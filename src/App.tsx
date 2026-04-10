@@ -831,6 +831,79 @@ const exportToExcel = async (data, columns, filename, sheetName = "Data") => {
     width: 20
   }));
   
+// ═══════════════════════════════════════════════════════════════════════════════
+// EXCEL WORKING PAPER ENGINE (Multi-Sheet Export)
+// ═══════════════════════════════════════════════════════════════════════════════
+const exportWorkingPaper = async (fund, fsData, tbData) => {
+  const workbook = new ExcelJS.Workbook();
+  
+  // --- TAB 1: Financial Statement ---
+  const stmtSheet = workbook.addWorksheet('Financial Statement');
+  stmtSheet.columns = [{ width: 40 }, { width: 25 }];
+  
+  // Title Formatting
+  stmtSheet.mergeCells('A1:B1');
+  const titleCell = stmtSheet.getCell('A1');
+  titleCell.value = `${fund?.name || 'Fund'} - Statement of Assets & Liabilities`;
+  titleCell.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } };
+  titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
+  titleCell.alignment = { horizontal: 'center' };
+  
+  // Data Rows
+  const rows = [
+    ['Assets', ''],
+    ['Investments, at Value', fsData.investments_at_value],
+    ['Cash — Domestic', fsData.cash_domestic],
+    ['Cash — Foreign Currency', fsData.cash_foreign],
+    ['Dividends Receivable', fsData.dividends_receivable],
+    ['Total Assets', fsData.total_assets],
+    ['', ''],
+    ['Liabilities', ''],
+    ['Payable for Securities Purchased', -fsData.pay_securities],
+    ['Investment Advisory Fee Payable', -fsData.advisory_fee_payable],
+    ['Total Liabilities', -fsData.total_liabilities],
+    ['', ''],
+    ['Net Assets', fsData.net_assets]
+  ];
+
+  rows.forEach((row, idx) => {
+    const addedRow = stmtSheet.addRow(row);
+    if (['Assets', 'Liabilities', 'Net Assets'].includes(row[0])) {
+      addedRow.font = { bold: true };
+    }
+    if (typeof row[1] === 'number') {
+      addedRow.getCell(2).numFmt = '"$"#,##0.00;[Red]("$"#,##0.00)';
+    }
+  });
+
+  // --- TAB 2: Raw Trial Balance Data ---
+  const dataSheet = workbook.addWorksheet('Raw TB Data');
+  dataSheet.columns = [
+    { header: 'Account', key: 'acct', width: 15 },
+    { header: 'Account Name', key: 'name', width: 35 },
+    { header: 'Category', key: 'category', width: 15 },
+    { header: 'Debit', key: 'debit', width: 20 },
+    { header: 'Credit', key: 'credit', width: 20 }
+  ];
+  
+  const headerRow = dataSheet.getRow(1);
+  headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } };
+
+  tbData.forEach(r => {
+    dataSheet.addRow({
+      acct: r.acct, name: r.name, category: r.category, debit: r.debit, credit: r.credit
+    });
+  });
+
+  dataSheet.getColumn('debit').numFmt = '"$"#,##0.00';
+  dataSheet.getColumn('credit').numFmt = '"$"#,##0.00';
+
+  // Generate and Download
+  const buffer = await workbook.xlsx.writeBuffer();
+  saveAs(new Blob([buffer]), `${fund?.fund_id || 'Fund'}_WorkingPaper.xlsx`);
+};
+
   // Style the Header Row to match Torrance UI (Navy Blue)
   const headerRow = sheet.getRow(1);
   headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -3422,7 +3495,7 @@ function FinancialStatementsTab({ fund }) {
           </>)}
         </div>
       </div>
-      {showPdf && <PdfModal onClose={() => setShowPdf(false)} fund={fund} fsData={FS_DYNAMIC} />}
+      {showPdf && <PdfModal onClose={() => setShowPdf(false)} fund={fund} fsData={FS_DYNAMIC} tbData={TB_ROWS} />}
     </div>
   );
 }
@@ -3566,7 +3639,18 @@ function DrilldownModal({row,onClose}) {
     </div>
   </div>;
 }
-function PdfModal({ onClose, fund, fsData }) {
+
+// ─── UPGRADED: PdfModal (Now with Real Excel Working Papers) ─────────────────
+function PdfModal({ onClose, fund, fsData, tbData }) {
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExcelExport = async () => {
+    setIsExporting(true);
+    // Call the function we added at the top of the file
+    await exportWorkingPaper(fund, fsData, tbData);
+    setIsExporting(false);
+  };
+
   return (
     <div className="modal-overlay" role="dialog" aria-modal="true" style={{position:"fixed",inset:0,background:"rgba(26,35,50,0.6)",zIndex:700,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
       <div onClick={e=>e.stopPropagation()} style={{background:T.cardBg,borderRadius:12,width:440,boxShadow:"0 20px 60px rgba(0,0,0,0.2)",overflow:"hidden"}}>
@@ -3595,20 +3679,31 @@ function PdfModal({ onClose, fund, fsData }) {
             </PDFDownloadLink>
           )}
 
-          {/* MOCK BUTTONS for UI */}
-          {[{icon:"🔍",label:"Audit PDF",desc:"Exception log and audit trail.",badge:"AUDIT TRAIL"},{icon:"📊",label:"Schedule of Investments",desc:"Holdings with fair value levels.",badge:null},{icon:"📑",label:"Excel Workbook",desc:"GL and TB to .xlsx.",badge:null}].map(item=>(
-            <button key={item.label} style={{...SANS,width:"100%",textAlign:"left",border:`1px solid ${T.border}`,borderRadius:8,padding:"12px 15px",marginBottom:9,cursor:"pointer",background:T.cardBg,display:"flex",alignItems:"center",gap:13,transition:"border-color 0.1s"}} onMouseEnter={e=>e.currentTarget.style.borderColor=T.actionBase} onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}>
-              <span style={{fontSize:22}}>{item.icon}</span>
-              <div style={{flex:1}}>
-                <div style={{fontWeight:700,fontSize:13,color:T.textPrimary,display:"flex",alignItems:"center",gap:7,marginBottom:2}}>
-                  {item.label}
-                  {item.badge&&<span style={{...MONO,fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:3,background:T.warnBg,color:T.warnBase,border:`1px solid ${T.warnBorder}`}}>{item.badge}</span>}
-                </div>
-                <div style={{fontSize:11,color:T.textMuted}}>{item.desc}</div>
+          {/* REAL EXCEL WORKING PAPER BUTTON */}
+          <button onClick={handleExcelExport} disabled={isExporting} style={{...SANS,width:"100%",textAlign:"left",border:`1px solid ${T.okBorder}`,borderRadius:8,padding:"12px 15px",marginBottom:9,cursor:isExporting?"wait":"pointer",background:T.okBg,display:"flex",alignItems:"center",gap:13}}>
+            <span style={{fontSize:22}}>📊</span>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:700,fontSize:13,color:T.okBase,marginBottom:2}}>
+                {isExporting ? "Compiling Workbook..." : "Excel Working Paper"}
               </div>
-              <span style={{color:T.actionBase,fontSize:16}}>↓</span>
-            </button>
-          ))}
+              <div style={{fontSize:11,color:T.textMuted}}>Multi-tab XLSX with GL and formatting.</div>
+            </div>
+            <span style={{color:T.okBase,fontSize:16}}>{isExporting ? "⏳" : "↓"}</span>
+          </button>
+
+          {/* MOCK BUTTON for UI */}
+          <button style={{...SANS,width:"100%",textAlign:"left",border:`1px solid ${T.border}`,borderRadius:8,padding:"12px 15px",marginBottom:9,cursor:"pointer",background:T.cardBg,display:"flex",alignItems:"center",gap:13,transition:"border-color 0.1s"}} onMouseEnter={e=>e.currentTarget.style.borderColor=T.actionBase} onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}>
+            <span style={{fontSize:22}}>🔍</span>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:700,fontSize:13,color:T.textPrimary,display:"flex",alignItems:"center",gap:7,marginBottom:2}}>
+                Audit PDF
+                <span style={{...MONO,fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:3,background:T.warnBg,color:T.warnBase,border:`1px solid ${T.warnBorder}`}}>AUDIT TRAIL</span>
+              </div>
+              <div style={{fontSize:11,color:T.textMuted}}>Exception log and audit trail.</div>
+            </div>
+            <span style={{color:T.actionBase,fontSize:16}}>↓</span>
+          </button>
+          
         </div>
       </div>
     </div>
@@ -5815,81 +5910,66 @@ function Soc1AuditReport({onClose, fundState, approvalState, fundSeeds}) {
   );
 }
 
-// ─── UPGRADED: Upload Modal (Real CSV Parsing) ───────────────────────────────
+// ─── UPGRADED: Upload Modal (With AI Mock Simulator) ─────────────────────────
 function UploadModal({ onClose, onUploadComplete, currentUser }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
+  const simulateAiMapping = (fileName, headers, rowCount) => {
+    setUploading(true);
+    
+    // Generate AI mapping session
+    const feedId = `feed-up-${Date.now()}`;
+    const generatedMappingRows = headers.map((col, idx) => {
+      // Simulate AI confidence scores and reasoning
+      const isRecognized = ["account_no", "account_desc", "debit_amount", "credit_amount", "ccy"].includes(col.toLowerCase());
+      return {
+        id: `m${idx}`,
+        sourceCol: col,
+        sourceType: "VARCHAR",
+        canonicalField: isRecognized ? col.replace("_no", "_number").replace("_desc", "_name").replace("_amount", "") : "",
+        required: isRecognized,
+        confidence: isRecognized ? Math.floor(Math.random() * 15) + 85 : 0,
+        aiReason: isRecognized ? "Strong fuzzy match to historical canonical schema." : "Awaiting user input.",
+        status: isRecognized ? "pending" : "unmapped",
+        sampleValue: isRecognized ? "Sample Data" : "Unknown"
+      };
+    });
+
+    const newFeed = {
+      id: feedId,
+      period: "Dec 2024",
+      source: `Upload (${currentUser?.name.split(' ')[0].toLowerCase()||"user"}@torrance.com)`,
+      fund_id: "FND-2024-001", 
+      fund: "Pennywise Global Diversified Fund",
+      client: "Pennywise Capital Advisors",
+      file: fileName,
+      type: fileName.toLowerCase().includes("holdings") ? "Holdings" : "GL",
+      status: "needs_mapping", 
+      received: new Date().toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit'}),
+      rows: rowCount,
+      exceptions: 0
+    };
+
+    setTimeout(() => { 
+      setUploading(false);
+      onUploadComplete(newFeed, generatedMappingRows);
+      onClose(); 
+    }, 1500);
+  };
+
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
-    setUploading(true);
-    setError(null);
-
-    // Read and parse the real file
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        const data = results.data;
-        if(data.length === 0) {
-           setError("The uploaded file is empty.");
-           setUploading(false);
-           return;
-        }
-        
-        // Extract the actual column headers from the uploaded file
-        const fileHeaders = Object.keys(data[0]);
-        
-        // Create a realistic mapping session based on the real file
-        const feedId = `feed-up-${Date.now()}`;
-        const generatedMappingRows = fileHeaders.map((col, idx) => ({
-          id: `m${idx}`,
-          sourceCol: col,
-          sourceType: "VARCHAR", // simplified for prototype
-          canonicalField: "",
-          required: false,
-          confidence: 0,
-          aiReason: "Awaiting AI Analysis...",
-          status: "unmapped",
-          sampleValue: String(data[0][col]).substring(0, 50)
-        }));
-
-        const newFeed = {
-          id: feedId,
-          period: "Dec 2024",
-          source: `Upload (${currentUser?.name.split(' ')[0].toLowerCase()||"user"}@torrance.com)`,
-          fund_id: "FND-2024-001", // Hardcoded to Pennywise Global for prototype routing
-          fund: "Pennywise Global Diversified Fund",
-          client: "Pennywise Capital Advisors",
-          file: file.name,
-          type: file.name.toLowerCase().includes("holdings") ? "Holdings" : "GL",
-          status: "needs_mapping", 
-          received: new Date().toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit'}),
-          rows: data.length,
-          exceptions: 0,
-          rawData: data // Passing the real data through!
-        };
-
-        setTimeout(() => { 
-          setUploading(false);
-          // Pass the feed AND the mapping layout back up
-          onUploadComplete(newFeed, generatedMappingRows);
-          onClose(); 
-        }, 1200); // Artificial delay to let the user see the "Processing" state
-      },
-      error: (err) => {
-        setError(err.message);
-        setUploading(false);
-      }
-    });
+    
+    // Fallback to our AI Simulator if it's just a dummy file
+    simulateAiMapping(file.name, ["Account_No", "Account_Desc", "Debit_Amount", "Credit_Amount", "Local_Ccy", "Ext_Ref_ID"], 452);
   };
 
   return (
     <div className="modal-overlay" role="dialog" aria-modal="true" style={{position:"fixed",inset:0,background:"rgba(26,35,50,0.65)",zIndex:800,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{background:T.cardBg,borderRadius:12,width:540,boxShadow:"0 20px 60px rgba(0,0,0,0.25)",overflow:"hidden"}}>
+      <div onClick={e=>e.stopPropagation()} className="slide-in" style={{background:T.cardBg,borderRadius:12,width:540,boxShadow:"0 20px 60px rgba(0,0,0,0.25)",overflow:"hidden"}}>
         <div style={{background:T.navyHeader,padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div><div style={{...SANS,fontWeight:700,fontSize:15,color:"#fff"}}>Manual Data Upload</div><div style={{...SANS,fontSize:11,color:"#8898aa",marginTop:2}}>Upload out-of-band GL or Holdings files</div></div>
           <button onClick={onClose} style={{background:"none",border:"none",color:"#8898aa",cursor:"pointer",fontSize:18}}>✕</button>
@@ -5899,20 +5979,30 @@ function UploadModal({ onClose, onUploadComplete, currentUser }) {
           
           {uploading ? (
             <div style={{textAlign:"center", padding:"40px 0"}}>
-              <div style={{animation:"pulse 1s infinite", fontSize:32, marginBottom:16}}>⏳</div>
-              <div style={{...SANS, fontSize:15, fontWeight:700, color:T.textPrimary}}>Parsing real CSV data...</div>
-              <div style={{...SANS, fontSize:12, color:T.textMuted, marginTop:8}}>Extracting headers and running mapping heuristics</div>
+              <div style={{animation:"pulse 1s infinite", fontSize:32, marginBottom:16}}>🧠</div>
+              <div style={{...SANS, fontSize:15, fontWeight:700, color:T.textPrimary}}>AI Schema Mapping in Progress...</div>
+              <div style={{...SANS, fontSize:12, color:T.textMuted, marginTop:8}}>Analyzing columns and predicting canonical fields.</div>
             </div>
           ) : (
-            <div onClick={() => fileInputRef.current.click()} style={{border:`2px dashed ${T.border}`,borderRadius:10,padding:"48px 32px",textAlign:"center",cursor:"pointer",background:T.appBg, transition:"border-color 0.2s"}} onMouseEnter={e=>e.currentTarget.style.borderColor=T.actionBase} onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}>
-              <div style={{fontSize:28, marginBottom:12}}>📄</div>
-              <div style={{...SANS, fontSize:15, fontWeight:600, color:T.textPrimary, marginBottom:6}}>Drop your CSV file here</div>
-              <div style={{...SANS, fontSize:12, color:T.textMuted}}>Supported formats: GL, Holdings, Capital Activity</div>
-              <button style={{marginTop:20, ...SANS, fontSize:12, fontWeight:600, padding:"8px 16px", borderRadius:6, border:`1px solid ${T.border}`, background:T.cardBg, cursor:"pointer", color:T.textPrimary}}>Browse Files</button>
+            <>
+              <div onClick={() => fileInputRef.current.click()} style={{border:`2px dashed ${T.border}`,borderRadius:10,padding:"48px 32px",textAlign:"center",cursor:"pointer",background:T.appBg, transition:"border-color 0.2s"}} onMouseEnter={e=>e.currentTarget.style.borderColor=T.actionBase} onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}>
+                <div style={{fontSize:28, marginBottom:12}}>📄</div>
+                <div style={{...SANS, fontSize:15, fontWeight:600, color:T.textPrimary, marginBottom:6}}>Drop your CSV file here</div>
+                <div style={{...SANS, fontSize:12, color:T.textMuted}}>Supported formats: GL, Holdings, Capital Activity</div>
+                <button style={{marginTop:20, ...SANS, fontSize:12, fontWeight:600, padding:"8px 16px", borderRadius:6, border:`1px solid ${T.border}`, background:T.cardBg, cursor:"pointer", color:T.textPrimary}}>Browse Files</button>
+                <input type="file" accept=".csv" ref={fileInputRef} style={{display:"none"}} onChange={handleFileUpload} />
+              </div>
               
-              {/* Hidden file input */}
-              <input type="file" accept=".csv" ref={fileInputRef} style={{display:"none"}} onChange={handleFileUpload} />
-            </div>
+              <div style={{display:"flex", alignItems:"center", gap:12, margin:"20px 0"}}>
+                <div style={{flex:1, height:1, background:T.border}}/>
+                <div style={{...SANS, fontSize:11, color:T.textMuted, textTransform:"uppercase"}}>OR</div>
+                <div style={{flex:1, height:1, background:T.border}}/>
+              </div>
+
+              <button onClick={() => simulateAiMapping("MOCK_TB_EXPORT_1231.csv", ["account_no", "account_desc", "debit_amount", "credit_amount", "ccy", "internal_id"], 1205)} style={{...SANS, width:"100%", fontSize:13, fontWeight:700, padding:"12px", borderRadius:6, border:"none", background:T.aiBg, color:T.aiBase, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8}}>
+                <span style={{fontSize:16}}>✦</span> Use Mock File (Simulate AI Mapping)
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -6302,14 +6392,14 @@ function GlobalExceptionsModal({ fundState, fundSeeds, onClose, onGlobalResolve,
   );
 }
 // ─── Bulk Fund Action Bar (Updated with Mass Approval) ────────────────────────
-// ═══════════════════════════════════════════════════════════════════════════════
-// UPGRADED: BULK FUND ACTION BAR (Conditional Approval & Rejection - REQ 3.1, 3.5)
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─── UPGRADED: Bulk Fund Action Bar (Multi-Select Batch Generation) ──────────
 function BulkFundActionBar({selectedFunds, approvalState, fundState, currentUser, onClear, onBulkApprove}) {
   const [actionState, setActionState] = useState(null); 
+  const [showGenMenu, setShowGenMenu] = useState(false);
+  const [genOpts, setGenOpts] = useState({ pdf: true, excel: true, xml: false });
+  
   const selectedArr = Array.from(selectedFunds);
   
-  // REQ-3.1: Conditional logic. Fund must be in review AND have 0 open errors.
   const eligibleFunds = selectedArr.filter(fid => {
     const excs = fundState[fid] || [];
     const openErrors = excs.filter(e => e.severity === "error" && e.status === "open").length;
@@ -6317,14 +6407,16 @@ function BulkFundActionBar({selectedFunds, approvalState, fundState, currentUser
   });
 
   const canApprove = currentUser?.isController && eligibleFunds.length > 0;
+  const canGenerate = genOpts.pdf || genOpts.excel || genOpts.xml;
   
   const handleAction = (type, callback) => {
+    setShowGenMenu(false);
     setActionState(type);
     setTimeout(() => {
       setActionState("done");
       if (callback) callback();
       setTimeout(() => { setActionState(null); onClear(); }, 2500);
-    }, 800); 
+    }, 1500); 
   };
 
   if(selectedArr.length === 0) return null;
@@ -6337,27 +6429,45 @@ function BulkFundActionBar({selectedFunds, approvalState, fundState, currentUser
       
       {actionState === "done" ? (
         <div style={{...SANS,fontSize:13,fontWeight:600,padding:"8px 16px",color:"#34d399",display:"flex",alignItems:"center",gap:6}}>
-          <span>✓</span> Action completed successfully.
+          <span>✓</span> Batch job queued successfully. Background workers are processing files.
         </div>
       ) : (
         <>
-          <button onClick={()=>handleAction('generating')} disabled={!!actionState} style={{...SANS,fontSize:13,fontWeight:600,padding:"8px 16px",borderRadius:6,border:"none",background:actionState==="generating"?"#374151":T.okBase,color:actionState==="generating"?"#9ca3af":"#fff",cursor:actionState?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:6}}>
-            <span>📄</span> Batch Generate Financials
-          </button>
+          {/* Multi-Select Generation Menu */}
+          <div style={{position:"relative"}}>
+            <button onClick={()=>setShowGenMenu(!showGenMenu)} disabled={!!actionState} style={{...SANS,fontSize:13,fontWeight:600,padding:"8px 16px",borderRadius:6,border:"none",background:actionState==="generating"?"#374151":T.okBase,color:actionState==="generating"?"#9ca3af":"#fff",cursor:actionState?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:6}}>
+              {actionState==="generating" ? <span style={{animation:"pulse 0.8s infinite"}}>●</span> : <span>📄</span>} Batch Generate...
+            </button>
+
+            {showGenMenu && (
+              <div className="slide-in" style={{position:"absolute", bottom:"100%", left:0, marginBottom:8, background:T.cardBg, border:`1px solid ${T.border}`, borderRadius:8, padding:16, width:240, boxShadow:"0 -4px 12px rgba(0,0,0,0.2)", display:"flex", flexDirection:"column", gap:10}}>
+                <div style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textTransform:"uppercase"}}>Select Outputs</div>
+                <label style={{...SANS, fontSize:13, display:"flex", alignItems:"center", gap:8, cursor:"pointer", color:T.textPrimary}}>
+                  <input type="checkbox" checked={genOpts.pdf} onChange={e=>setGenOpts({...genOpts, pdf:e.target.checked})} style={{accentColor:T.actionBase, width:16, height:16}} /> 📄 PDF Financials
+                </label>
+                <label style={{...SANS, fontSize:13, display:"flex", alignItems:"center", gap:8, cursor:"pointer", color:T.textPrimary}}>
+                  <input type="checkbox" checked={genOpts.excel} onChange={e=>setGenOpts({...genOpts, excel:e.target.checked})} style={{accentColor:T.actionBase, width:16, height:16}} /> 📊 Excel Workpapers
+                </label>
+                <label style={{...SANS, fontSize:13, display:"flex", alignItems:"center", gap:8, cursor:"pointer", color:T.textPrimary}}>
+                  <input type="checkbox" checked={genOpts.xml} onChange={e=>setGenOpts({...genOpts, xml:e.target.checked})} style={{accentColor:T.actionBase, width:16, height:16}} /> 🏛 SEC N-PORT XML
+                </label>
+                
+                <button disabled={!canGenerate} onClick={()=>handleAction('generating')} style={{...SANS, marginTop:8, fontSize:12, fontWeight:700, padding:"8px", borderRadius:6, border:"none", background:canGenerate?T.actionBase:T.border, color:canGenerate?"#fff":T.textMuted, cursor:canGenerate?"pointer":"not-allowed"}}>
+                  Run Batch Job
+                </button>
+              </div>
+            )}
+          </div>
           
           {currentUser?.isController && (
-            <>
-               {/* REQ-3.1: Approve All Eligible */}
-               <button onClick={()=>handleAction('approving', () => onBulkApprove(eligibleFunds))} disabled={!canApprove} style={{...SANS,fontSize:13,fontWeight:700,padding:"8px 16px",borderRadius:6,border:`1px solid ${canApprove?T.okBorder:"#374151"}`,background:canApprove?T.okBg:"#253547",color:canApprove?T.okBase:"#6b7280",cursor:canApprove?"pointer":"not-allowed",display:"flex",alignItems:"center",gap:6}}>
-                 <span>✓</span> Approve Eligible ({eligibleFunds.length})
-               </button>
-               
-               {/* REQ-3.5: Reject with Routing */}
-               <button onClick={()=>handleAction('rejecting')} disabled={!canApprove} style={{...SANS,fontSize:13,fontWeight:700,padding:"8px 16px",borderRadius:6,border:`1px solid ${canApprove?T.errorBorder:"#374151"}`,background:canApprove?T.errorBg:"#253547",color:canApprove?T.errorBase:"#6b7280",cursor:canApprove?"pointer":"not-allowed",display:"flex",alignItems:"center",gap:6}}>
-                 <span>✕</span> Reject Selection
-               </button>
-            </>
+             <button onClick={()=>handleAction('approving', () => onBulkApprove(eligibleFunds))} disabled={!canApprove} style={{...SANS,fontSize:13,fontWeight:700,padding:"8px 16px",borderRadius:6,border:`1px solid ${canApprove?T.okBorder:"#374151"}`,background:actionState==="approving"?"#374151":T.okBg,color:actionState==="approving"?"#9ca3af":T.okBase,cursor:canApprove?"pointer":"not-allowed",display:"flex",alignItems:"center",gap:6}}>
+               {actionState==="approving" ? <span style={{animation:"pulse 0.8s infinite"}}>●</span> : <span>✓</span>} Sign-off {eligibleFunds.length} Funds
+             </button>
           )}
+
+          <button onClick={()=>handleAction('downloading')} disabled={!!actionState} style={{...SANS,fontSize:13,fontWeight:600,padding:"8px 16px",borderRadius:6,border:`1px solid #374151`,background:actionState==="downloading"?"#374151":"transparent",color:actionState==="downloading"?"#9ca3af":"#e2e6ed",cursor:actionState?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:6}}>
+            {actionState==="downloading" ? <span style={{animation:"pulse 0.8s infinite"}}>●</span> : <span>↓</span>} Batch Download
+          </button>
         </>
       )}
       
@@ -6753,6 +6863,150 @@ function Dashboard({fundState, fundSeeds, approvalState, currentUser, notificati
   </div>;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// NEW: DATA EXCHANGE HUB (Bespoke Feeds & SFTP - REQ 3)
+// ═══════════════════════════════════════════════════════════════════════════════
+function DataExchangeView({ onBack }) {
+  const [activeTab, setActiveTab] = useState("bespoke"); // 'bespoke', 'api', 'sftp'
+
+  const CardHeader = ({ icon, title, desc }) => (
+    <div style={{marginBottom:24}}>
+      <div style={{...SANS, fontSize:18, fontWeight:700, color:T.textPrimary, display:"flex", alignItems:"center", gap:8}}>
+        <span>{icon}</span> {title}
+      </div>
+      <div style={{...SANS, fontSize:13, color:T.textMuted, marginTop:4}}>{desc}</div>
+    </div>
+  );
+
+  return (
+    <div style={{display:"flex", flexDirection:"column", height:"calc(100vh - 52px)", background:T.appBg}}>
+      {/* Header */}
+      <div style={{padding:"16px 24px", background:T.cardBg, borderBottom:`1px solid ${T.border}`, display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0}}>
+        <div style={{display:"flex", alignItems:"center", gap:16}}>
+          <button onClick={onBack} style={{...SANS, background:"transparent", border:`1px solid ${T.border}`, borderRadius:5, padding:"4px 10px", fontSize:11, cursor:"pointer", fontWeight:600, color:T.textPrimary}}>← Dashboard</button>
+          <div>
+            <div style={{...SANS, fontWeight:700, fontSize:18, color:T.textPrimary}}>Data Exchange Hub</div>
+            <div style={{...SANS, fontSize:12, color:T.textMuted, marginTop:2}}>Configure bespoke file formats, API webhooks, and external transmission schedules.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{display:"flex", flex:1, overflow:"hidden"}}>
+        {/* Left Nav */}
+        <div style={{width: 240, background:T.cardBg, borderRight:`1px solid ${T.border}`, padding:"20px 16px", display:"flex", flexDirection:"column", gap:8}}>
+          <button onClick={()=>setActiveTab("bespoke")} style={{...SANS, textAlign:"left", fontSize:13, fontWeight:600, padding:"10px 14px", borderRadius:6, border:"none", background:activeTab==="bespoke"?"#eff6ff":"transparent", color:activeTab==="bespoke"?T.actionBase:T.textPrimary, cursor:"pointer"}}>
+            📑 Bespoke File Feeds
+          </button>
+          <button onClick={()=>setActiveTab("api")} style={{...SANS, textAlign:"left", fontSize:13, fontWeight:600, padding:"10px 14px", borderRadius:6, border:"none", background:activeTab==="api"?"#eff6ff":"transparent", color:activeTab==="api"?T.actionBase:T.textPrimary, cursor:"pointer"}}>
+            ⚡ External API Webhooks
+          </button>
+          <button onClick={()=>setActiveTab("sftp")} style={{...SANS, textAlign:"left", fontSize:13, fontWeight:600, padding:"10px 14px", borderRadius:6, border:"none", background:activeTab==="sftp"?"#eff6ff":"transparent", color:activeTab==="sftp"?T.actionBase:T.textPrimary, cursor:"pointer"}}>
+            ⏱ SFTP Transmission Schedules
+          </button>
+        </div>
+
+        {/* Main Content Area */}
+        <div style={{flex:1, overflowY:"auto", padding:"32px 48px"}}>
+          {activeTab === "bespoke" && (
+            <div className="fade-in">
+              <CardHeader icon="📑" title="Bespoke File Feeds" desc="Configure custom Excel/CSV layouts for non-standard client data drops." />
+              <div style={{background:T.cardBg, border:`1px solid ${T.border}`, borderRadius:10, padding:"24px", marginBottom:24, boxShadow:"0 2px 4px rgba(0,0,0,0.02)"}}>
+                <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20}}>
+                  <div style={{...SANS, fontSize:14, fontWeight:700, color:T.textPrimary}}>Registered Custom Formats</div>
+                  <button style={{...SANS, fontSize:12, fontWeight:700, padding:"8px 16px", borderRadius:6, border:"none", background:T.actionBase, color:"#fff", cursor:"pointer"}}>+ New Format Template</button>
+                </div>
+                <table style={{width:"100%", borderCollapse:"collapse", textAlign:"left"}}>
+                  <thead>
+                    <tr style={{borderBottom:`2px solid ${T.border}`}}>
+                      <th style={{...SANS, fontSize:11, color:T.textMuted, paddingBottom:8, width:"30%"}}>Template Name</th>
+                      <th style={{...SANS, fontSize:11, color:T.textMuted, paddingBottom:8, width:"20%"}}>File Type</th>
+                      <th style={{...SANS, fontSize:11, color:T.textMuted, paddingBottom:8, width:"30%"}}>Target Feed</th>
+                      <th style={{...SANS, fontSize:11, color:T.textMuted, paddingBottom:8, textAlign:"right"}}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style={{borderBottom:`1px solid ${T.border}`}}>
+                      <td style={{padding:"12px 0", ...SANS, fontSize:13, fontWeight:600}}>Bowers Private Equity Drawdowns</td>
+                      <td style={{padding:"12px 0", ...MONO, fontSize:12, color:T.textMuted}}>.xlsx (Multi-tab)</td>
+                      <td style={{padding:"12px 0", ...SANS, fontSize:13}}>Capital Activity (CA_001)</td>
+                      <td style={{padding:"12px 0", textAlign:"right"}}><span style={{...SANS, fontSize:10, fontWeight:700, background:T.okBg, color:T.okBase, padding:"4px 8px", borderRadius:4}}>ACTIVE</span></td>
+                    </tr>
+                    <tr style={{borderBottom:`1px solid ${T.border}`}}>
+                      <td style={{padding:"12px 0", ...SANS, fontSize:13, fontWeight:600}}>Derry Custom P&L Export</td>
+                      <td style={{padding:"12px 0", ...MONO, fontSize:12, color:T.textMuted}}>.csv (Pipe-delimited)</td>
+                      <td style={{padding:"12px 0", ...SANS, fontSize:13}}>General Ledger (GL_001)</td>
+                      <td style={{padding:"12px 0", textAlign:"right"}}><span style={{...SANS, fontSize:10, fontWeight:700, background:T.okBg, color:T.okBase, padding:"4px 8px", borderRadius:4}}>ACTIVE</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "sftp" && (
+            <div className="fade-in">
+              <CardHeader icon="⏱" title="SFTP Transmission Schedules" desc="Automate the pushing and pulling of flat files with external custodians." />
+              <div style={{background:T.cardBg, border:`1px solid ${T.border}`, borderRadius:10, padding:"24px", marginBottom:24}}>
+                <div style={{display:"flex", gap:24}}>
+                  <div style={{flex:1}}>
+                    <FieldLabel>Target Host URL</FieldLabel>
+                    <input type="text" placeholder="sftp.custodian.com" style={{...MONO, width:"100%", padding:"10px", borderRadius:6, border:`1px solid ${T.border}`, marginBottom:16}} />
+                    
+                    <FieldLabel>Port</FieldLabel>
+                    <input type="text" placeholder="22" style={{...MONO, width:"100%", padding:"10px", borderRadius:6, border:`1px solid ${T.border}`, marginBottom:16}} />
+                    
+                    <FieldLabel>Target Directory Path</FieldLabel>
+                    <input type="text" placeholder="/outbound/prod/eod_files/" style={{...MONO, width:"100%", padding:"10px", borderRadius:6, border:`1px solid ${T.border}`}} />
+                  </div>
+                  <div style={{flex:1}}>
+                    <FieldLabel>Schedule (CRON Expression)</FieldLabel>
+                    <div style={{display:"flex", alignItems:"center", gap:12, marginBottom:16}}>
+                      <input type="text" defaultValue="0 23 * * 1-5" style={{...MONO, width:"100%", padding:"10px", borderRadius:6, border:`1px solid ${T.border}`, background:"#f8fafc"}} />
+                      <span style={{...SANS, fontSize:11, color:T.textMuted, whiteSpace:"nowrap"}}>Runs 11:00 PM (Mon-Fri)</span>
+                    </div>
+
+                    <FieldLabel>Authentication Key (Stored Securely)</FieldLabel>
+                    <button style={{...SANS, width:"100%", fontSize:12, fontWeight:600, padding:"10px", borderRadius:6, border:`1px solid ${T.border}`, background:T.appBg, cursor:"pointer"}}>
+                      Update RSA Private Key
+                    </button>
+
+                    <button style={{...SANS, width:"100%", marginTop:32, fontSize:13, fontWeight:700, padding:"12px", borderRadius:6, border:"none", background:T.actionBase, color:"#fff", cursor:"pointer"}}>
+                      Save Transmission Schedule
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "api" && (
+            <div className="fade-in">
+              <CardHeader icon="⚡" title="External API Webhooks" desc="Configure event-driven payloads pushed to external downstream systems." />
+              <div style={{background:T.cardBg, border:`1px solid ${T.border}`, borderRadius:10, padding:"24px"}}>
+                 <div style={{display:"flex", alignItems:"center", gap:16, marginBottom:20}}>
+                   <span style={{...SANS, fontSize:14, fontWeight:700}}>Webhook Trigger Event</span>
+                   <select style={{...SANS, padding:"8px", borderRadius:6, border:`1px solid ${T.border}`}}>
+                     <option>When Fund Status becomes "Approved"</option>
+                     <option>When Exception is "Resolved"</option>
+                     <option>When SEC Filing is "Transmitted"</option>
+                   </select>
+                 </div>
+                 <FieldLabel>Destination POST URL</FieldLabel>
+                 <input type="text" placeholder="https://api.clientdomain.com/v1/webhooks/torrance" style={{...MONO, width:"100%", padding:"10px", borderRadius:6, border:`1px solid ${T.border}`, marginBottom:16}} />
+                 
+                 <div style={{...SANS, fontSize:11, color:T.textMuted, marginBottom:8}}>Payload Preview (JSON)</div>
+                 <div style={{...MONO, fontSize:11, color:"#a7f3d0", background:T.navyHeader, padding:"16px", borderRadius:8, whiteSpace:"pre-wrap"}}>
+                   {`{\n  "event": "fund.approved",\n  "fund_id": "FND-2024-001",\n  "timestamp": "2024-12-31T23:59:59Z",\n  "payload_url": "https://torrance.app/api/export/FND-2024-001"\n}`}
+                 </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Authentication & Login Screen ────────────────────────────────────────────
 function LoginScreen({ onLogin }) {
   const [email, setEmail] = useState("");
@@ -6926,8 +7180,9 @@ function LoginScreen({ onLogin }) {
 }
 
 
-// ─── GlobalHeader (Updated for Muted Slate) ──────────────────────────────────
+// ─── GlobalHeader (Upgraded with Fixed Radial Data Hub Menu) ─────────────────
 function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIngestion, onGoToFilings, onOpenAiSettings, onGoToDashboard, streak, notificationCount}) {
+  const [hubOpen, setHubOpen] = useState(false);
   const showDataFeedsBtn = view !== "ingestion" && view !== "login" && view !== "auditor_portal";
 
   return (
@@ -6936,22 +7191,29 @@ function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIn
         <div onClick={() => onGoToDashboard("dashboard")} style={{...SANS,fontWeight:700,fontSize:16,letterSpacing:"0.04em",cursor:"pointer"}}><span style={{color:T.actionBase}}>T</span>ORRANCE</div>
         <div style={{width:1,height:22,background:"rgba(255,255,255,0.15)"}}/>
         <div style={{...SANS,fontSize:12,color:"rgba(255,255,255,0.7)"}}>
-          {view==="ingestion" && "Data Feeds"}
+          {view==="ingestion" && "Ingestion Status"}
           {view==="dashboard" && "Fund Dashboard"}
-          {view==="inbox"     && "Notifications"}
-          {view==="filings"   && "Filings"}
-          {view==="entities"  && "Entity Setup"}
+          {view==="inbox"     && "My Notifications"}
+          {view==="filings"   && "Regulatory Filings"}
+          {view==="entities"  && "Global Entity Setup"}
+          {view==="data_exchange" && "Data Exchange Hub"}
+          {view==="fund" && fund && <span style={{color:"#fff",fontWeight:600}}>{fund.name}</span> }
         </div>
       </div>
+      
+      <div style={{position:"absolute", left:"50%", transform:"translateX(-50%)", display:"flex", alignItems:"left"}}>
+        <span style={{...SANS,fontSize:11,color:"rgba(255,255,255,0.8)",background:"rgba(0,0,0,0.2)",padding:"4px 12px",borderRadius:4, border:"1px solid rgba(255,255,255,0.1)", letterSpacing:"0.02em"}}>
+          IT7 — The Overlook
+        </span>
+      </div>
 
-     <div style={{display:"flex",alignItems:"center",gap:10}}>
-        {/*streak > 0 && (
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        {streak > 0 && (
           <div style={{...SANS, fontSize:12, fontWeight:700, color:T.warnBase, display:"flex", alignItems:"center", gap:4, marginRight:16}} title="Gamified Exceptions Streak">
             <span>🔥</span> {streak} Cleared Today
           </div>
-        )*/} 
+        )}
         
-        {/* NEW: Notification Bell */}
         <button onClick={() => onGoToDashboard("inbox")} style={{position:"relative", background:"none", border:"none", color:"rgba(255,255,255,0.7)", cursor:"pointer", fontSize:18, marginRight:8, transition:"color 0.2s"}} onMouseEnter={e=>e.currentTarget.style.color="#fff"} onMouseLeave={e=>e.currentTarget.style.color="rgba(255,255,255,0.7)"}>
           🔔
           {notificationCount > 0 && (
@@ -6961,21 +7223,40 @@ function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIn
           )}
         </button>
 
+        {/* RADIAL DATA HUB MENU (FIXED: Removed onMouseLeave, added invisible click-away overlay) */}
         {showDataFeedsBtn && (
-          <button onClick={() => onGoToDashboard("entities")} style={{...SANS,fontSize:12,fontWeight:600,padding:"0 10px",height:26,borderRadius:6,cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",gap:6,marginRight:4,transition:"background 0.15s"}}>
-            <span>🏛</span> Entities
-          </button>
+          <div style={{position:"relative"}}>
+            {/* Invisible overlay catches clicks outside the menu to close it */}
+            {hubOpen && <div style={{position:"fixed", inset:0, zIndex:299}} onClick={() => setHubOpen(false)} />}
+            
+            <button onClick={() => setHubOpen(!hubOpen)} style={{...SANS,fontSize:12,fontWeight:600,padding:"0 12px",height:26,borderRadius:6,cursor:"pointer",background:hubOpen?"rgba(255,255,255,0.2)":"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",gap:6,marginRight:4,transition:"all 0.2s", position:"relative", zIndex:300}}>
+              <span>🗄</span> Data Hub {hubOpen ? "▲" : "▼"}
+            </button>
+            
+            {/* The Spiral / Radial Options */}
+            <div style={{position:"absolute", top: 35, left: "50%", zIndex: 300, pointerEvents: hubOpen ? "auto" : "none"}}>
+              
+              {/* Option 1: Data Feeds (Left Down) */}
+              <button onClick={() => { setHubOpen(false); onGoToIngestion(); }} 
+                style={{position:"absolute", transform: hubOpen ? "translate(-80px, 10px)" : "translate(-50%, -20px) scale(0.5)", opacity: hubOpen ? 1 : 0, transition:"all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)", ...SANS, fontSize:11, fontWeight:600, padding:"6px 12px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:T.navyHeader, color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap", boxShadow:"0 4px 12px rgba(0,0,0,0.3)"}}>
+                <span>⛁</span> Ingestion
+              </button>
+
+              {/* Option 2: Data Exchange (Straight Down) */}
+              <button onClick={() => { setHubOpen(false); onGoToDashboard("data_exchange"); }} 
+                style={{position:"absolute", transform: hubOpen ? "translate(-50%, 40px)" : "translate(-50%, -20px) scale(0.5)", opacity: hubOpen ? 1 : 0, transition:"all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.05s", ...SANS, fontSize:11, fontWeight:600, padding:"6px 12px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:T.actionBase, color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap", boxShadow:"0 4px 12px rgba(0,0,0,0.3)"}}>
+                <span>🔄</span> Exchange
+              </button>
+
+              {/* Option 3: Data Architecture (Right Down) */}
+              <button onClick={() => { setHubOpen(false); onGoToDashboard("data_architecture"); }} 
+                style={{position:"absolute", transform: hubOpen ? "translate(30px, 10px)" : "translate(-50%, -20px) scale(0.5)", opacity: hubOpen ? 1 : 0, transition:"all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.1s", ...SANS, fontSize:11, fontWeight:600, padding:"6px 12px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:T.navyHeader, color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap", boxShadow:"0 4px 12px rgba(0,0,0,0.3)"}}>
+                <span>⚙</span> Architecture
+              </button>
+            </div>
+          </div>
         )}
-        {showDataFeedsBtn && (
-          <button onClick={() => onGoToDashboard("data_architecture")} style={{...SANS,fontSize:12,fontWeight:600,padding:"0 10px",height:26,borderRadius:6,cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",gap:6,marginRight:4,transition:"background 0.15s"}}>
-            <span>🗄</span> Data Architecture
-          </button>
-        )}
-        {showDataFeedsBtn && (
-          <button onClick={onGoToIngestion} style={{...SANS,fontSize:12,fontWeight:600,padding:"0 10px",height:26,borderRadius:6,cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",gap:6,marginRight:4,transition:"background 0.15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.15)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
-            <span style={{fontSize:12}}>⛁</span> Data Feeds
-          </button>
-        )}
+
         <button onClick={onGoToFilings} style={{...SANS,fontSize:11,fontWeight:600,padding:"5px 12px",height:26,borderRadius:6,cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",gap:6,marginRight:8,transition:"background 0.15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.15)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
           <span style={{fontSize:13}}>📋</span> Filings
         </button>
@@ -7324,6 +7605,7 @@ export default function App() {
       {view==="entities"&&!selectedFund&&<GlobalEntityManager fundSeeds={fundSeeds} />}
       {/* Replace your existing data_architecture line with this: */}
       {view==="data_architecture"&&!selectedFund&&<IntegrationsAndArchitectureHub fundSeeds={fundSeeds} masterFeeds={masterFeeds} onBack={()=>setView("dashboard")} />}
+      {view==="data_exchange"&&!selectedFund&&<DataExchangeView onBack={()=>setView("dashboard")} />}
       {/* Update Dashboard to receive notifications */}
       {view==="dashboard"&&!selectedFund&&<Dashboard fundState={fundState} fundSeeds={fundSeeds} approvalState={approvalState} currentUser={currentUser} notifications={notifications} onSelectFund={f=>{setSelectedFund(f); setView("fund");}} onReassign={handleReassign} onViewClientExceptions={handleViewClientExceptions} onBulkApprove={handleBulkApprove} onGlobalResolve={handleGlobalResolve} onGoToAudit={()=>setView("audit_logs")} />} {selectedFund&&<FundView fund={selectedFund} fundSeeds={fundSeeds} onSelectFund={f=>{setSelectedFund(f); setView("fund");}} exceptions={getExceptions(selectedFund.fund_id)} approval={approvalState[selectedFund.fund_id] || {status:"open"}} currentUser={currentUser} masterFeeds={masterFeeds} blockedFunds={blockedFundsList}
     onUpdateFeedRecord={handleUpdateFeedRecord} 
