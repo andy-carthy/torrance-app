@@ -1,4 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import Papa from 'papaparse';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+import { Document, Page, Text, View, StyleSheet, PDFDownloadLink } from '@react-pdf/renderer';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DESIGN TOKENS (Muted Slate UI for High-Density Data)
@@ -741,6 +745,107 @@ const fmtNum     = (n) => n.toLocaleString("en-US",{minimumFractionDigits:2,maxi
 const fmtShares  = (n,dec=0) => n===0?"—":n.toLocaleString("en-US",{minimumFractionDigits:dec,maximumFractionDigits:dec});
 const fmtPct     = (n) => `${n.toFixed(2)}%`;
 const fmtMono    = (n,neg) => <span style={{...MONO,color:neg?"":undefined}}>{n}</span>;
+// ═══════════════════════════════════════════════════════════════════════════════
+// PDF GENERATION ENGINE (@react-pdf/renderer)
+// ═══════════════════════════════════════════════════════════════════════════════
+const pdfStyles = StyleSheet.create({
+  page: { padding: 40, fontFamily: 'Helvetica', fontSize: 10, color: '#334155' },
+  header: { fontSize: 16, fontWeight: 'bold', color: '#0f172a', textAlign: 'center', marginBottom: 4 },
+  subHeader: { fontSize: 10, color: '#64748b', textAlign: 'center', marginBottom: 24 },
+  sectionTitle: { fontSize: 11, fontWeight: 'bold', color: '#0f172a', borderBottom: '1px solid #e2e8f0', paddingBottom: 4, marginTop: 16, marginBottom: 8, textTransform: 'uppercase' },
+  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
+  rowBold: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4, fontWeight: 'bold', borderTop: '1px solid #0f172a', marginTop: 4 },
+  rowDouble: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4, fontWeight: 'bold', borderTop: '1px solid #0f172a', borderBottom: '2px solid #0f172a', marginTop: 4, marginBottom: 4 },
+  label: { flex: 1 },
+  value: { width: 100, textAlign: 'right', fontFamily: 'Courier' },
+  indent: { paddingLeft: 15 }
+});
+
+const fmtPdfUSD = (n) => n == null ? "—" : n < 0 ? `($${Math.abs(n).toLocaleString("en-US",{minimumFractionDigits:2})})` : `$${n.toLocaleString("en-US",{minimumFractionDigits:2})}`;
+
+const FinancialStatementPDF = ({ fund, fsData }) => (
+  <Document>
+    {/* PAGE 1: Statement of Assets and Liabilities */}
+    <Page size="A4" style={pdfStyles.page}>
+      <Text style={pdfStyles.header}>Statement of Assets and Liabilities</Text>
+      <Text style={pdfStyles.subHeader}>{fund?.name || "Fund"} — As of December 31, 2024</Text>
+
+      <Text style={pdfStyles.sectionTitle}>Assets</Text>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Investments, at Value</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.investments_at_value)}</Text></View>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Cash — Domestic</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.cash_domestic)}</Text></View>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Cash — Foreign Currency</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.cash_foreign)}</Text></View>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Dividends Receivable</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.dividends_receivable)}</Text></View>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Interest Receivable</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.interest_receivable)}</Text></View>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Receivable for Securities Sold</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.recv_securities_sold)}</Text></View>
+      <View style={pdfStyles.rowBold}><Text style={pdfStyles.label}>Total Assets</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.total_assets)}</Text></View>
+
+      <Text style={pdfStyles.sectionTitle}>Liabilities</Text>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Payable for Securities Purchased</Text><Text style={pdfStyles.value}>{fmtPdfUSD(-fsData.pay_securities)}</Text></View>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Payable for Fund Shares Redeemed</Text><Text style={pdfStyles.value}>{fmtPdfUSD(-fsData.pay_shares_redeemed)}</Text></View>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Investment Advisory Fee Payable</Text><Text style={pdfStyles.value}>{fmtPdfUSD(-fsData.advisory_fee_payable)}</Text></View>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Administration Fee Payable</Text><Text style={pdfStyles.value}>{fmtPdfUSD(-fsData.admin_fee_payable)}</Text></View>
+      <View style={pdfStyles.rowBold}><Text style={pdfStyles.label}>Total Liabilities</Text><Text style={pdfStyles.value}>{fmtPdfUSD(-fsData.total_liabilities)}</Text></View>
+
+      <Text style={pdfStyles.sectionTitle}>Net Assets</Text>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Net Assets — Class A</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.net_assets_classA)}</Text></View>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Net Assets — Institutional</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.net_assets_inst)}</Text></View>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Net Assets — R6</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.net_assets_r6)}</Text></View>
+      <View style={pdfStyles.rowDouble}><Text style={pdfStyles.label}>Total Net Assets</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.net_assets)}</Text></View>
+    </Page>
+
+    {/* PAGE 2: Statement of Operations */}
+    <Page size="A4" style={pdfStyles.page}>
+      <Text style={pdfStyles.header}>Statement of Operations</Text>
+      <Text style={pdfStyles.subHeader}>{fund?.name || "Fund"} — For the Year Ended December 31, 2024</Text>
+
+      <Text style={pdfStyles.sectionTitle}>Investment Income</Text>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Dividend Income</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.div_income_domestic + fsData.div_income_foreign)}</Text></View>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Interest Income</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.interest_income)}</Text></View>
+      <View style={pdfStyles.rowBold}><Text style={pdfStyles.label}>Total Investment Income</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.total_investment_income)}</Text></View>
+
+      <Text style={pdfStyles.sectionTitle}>Expenses</Text>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Advisory Fees</Text><Text style={pdfStyles.value}>{fmtPdfUSD(-fsData.advisory_fees)}</Text></View>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Administration Fees</Text><Text style={pdfStyles.value}>{fmtPdfUSD(-fsData.admin_fees)}</Text></View>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Professional Fees</Text><Text style={pdfStyles.value}>{fmtPdfUSD(-fsData.professional_fees)}</Text></View>
+      <View style={pdfStyles.rowBold}><Text style={pdfStyles.label}>Total Expenses</Text><Text style={pdfStyles.value}>{fmtPdfUSD(-fsData.total_expenses)}</Text></View>
+      <View style={pdfStyles.rowBold}><Text style={pdfStyles.label}>Net Investment Income / (Loss)</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.net_investment_income)}</Text></View>
+      
+      <Text style={pdfStyles.sectionTitle}>Realized & Unrealized Gain / (Loss)</Text>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Net Realized Gain on Investments</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.realized_gain)}</Text></View>
+      <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Net Change in Unrealized Appreciation</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.unrealized_change)}</Text></View>
+      <View style={pdfStyles.rowDouble}><Text style={pdfStyles.label}>Net Increase in Net Assets from Operations</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.net_increase_ops)}</Text></View>
+    </Page>
+  </Document>
+);
+// ═══════════════════════════════════════════════════════════════════════════════
+// EXCEL EXPORT ENGINE
+// ═══════════════════════════════════════════════════════════════════════════════
+const exportToExcel = async (data, columns, filename, sheetName = "Data") => {
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet(sheetName);
+
+  // Setup columns
+  sheet.columns = columns.map(c => ({
+    header: typeof c === 'string' ? c : c.label,
+    key: typeof c === 'string' ? c : c.field,
+    width: 20
+  }));
+  
+  // Style the Header Row to match Torrance UI (Navy Blue)
+  const headerRow = sheet.getRow(1);
+  headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
+  headerRow.alignment = { vertical: 'middle', horizontal: 'left' };
+
+  // Add the Data
+  data.forEach(rowData => {
+    sheet.addRow(rowData);
+  });
+
+  // Generate and Download
+  const buffer = await workbook.xlsx.writeBuffer();
+  saveAs(new Blob([buffer]), `${filename}.xlsx`);
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GLOBAL CSS & STYLE INJECTOR (Updated to aggressively block Dark Mode)
@@ -1822,8 +1927,8 @@ function HoldingsGrid({ holdings }) {
           {showAllCols ? "[-] Compact View" : "[+] Show 23 More Columns"}
         </button>
 
-        <button style={{...SANS,fontSize:12,fontWeight:600,padding:"0 14px",height:34,borderRadius:6,border:`1px solid ${T.border}`,background:T.cardBg,color:T.textPrimary,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
-          <span>↓</span> Export CSV
+        <button onClick={() => exportToExcel(filteredAndSorted, COLS, "Holdings_Export")} style={{...SANS,fontSize:12,fontWeight:600,padding:"0 14px",height:34,borderRadius:6,border:`1px solid ${T.border}`,background:T.cardBg,color:T.textPrimary,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
+          <span>↓</span> Export Excel
         </button>
       </div>
     </div>
@@ -3317,7 +3422,7 @@ function FinancialStatementsTab({ fund }) {
           </>)}
         </div>
       </div>
-      {showPdf && <PdfModal onClose={() => setShowPdf(false)} />}
+      {showPdf && <PdfModal onClose={() => setShowPdf(false)} fund={fund} fsData={FS_DYNAMIC} />}
     </div>
   );
 }
@@ -3461,13 +3566,53 @@ function DrilldownModal({row,onClose}) {
     </div>
   </div>;
 }
-function PdfModal({onClose}) {
-  return <div className="modal-overlay" role="dialog" aria-modal="true" style={{position:"fixed",inset:0,background:"rgba(26,35,50,0.6)",zIndex:700,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
-    <div onClick={e=>e.stopPropagation()} style={{background:T.cardBg,borderRadius:12,width:440,boxShadow:"0 20px 60px rgba(0,0,0,0.2)",overflow:"hidden"}}>
-      <div style={{background:T.navyHeader,padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{...SANS,fontWeight:700,fontSize:14,color:"#fff"}}>Export Reports</span><button onClick={onClose} aria-label="Close" style={{background:"none",border:"none",color:"#8898aa",cursor:"pointer",fontSize:18}}>✕</button></div>
-      <div style={{padding:"18px 20px 22px"}}>{[{icon:"📄",label:"Clean PDF",desc:"Final report.",badge:null},{icon:"🔍",label:"Audit PDF",desc:"Exception log and audit trail.",badge:"AUDIT TRAIL"},{icon:"📊",label:"Schedule of Investments",desc:"Holdings with fair value levels.",badge:null},{icon:"📑",label:"Excel Workbook",desc:"GL and TB to .xlsx.",badge:null}].map(item=><button key={item.label} style={{...SANS,width:"100%",textAlign:"left",border:`1px solid ${T.border}`,borderRadius:8,padding:"12px 15px",marginBottom:9,cursor:"pointer",background:T.cardBg,display:"flex",alignItems:"center",gap:13,transition:"border-color 0.1s"}} onMouseEnter={e=>e.currentTarget.style.borderColor=T.actionBase} onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}><span style={{fontSize:22}}>{item.icon}</span><div style={{flex:1}}><div style={{fontWeight:700,fontSize:13,color:T.textPrimary,display:"flex",alignItems:"center",gap:7,marginBottom:2}}>{item.label}{item.badge&&<span style={{...MONO,fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:3,background:T.warnBg,color:T.warnBase,border:`1px solid ${T.warnBorder}`}}>{item.badge}</span>}</div><div style={{fontSize:11,color:T.textMuted}}>{item.desc}</div></div><span style={{color:T.actionBase,fontSize:16}}>↓</span></button>)}</div>
+function PdfModal({ onClose, fund, fsData }) {
+  return (
+    <div className="modal-overlay" role="dialog" aria-modal="true" style={{position:"fixed",inset:0,background:"rgba(26,35,50,0.6)",zIndex:700,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{background:T.cardBg,borderRadius:12,width:440,boxShadow:"0 20px 60px rgba(0,0,0,0.2)",overflow:"hidden"}}>
+        <div style={{background:T.navyHeader,padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <span style={{...SANS,fontWeight:700,fontSize:14,color:"#fff"}}>Export Reports</span>
+          <button onClick={onClose} aria-label="Close" style={{background:"none",border:"none",color:"#8898aa",cursor:"pointer",fontSize:18}}>✕</button>
+        </div>
+        
+        <div style={{padding:"18px 20px 22px"}}>
+          
+          {/* REAL PDF GENERATOR BUTTON */}
+          {fsData && (
+            <PDFDownloadLink document={<FinancialStatementPDF fund={fund} fsData={fsData} />} fileName={`${fund?.fund_id || 'fund'}_financials.pdf`} style={{textDecoration:'none'}}>
+              {({ loading }) => (
+                <button style={{...SANS,width:"100%",textAlign:"left",border:`1px solid ${T.actionBase}`,borderRadius:8,padding:"12px 15px",marginBottom:9,cursor:loading?"wait":"pointer",background:T.actionBg,display:"flex",alignItems:"center",gap:13}}>
+                  <span style={{fontSize:22}}>📄</span>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:700,fontSize:13,color:T.actionBase,marginBottom:2}}>
+                      {loading ? "Generating PDF Data..." : "Clean PDF (Generated)"}
+                    </div>
+                    <div style={{fontSize:11,color:T.textMuted}}>Multi-page GAAP Financial Statements.</div>
+                  </div>
+                  <span style={{color:T.actionBase,fontSize:16}}>{loading ? "⏳" : "↓"}</span>
+                </button>
+              )}
+            </PDFDownloadLink>
+          )}
+
+          {/* MOCK BUTTONS for UI */}
+          {[{icon:"🔍",label:"Audit PDF",desc:"Exception log and audit trail.",badge:"AUDIT TRAIL"},{icon:"📊",label:"Schedule of Investments",desc:"Holdings with fair value levels.",badge:null},{icon:"📑",label:"Excel Workbook",desc:"GL and TB to .xlsx.",badge:null}].map(item=>(
+            <button key={item.label} style={{...SANS,width:"100%",textAlign:"left",border:`1px solid ${T.border}`,borderRadius:8,padding:"12px 15px",marginBottom:9,cursor:"pointer",background:T.cardBg,display:"flex",alignItems:"center",gap:13,transition:"border-color 0.1s"}} onMouseEnter={e=>e.currentTarget.style.borderColor=T.actionBase} onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}>
+              <span style={{fontSize:22}}>{item.icon}</span>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:13,color:T.textPrimary,display:"flex",alignItems:"center",gap:7,marginBottom:2}}>
+                  {item.label}
+                  {item.badge&&<span style={{...MONO,fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:3,background:T.warnBg,color:T.warnBase,border:`1px solid ${T.warnBorder}`}}>{item.badge}</span>}
+                </div>
+                <div style={{fontSize:11,color:T.textMuted}}>{item.desc}</div>
+              </div>
+              <span style={{color:T.actionBase,fontSize:16}}>↓</span>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
-  </div>;
+  );
 }
 
 // ─── ApprovalWaterfallBar (Updated for Muted Slate) ──────────────────────
@@ -5670,31 +5815,78 @@ function Soc1AuditReport({onClose, fundState, approvalState, fundSeeds}) {
   );
 }
 
-// ─── Modals (Upload & Raw Data Preview) ───────────────────────────────────────
+// ─── UPGRADED: Upload Modal (Real CSV Parsing) ───────────────────────────────
 function UploadModal({ onClose, onUploadComplete, currentUser }) {
   const [uploading, setUploading] = useState(false);
-  const handleFile = () => {
+  const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
     setUploading(true);
-    setTimeout(() => { 
-      setUploading(false); 
-      // Inject new row into the table dynamically
-      onUploadComplete({
-        id: `feed-up-${Date.now()}`,
-        period: "Dec 2024",
-        source: `Upload (${currentUser?.name.split(' ')[0].toLowerCase()||"user"}@torrance.com)`,
-        fund_id: "FND-2024-001",
-        fund: "Pennywise Global Diversified Fund",
-        client: "Pennywise Capital Advisors",
-        file: "MANUAL_ADJ_1231.csv",
-        type: "GL",
-        status: "success",
-        received: new Date().toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit'}),
-        rows: 14,
-        exceptions: 0
-      });
-      onClose(); 
-    }, 1800);
+    setError(null);
+
+    // Read and parse the real file
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const data = results.data;
+        if(data.length === 0) {
+           setError("The uploaded file is empty.");
+           setUploading(false);
+           return;
+        }
+        
+        // Extract the actual column headers from the uploaded file
+        const fileHeaders = Object.keys(data[0]);
+        
+        // Create a realistic mapping session based on the real file
+        const feedId = `feed-up-${Date.now()}`;
+        const generatedMappingRows = fileHeaders.map((col, idx) => ({
+          id: `m${idx}`,
+          sourceCol: col,
+          sourceType: "VARCHAR", // simplified for prototype
+          canonicalField: "",
+          required: false,
+          confidence: 0,
+          aiReason: "Awaiting AI Analysis...",
+          status: "unmapped",
+          sampleValue: String(data[0][col]).substring(0, 50)
+        }));
+
+        const newFeed = {
+          id: feedId,
+          period: "Dec 2024",
+          source: `Upload (${currentUser?.name.split(' ')[0].toLowerCase()||"user"}@torrance.com)`,
+          fund_id: "FND-2024-001", // Hardcoded to Pennywise Global for prototype routing
+          fund: "Pennywise Global Diversified Fund",
+          client: "Pennywise Capital Advisors",
+          file: file.name,
+          type: file.name.toLowerCase().includes("holdings") ? "Holdings" : "GL",
+          status: "needs_mapping", 
+          received: new Date().toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit'}),
+          rows: data.length,
+          exceptions: 0,
+          rawData: data // Passing the real data through!
+        };
+
+        setTimeout(() => { 
+          setUploading(false);
+          // Pass the feed AND the mapping layout back up
+          onUploadComplete(newFeed, generatedMappingRows);
+          onClose(); 
+        }, 1200); // Artificial delay to let the user see the "Processing" state
+      },
+      error: (err) => {
+        setError(err.message);
+        setUploading(false);
+      }
+    });
   };
+
   return (
     <div className="modal-overlay" role="dialog" aria-modal="true" style={{position:"fixed",inset:0,background:"rgba(26,35,50,0.65)",zIndex:800,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
       <div onClick={e=>e.stopPropagation()} style={{background:T.cardBg,borderRadius:12,width:540,boxShadow:"0 20px 60px rgba(0,0,0,0.25)",overflow:"hidden"}}>
@@ -5703,18 +5895,23 @@ function UploadModal({ onClose, onUploadComplete, currentUser }) {
           <button onClick={onClose} style={{background:"none",border:"none",color:"#8898aa",cursor:"pointer",fontSize:18}}>✕</button>
         </div>
         <div style={{padding:"24px 32px"}}>
+          {error && <div style={{background:T.errorBg, color:T.errorBase, padding:"10px", borderRadius:6, marginBottom:16, fontSize:12, border:`1px solid ${T.errorBorder}`}}>⚠ {error}</div>}
+          
           {uploading ? (
             <div style={{textAlign:"center", padding:"40px 0"}}>
               <div style={{animation:"pulse 1s infinite", fontSize:32, marginBottom:16}}>⏳</div>
-              <div style={{...SANS, fontSize:15, fontWeight:700, color:T.textPrimary}}>Processing file...</div>
-              <div style={{...SANS, fontSize:12, color:T.textMuted, marginTop:8}}>Running rules engine and AI data mapping</div>
+              <div style={{...SANS, fontSize:15, fontWeight:700, color:T.textPrimary}}>Parsing real CSV data...</div>
+              <div style={{...SANS, fontSize:12, color:T.textMuted, marginTop:8}}>Extracting headers and running mapping heuristics</div>
             </div>
           ) : (
-            <div onClick={handleFile} style={{border:`2px dashed ${T.border}`,borderRadius:10,padding:"48px 32px",textAlign:"center",cursor:"pointer",background:T.appBg, transition:"border-color 0.2s"}} onMouseEnter={e=>e.currentTarget.style.borderColor=T.actionBase} onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}>
+            <div onClick={() => fileInputRef.current.click()} style={{border:`2px dashed ${T.border}`,borderRadius:10,padding:"48px 32px",textAlign:"center",cursor:"pointer",background:T.appBg, transition:"border-color 0.2s"}} onMouseEnter={e=>e.currentTarget.style.borderColor=T.actionBase} onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}>
               <div style={{fontSize:28, marginBottom:12}}>📄</div>
               <div style={{...SANS, fontSize:15, fontWeight:600, color:T.textPrimary, marginBottom:6}}>Drop your CSV file here</div>
               <div style={{...SANS, fontSize:12, color:T.textMuted}}>Supported formats: GL, Holdings, Capital Activity</div>
               <button style={{marginTop:20, ...SANS, fontSize:12, fontWeight:600, padding:"8px 16px", borderRadius:6, border:`1px solid ${T.border}`, background:T.cardBg, cursor:"pointer", color:T.textPrimary}}>Browse Files</button>
+              
+              {/* Hidden file input */}
+              <input type="file" accept=".csv" ref={fileInputRef} style={{display:"none"}} onChange={handleFileUpload} />
             </div>
           )}
         </div>
@@ -5787,7 +5984,16 @@ function IngestionStatusWidget({feeds, setFeeds, onGoToDashboard, onOpenMapping,
   };
   
   const handleRetry=id=>{ setRetrying(id);setTimeout(()=>{setFeeds(prev=>prev.map(f=>f.id===id?{...f,status:"success",received:new Date().toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit'}),rows:203,exceptions:7,error:undefined}:f));setRetrying(null);},1800); };
-  const handleUploadComplete=(newFeed)=>{ setFeeds(prev => [newFeed, ...prev]); };
+  const handleUploadComplete = (newFeed, mappingRows) => {
+    setFeeds(prev => [newFeed, ...prev]);
+    // Inject the real file's mapping data into our session dictionary!
+    MAPPING_SESSIONS[newFeed.id] = {
+      feedId: newFeed.id,
+      fileName: newFeed.file,
+      fundName: newFeed.fund,
+      rows: mappingRows
+    };
+  };
 
   const displayFeeds = useMemo(() => {
     let result = [...feeds];
