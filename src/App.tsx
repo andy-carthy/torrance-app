@@ -74,14 +74,13 @@ const SLA_CONFIGS = [
 ];
 
 const INGESTION_FEEDS = [
-  {id:"feed-001", period:"Dec 2024", source:"SFTP", fund_id:"FND-2024-001",fund:"Pennywise Global Diversified Fund",    client:"Pennywise Capital Advisors",    file:"Pennywise_GL_20241231.csv",       type:"GL",      status:"needs_mapping", received:"Dec 31, 2024 11:58 PM", rows:131,exceptions:8 },
-  {id:"feed-002", period:"Dec 2024", source:"SFTP", fund_id:"FND-2024-001",fund:"Pennywise Global Diversified Fund",    client:"Pennywise Capital Advisors",    file:"Pennywise_HOLDINGS_20241231.csv", type:"Holdings",status:"success", received:"Dec 31, 2024 11:59 PM", rows:284,exceptions:1 },
-  {id:"feed-003", period:"Dec 2024", source:"API",  fund_id:"FND-2024-002",fund:"Pennywise Fixed Income Opp. Fund",     client:"Pennywise Capital Advisors",    file:"Pennywise_FI_GL_20241231.csv",    type:"GL",      status:"success", received:"Jan 1, 2025 12:04 AM",  rows:88, exceptions:1 },
-  {id:"feed-004", period:"Dec 2024", source:"SFTP", fund_id:"FND-2024-003",fund:"Bowers Growth Equity Fund",     client:"Bowers Asset Management",file:"MERI_GL_20241231.csv",        type:"GL",      status:"failed",  received:"Jan 1, 2025 12:11 AM",  rows:0,  exceptions:0, error:"Authentication timeout after 3 retries."},
-  {id:"feed-005", period:"Dec 2024", source:"SFTP", fund_id:"FND-2024-003",fund:"Bowers Growth Equity Fund",     client:"Bowers Asset Management",file:"MERI_HOLDINGS_20241231.csv", type:"Holdings",status:"pending", received:"—",                       rows:0,  exceptions:0 },
-  {id:"feed-006", period:"Dec 2024", source:"API",  fund_id:"FND-2024-004",fund:"Bowers Multi-Strategy Fund",    client:"Bowers Asset Management",file:"MERI_MS_GL_20241231.csv",     type:"GL",      status:"success", received:"Jan 1, 2025 12:08 AM",  rows:156,exceptions:0 },
-  {id:"feed-007", period:"Dec 2024", source:"SFTP", fund_id:"FND-2024-005",fund:"Derry Credit Opp. Fund",        client:"Derry Capital Partners", file:"BSKY_CR_GL_20241231.csv",     type:"GL",      status:"success", received:"Jan 1, 2025 12:22 AM",  rows:67, exceptions:3 },
-  {id:"feed-008", period:"Dec 2024", source:"SFTP", fund_id:"FND-2024-006",fund:"Derry Real Assets Fund",        client:"Derry Capital Partners", file:"BSKY_RA_GL_20241231.csv",     type:"GL",      status:"success", received:"Jan 1, 2025 12:24 AM",  rows:89, exceptions:2 },
+  {id:"feed-001", period:"Dec 2024", connType:"API", fund_id:"FND-2024-001",fund:"Pennywise Global Diversified", client:"Pennywise Capital", payload:"PW_GL_Dec31_Final.json", type:"GL", rows:1205, received:"Dec 31, 23:45", sourceOrigin:"State Street REST API", exceptions:0, status:"success" },
+  {id:"feed-002", period:"Dec 2024", connType:"API", fund_id:"FND-2024-001",fund:"Pennywise Global Diversified", client:"Pennywise Capital", payload:"PW_Holdings_Live.json", type:"Holdings", rows:452, received:"Dec 31, 23:46", sourceOrigin:"Bloomberg B-PIPE", exceptions:4, status:"success" },
+  {id:"feed-003", period:"Dec 2024", connType:"API", fund_id:"FND-2024-002",fund:"Derry Macro Fund", client:"Derry Partners", payload:"Derry_CapAct_v2.json", type:"Capital Activity", rows:12, received:"Jan 01, 01:15", sourceOrigin:"JPM Webhook", exceptions:0, status:"success" },
+  {id:"feed-004", period:"Dec 2024", connType:"API", fund_id:"FND-2024-003",fund:"Derry Macro Fund", client:"Derry Partners", payload:"Derry_GL_Sub.json", type:"GL", rows:310, received:"Jan 01, 01:16", sourceOrigin:"JPM Webhook", exceptions:0, status:"success" },
+  {id:"feed-005", period:"Dec 2024", connType:"SFTP", fund_id:"FND-2024-004",fund:"Bowers Private Equity", client:"Bowers Asset", payload:"BPE_Holdings_EOM.csv", type:"Holdings", rows:89, received:"Jan 01, 04:00", sourceOrigin:"BNY Mellon SFTP", exceptions:2, status:"success" },
+  {id:"feed-006", period:"Dec 2024", connType:"SFTP", fund_id:"FND-2024-005",fund:"Bowers Private Equity", client:"Bowers Asset", payload:"BPE_TrialBalance.xlsx", type:"GL", rows:145, received:"Jan 01, 04:05", sourceOrigin:"BNY Mellon SFTP", exceptions:0, status:"success" },
+  {id:"feed-007", period:"Dec 2024", connType:"Manual", fund_id:"FND-2024-006",fund:"Pennywise Global Diversified", client:"Pennywise Capital", payload:"Adj_Entries_Late.csv", type:"GL", rows:5, received:"Jan 02, 09:30", sourceOrigin:"acarthy@torrance.com", exceptions:0, status:"needs_mapping" }
 ];
 // ═══════════════════════════════════════════════════════════════════════════════
 // EXPANDED FUNDS SEED (Added 'fundType' and 'prior_net_assets' for Variance Scoring)
@@ -629,6 +628,9 @@ const AI_ROOT_CAUSE = {
 // ═══════════════════════════════════════════════════════════════════════════════
 // IT5: AI DATA MAPPING DATA — one session per GL feed
 // ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+// IT5: AI DATA MAPPING DATA — one session per GL feed
+// ═══════════════════════════════════════════════════════════════════════════════
 const MAPPING_SESSIONS = {
   "feed-001": {
     feedId:"feed-001", fileName:"Pennywise_GL_20241231.csv", fundName:"Pennywise Global Diversified Fund",
@@ -651,6 +653,17 @@ const MAPPING_SESSIONS = {
       {id:"m16",sourceCol:"quantity * px_local",sourceType:"COMPUTED",     canonicalField:"market_value",       required:false,confidence:86,aiReason:"Derived canonical market_value by multiplying quantity and px_local columns.", status:"review", isComputed:true, sampleValue:"[1500 * 45.20] = 67800.00"},
     ],
   },
+  "feed-007": {
+    feedId:"feed-007", fileName:"Adj_Entries_Late.csv", fundName:"Pennywise Global Diversified",
+    rows:[
+      {id:"m01",sourceCol:"Account_No", sourceType:"VARCHAR(10)", canonicalField:"account_number", required:true, confidence:92,aiReason:"Strong fuzzy match to historical canonical schema.", status:"pending", sampleValue:"5010"},
+      {id:"m02",sourceCol:"Account_Desc", sourceType:"VARCHAR(200)", canonicalField:"account_name", required:true, confidence:88,aiReason:"Strong fuzzy match to historical canonical schema.", status:"pending", sampleValue:"Advisory Fee"},
+      {id:"m03",sourceCol:"Debit_Amount", sourceType:"DECIMAL(18,2)",canonicalField:"debit", required:true, confidence:95,aiReason:"Strong fuzzy match to historical canonical schema.", status:"pending", sampleValue:"15000.00"},
+      {id:"m04",sourceCol:"Credit_Amount", sourceType:"DECIMAL(18,2)",canonicalField:"credit", required:true, confidence:95,aiReason:"Strong fuzzy match to historical canonical schema.", status:"pending", sampleValue:"0.00"},
+      {id:"m05",sourceCol:"Local_Ccy", sourceType:"CHAR(3)", canonicalField:"currency", required:true, confidence:90,aiReason:"Strong fuzzy match to historical canonical schema.", status:"pending", sampleValue:"USD"},
+      {id:"m06",sourceCol:"Ext_Ref_ID", sourceType:"VARCHAR(50)", canonicalField:"", required:false, confidence:0,aiReason:"Awaiting user input.", status:"unmapped", sampleValue:"ADJ-1231"}
+    ]
+  }
 };
 
 const CANONICAL_OPTIONS = [
@@ -1092,6 +1105,8 @@ function AiSuggestionBanner({excId,onAccept}) {
     </div>
   </div>;
 }
+
+
 
 // ─── ThreadedComments ─────────────────────────────────────────────────────────
 function ThreadedComments({thread,onAddMessage,currentUserId}) {
@@ -2732,7 +2747,7 @@ function IntegrationsAndArchitectureHub({ fundSeeds, masterFeeds, onBack }) {
           </div>
         </div>
         <div style={{display:"flex", background:T.appBg, border:`1px solid ${T.border}`, borderRadius:6, padding:4}}>
-          <button onClick={()=>setActiveTab("connectors")} style={{...SANS, fontSize:12, fontWeight:600, padding:"6px 16px", borderRadius:4, border:"none", background:activeTab==="connectors"?T.cardBg:"transparent", color:activeTab==="connectors"?T.textPrimary:T.textMuted, cursor:"pointer", boxShadow:activeTab==="connectors"?"0 1px 2px rgba(0,0,0,0.05)":"none"}}>API Connectors</button>
+          <button onClick={()=>setActiveTab("connectors")} style={{...SANS, fontSize:12, fontWeight:600, padding:"6px 16px", borderRadius:4, border:"none", background:activeTab==="connectors"?T.cardBg:"transparent", color:activeTab==="connectors"?T.textPrimary:T.textMuted, cursor:"pointer", boxShadow:activeTab==="connectors"?"0 1px 2px rgba(0,0,0,0.05)":"none"}}>Connectors</button>
           <button onClick={()=>setActiveTab("flows")} style={{...SANS, fontSize:12, fontWeight:600, padding:"6px 16px", borderRadius:4, border:"none", background:activeTab==="flows"?T.cardBg:"transparent", color:activeTab==="flows"?T.textPrimary:T.textMuted, cursor:"pointer", boxShadow:activeTab==="flows"?"0 1px 2px rgba(0,0,0,0.05)":"none"}}>Pipeline Map</button>
           <button onClick={()=>setActiveTab("schemas")} style={{...SANS, fontSize:12, fontWeight:600, padding:"6px 16px", borderRadius:4, border:"none", background:activeTab==="schemas"?T.cardBg:"transparent", color:activeTab==="schemas"?T.textPrimary:T.textMuted, cursor:"pointer", boxShadow:activeTab==="schemas"?"0 1px 2px rgba(0,0,0,0.05)":"none"}}>Schema Registry</button>
         </div>
@@ -3703,10 +3718,23 @@ function PdfModal({ onClose, fund, fsData, tbData }) {
             </div>
             <span style={{color:T.actionBase,fontSize:16}}>↓</span>
           </button>
-          
+          {/* ─── SPRINT 2: Export API Endpoint (C-16) ─── */}
+          <div style={{marginTop: 24, paddingTop: 16, borderTop: `1px dashed ${T.border}`}}>
+             <div style={{...SANS, fontSize: 11, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8}}>Automate this export</div>
+             <div style={{background: T.navyHeader, borderRadius: 6, padding: "10px 12px", display: "flex", alignItems: "center", justifyContent: "space-between"}}>
+               <div style={{display: "flex", alignItems: "center", gap: 8}}>
+                 <span style={{...MONO, fontSize: 10, fontWeight: 700, color: "#10b981", background: "rgba(16,185,129,0.1)", padding: "2px 6px", borderRadius: 4}}>GET</span>
+                 <span style={{...MONO, fontSize: 11, color: "#e2e8f0"}}>/api/v1/export/fs/{fund?.fund_id}</span>
+               </div>
+               <button title="Copy to clipboard" style={{background: "none", border: "none", color: T.textMuted, cursor: "pointer", fontSize: 14}}>📋</button>
+             </div>
+             <div style={{...SANS, fontSize: 11, color: T.textMuted, marginTop: 6}}>
+               Use this endpoint to programmatically pull the approved financial statements into downstream systems.
+             </div>
+          </div>
+          </div>
         </div>
       </div>
-    </div>
   );
 }
 
@@ -3737,6 +3765,7 @@ function ApprovalWaterfallBar({fund,approval,exceptions,currentUser,onSubmit,onA
 // IT5: NO-CODE DATA PREP ENGINE
 // Allows users to build Normalise, Enhance, Merge, Aggregate, and Split rules
 // ═══════════════════════════════════════════════════════════════════════════════
+// ─── SPRINT 2: Data Prep Engine Modal (C-08 Extension) ───────────────────────
 function DataPrepModal({ row, columns, onClose, onApply }) {
   const [action, setAction] = useState("normalise");
   const [config, setConfig] = useState({ param1: "", param2: "" });
@@ -3749,6 +3778,9 @@ function DataPrepModal({ row, columns, onClose, onApply }) {
     { id: "split",     icon: "✂️", label: "Split",     desc: "Split into new columns via delimiter." },
     { id: "aggregate", icon: "∑",  label: "Aggregate", desc: "Sum, count, or average grouped data." },
   ];
+
+  // Helper for the field labels
+  const Label = ({children}) => <div style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:6, marginTop:16}}>{children}</div>;
 
   // Simulate preview generation when config changes
   useEffect(() => {
@@ -3777,7 +3809,7 @@ function DataPrepModal({ row, columns, onClose, onApply }) {
             <div style={{...SANS,fontWeight:700,fontSize:16,color:"#fff",display:"flex",alignItems:"center",gap:8}}>
               <span>🛠</span> Data Prep Engine
             </div>
-            <div style={{...SANS,fontSize:12,color:"#9ca3af",marginTop:4}}>
+            <div style={{...SANS,fontSize:12,color:"rgba(255,255,255,0.7)",marginTop:4}}>
               Configuring transformation for column: <span style={{color:"#fff",fontWeight:600}}>{row.sourceCol}</span>
             </div>
           </div>
@@ -3810,10 +3842,9 @@ function DataPrepModal({ row, columns, onClose, onApply }) {
                 <span style={{fontSize:18}}>{ACTIONS.find(a=>a.id===action).icon}</span> Configure {ACTIONS.find(a=>a.id===action).label}
               </div>
 
-              {/* Dynamic Config Forms based on Action */}
               {action === "normalise" && (
                 <div className="fade-in">
-                  <FieldLabel>Operation</FieldLabel>
+                  <Label>Operation</Label>
                   <select value={config.param1} onChange={e=>setConfig({...config, param1:e.target.value})} style={{...SANS,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,marginBottom:16}}>
                     <option value="">Select operation...</option>
                     <option value="UPPERCASE">Convert to UPPERCASE</option>
@@ -3830,16 +3861,15 @@ function DataPrepModal({ row, columns, onClose, onApply }) {
                     <div style={{...SANS,fontSize:12,fontWeight:700,color:T.aiBase,marginBottom:4}}>✦ AI Enhancement Prompt</div>
                     <div style={{...SANS,fontSize:11,color:T.textMuted}}>Instruct the Torrance AI on how to extract or enrich this data.</div>
                   </div>
-                  <FieldLabel>Prompt</FieldLabel>
+                  <Label>Prompt</Label>
                   <textarea rows={3} value={config.param1} onChange={e=>setConfig({...config, param1:e.target.value})} placeholder="e.g., 'Extract only the company name, ignoring legal suffixes like LLC or Inc.'" style={{...SANS,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,resize:"vertical"}} />
                 </div>
               )}
 
               {action === "split" && (
                 <div className="fade-in">
-                  <FieldLabel>Delimiter</FieldLabel>
+                  <Label>Delimiter</Label>
                   <input type="text" value={config.param1} onChange={e=>setConfig({...config, param1:e.target.value})} placeholder="e.g., '-', ' ', or ','" style={{...SANS,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,marginBottom:16}} />
-                  
                   <div style={{display:"flex",gap:12}}>
                     <label style={{...SANS,fontSize:13,display:"flex",alignItems:"center",gap:6}}><input type="radio" name="splitType" defaultChecked/> Keep First Part</label>
                     <label style={{...SANS,fontSize:13,display:"flex",alignItems:"center",gap:6}}><input type="radio" name="splitType"/> Keep Last Part</label>
@@ -3850,26 +3880,26 @@ function DataPrepModal({ row, columns, onClose, onApply }) {
 
               {action === "merge" && (
                 <div className="fade-in">
-                  <FieldLabel>Column to Merge With</FieldLabel>
+                  <Label>Column to Merge With</Label>
                   <select value={config.param1} onChange={e=>setConfig({...config, param1:e.target.value})} style={{...SANS,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,marginBottom:16}}>
                     <option value="">Select column...</option>
                     {columns.filter(c=>c!==row.sourceCol).map(c=><option key={c} value={c}>{c}</option>)}
                   </select>
-                  <FieldLabel>Separator String</FieldLabel>
+                  <Label>Separator String</Label>
                   <input type="text" value={config.param2} onChange={e=>setConfig({...config, param2:e.target.value})} placeholder="e.g., ' - '" style={{...SANS,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13}} />
                 </div>
               )}
 
               {action === "aggregate" && (
                 <div className="fade-in">
-                  <FieldLabel>Aggregation Function</FieldLabel>
+                  <Label>Aggregation Function</Label>
                   <select value={config.param1} onChange={e=>setConfig({...config, param1:e.target.value})} style={{...SANS,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,marginBottom:16}}>
                     <option value="">Select function...</option>
                     <option value="SUM">SUM</option>
                     <option value="AVG">AVERAGE</option>
                     <option value="COUNT">COUNT</option>
                   </select>
-                  <FieldLabel>Group By Column (Optional)</FieldLabel>
+                  <Label>Group By Column (Optional)</Label>
                   <select style={{...SANS,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13}}>
                     <option value="">No grouping...</option>
                     {columns.filter(c=>c!==row.sourceCol).map(c=><option key={c} value={c}>{c}</option>)}
@@ -5056,83 +5086,227 @@ function AuditorPortal({onClose}) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // IT6: THE BOILERROOM COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
+// ─── COMBINED: Autonomous Flow & Team Capacity Dashboard (With Rebalancing) ──
+function TouchlessFlowDashboard() {
+  const [rebalanceModalOpen, setRebalanceModalOpen] = useState(false);
 
-function TouchlessFlowDashboard({fundSeeds, approvalState, fundState}) {
-  const STAGES = ["Ingest","Triage","Review","Approved"];
-  const STAGE_CFG = {
-    Ingest:   {color:"#6366f1", bg:"#eef2ff", border:"#c7d2fe", icon:"📥"},
-    Triage:   {color:T.warnBase,bg:T.warnBg,  border:T.warnBorder,icon:"🔍"},
-    Review:   {color:T.actionBase,bg:T.actionBg,border:"#bfdbfe",icon:"⏳"},
-    Approved: {color:T.okBase,  bg:T.okBg,   border:T.okBorder,  icon:"✓"},
-  };
+  // 1. Aggregate Data for Pipeline
+  const allExceptions = Object.values(FUND_EXCEPTIONS).flat();
+  const openExcs = allExceptions.filter(e => e.status === "open");
+  const resolvedExcs = allExceptions.filter(e => e.status === "resolved");
 
-  const getStage = (fund) => {
-    const a = approvalState[fund.fund_id];
-    const excs = fundState[fund.fund_id] || [];
-    const hasOpenErrors = excs.some(e=>e.severity==="error"&&e.status==="open");
-    if (a?.status==="approved") return "Approved";
-    if (a?.status==="review_pending") return "Review";
-    if (!hasOpenErrors && excs.length > 0) return "Review";
-    return excs.length === 0 ? "Ingest" : "Triage";
-  };
+  const ingestedCount = INGESTION_FEEDS.filter(f => f.status === "success").length;
+  const totalFeeds = INGESTION_FEEDS.length;
 
-  const totalExcs = fundSeeds.reduce((s,f)=>(fundState[f.fund_id]||[]).length+s, 0);
-  const totalAiAccepted = Object.values(TOUCHLESS_STATS).reduce((s,v)=>s+v.aiAccepted, 0);
-  const touchlessRate = totalExcs > 0 ? Math.round((totalAiAccepted/totalExcs)*100) : 0;
+  const totalCaught = allExceptions.length;
+  const totalResolved = resolvedExcs.length;
+
+  const reviewPending = openExcs.length;
+  
+  const approvedFunds = Object.values(INITIAL_APPROVAL_STATE).filter(a => a.status === "approved").length;
+  const filingsDue = BEVERLEY_FILINGS.filter(f => f.status !== "filed").length;
+
+  const stages = [
+    { id: "ingest", title: "Data Ingestion", metric: `${ingestedCount} / ${totalFeeds}`, desc: "Feeds received & parsed", icon: "⛁", color: T.actionBase, bg: T.actionBg },
+    { id: "auto", title: "Touchless AI", metric: `${totalResolved} / ${totalCaught}`, desc: "Exceptions auto-resolved", icon: "✦", color: T.aiBase, bg: T.aiBg },
+    { id: "review", title: "Judgment Queue", metric: reviewPending, desc: "Pending preparer review", icon: "👤", color: T.warnBase, bg: T.warnBg },
+    { id: "approve", title: "Controller Sign-Off", metric: approvedFunds, desc: "Funds certified", icon: "✓", color: T.okBase, bg: T.okBg },
+    { id: "file", title: "Regulatory Filings", metric: filingsDue, desc: "Filings due in 30 days", icon: "🏛", color: "#64748b", bg: "#f1f5f9" }
+  ];
+
+  // 2. Map Capacity Data (Supporting multiple users per fund)
+  const capacityData = TEAM.map(user => {
+    const userExcs = openExcs.filter(e => e.assignee === user.id);
+    
+    // Safely handle if assignedTo is an array (multiple users) or a string (single user)
+    const userFunds = FUNDS_SEED.filter(f => {
+      const assigned = Array.isArray(f.assignedTo) ? f.assignedTo : [f.assignedTo];
+      return assigned.includes(user.id);
+    });
+    
+    const userFilings = BEVERLEY_FILINGS.filter(f => f.assignedTo === user.id && f.status !== "filed");
+    
+    // Weighted scoring algorithm for workload
+    let workloadScore = 0;
+    if (user.isController) {
+      workloadScore = (userFunds.length * 15) + (userFilings.length * 5);
+    } else {
+      workloadScore = (userExcs.length * 12) + (userFunds.length * 8) + (userFilings.length * 2);
+    }
+    
+    let capacityPct = Math.min(100, workloadScore);
+    if (capacityPct === 0) capacityPct = Math.floor(Math.random() * 30) + 15; // Visual baseline for demo
+
+    return {
+      ...user,
+      activeTasks: user.isController ? userFunds.length : userExcs.length,
+      taskLabel: user.isController ? "Funds to Review" : "Assigned Exceptions",
+      capacityPct,
+      filings: userFilings.length,
+      assignedFunds: userFunds // Passing full fund objects for rendering
+    };
+  }).sort((a, b) => b.capacityPct - a.capacityPct);
 
   return (
-    <div style={{padding:"20px 24px"}}>
-      <div style={{display:"flex",gap:12,marginBottom:24}}>
-        {[
-          {label:"Touchless Rate",   val:`${touchlessRate}%`,  color:touchlessRate>=50?T.okBase:T.warnBase, sub:"AI-resolved without human action"},
-          {label:"AI Accepted",      val:totalAiAccepted,      color:T.aiBase, sub:"Suggestions accepted this close"},
-          {label:"Human Resolved",   val:Object.values(TOUCHLESS_STATS).reduce((s,v)=>s+v.humanResolved,0), color:T.actionBase, sub:"Manual resolutions"},
-          {label:"Funds in Pipeline",val:fundSeeds.length,     color:T.textPrimary, sub:"Across all stages"},
-        ].map((k,i)=>(
-          <div key={i} style={{background:T.cardBg,border:`1px solid ${T.border}`,borderRadius:9,padding:"14px 18px",flex:1, boxShadow:"0 1px 3px rgba(0,0,0,0.02)"}}>
-            <div style={{...SANS,fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:4}}>{k.label}</div>
-            <div style={{...MONO,fontSize:22,fontWeight:700,color:k.color,marginBottom:2}}>{k.val}</div>
-            <div style={{...SANS,fontSize:10,color:T.textMuted}}>{k.sub}</div>
+    <div className="fade-in" style={{background: T.navyHeader, borderRadius: 12, marginBottom: 24, boxShadow: "0 10px 30px rgba(0,0,0,0.2)", overflow: "hidden", display: "flex", flexDirection: "column"}}>
+      
+      {/* ─── TOP PANE: Global Pipeline Flow ─── */}
+      <div style={{padding: "24px 32px", position: "relative"}}>
+        <div style={{display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 36}}>
+          <div>
+            <h2 style={{...SANS, fontSize: 18, fontWeight: 700, color: "#fff", margin: 0}}>Autonomous Operations</h2>
+            <p style={{...SANS, fontSize: 13, color: "rgba(255,255,255,0.6)", marginTop: 4}}>Live view of global STP flow and process bottlenecks.</p>
           </div>
-        ))}
-      </div>
+        </div>
 
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
-        {STAGES.map(stage=>{
-          const cfg = STAGE_CFG[stage];
-          const fundsInStage = fundSeeds.filter(f=>getStage(f)===stage);
-          return (
-            <div key={stage} style={{background:T.cardBg,border:`1px solid ${T.border}`,borderRadius:10,overflow:"hidden"}}>
-              <div style={{padding:"10px 14px",background:cfg.bg,borderBottom:`1px solid ${cfg.border}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <div style={{display:"flex",alignItems:"center",gap:7}}>
-                  <span style={{fontSize:16}}>{cfg.icon}</span>
-                  <span style={{...SANS,fontWeight:700,fontSize:12,color:cfg.color}}>{stage}</span>
-                </div>
-                <span style={{...MONO,fontSize:13,fontWeight:700,color:cfg.color}}>{fundsInStage.length}</span>
+        <div style={{display: "flex", alignItems: "center", position: "relative"}}>
+          <div style={{position: "absolute", top: 26, left: "10%", right: "10%", height: 2, background: "rgba(255,255,255,0.15)", zIndex: 0}} />
+          
+          {stages.map((stage) => (
+            <div key={stage.id} style={{flex: 1, display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 1}}>
+              <div style={{width: 52, height: 52, borderRadius: "50%", background: stage.bg, border: `2px solid ${stage.color}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: stage.color, marginBottom: 12, boxShadow: `0 0 0 6px ${T.navyHeader}`}}>
+                {stage.icon}
               </div>
-              <div style={{padding:"10px",display:"flex",flexDirection:"column",gap:8,minHeight:120}}>
-                {fundsInStage.length===0&&<div style={{...SANS,fontSize:11,color:T.textMuted,textAlign:"center",padding:"20px 0"}}>No funds</div>}
-                {fundsInStage.map(f=>{
-                  const stats = TOUCHLESS_STATS[f.fund_id];
-                  const tRate = stats?.totalExcs>0 ? Math.round((stats.aiAccepted/stats.totalExcs)*100) : 100;
-                  return (
-                    <div key={f.fund_id} style={{padding:"9px 11px",borderRadius:7,border:`1px solid ${T.border}`,background:T.appBg}}>
-                      <div style={{...SANS,fontSize:11,fontWeight:600,color:T.textPrimary,marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={f.name}>{f.name}</div>
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                        <span style={{...SANS,fontSize:10,color:T.textMuted}}>{fmtCompact(f.net_assets)}</span>
-                        <div style={{display:"flex",alignItems:"center",gap:5}}>
-                          {stats?.aiAccepted>0&&<span style={{...MONO,fontSize:9,fontWeight:700,padding:"1px 5px",borderRadius:3,background:T.aiBg,color:T.aiBase,border:`1px solid ${T.aiBorder}`}}>✦ {stats.aiAccepted} AI</span>}
-                          <span style={{...MONO,fontSize:10,fontWeight:700,color:tRate>=50?T.okBase:T.warnBase}}>{tRate}%</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div style={{textAlign: "center"}}>
+                <div style={{...SANS, fontSize: 22, fontWeight: 700, color: "#fff", lineHeight: 1.1}}>{stage.metric}</div>
+                <div style={{...SANS, fontSize: 12, fontWeight: 700, color: stage.color, marginTop: 4}}>{stage.title}</div>
+                <div style={{...SANS, fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 4, maxWidth: 130, margin: "4px auto 0", lineHeight: 1.4}}>{stage.desc}</div>
               </div>
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
+
+      {/* ─── BOTTOM PANE: Human-in-the-Loop Capacity Grid ─── */}
+      <div style={{background: T.appBg, borderTop: `1px solid rgba(255,255,255,0.1)`, padding: "20px 32px"}}>
+        <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20}}>
+           <h3 style={{...SANS, fontSize: 13, fontWeight: 700, color: T.textPrimary, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0}}>Team Capacity & Bottlenecks</h3>
+           <button onClick={() => setRebalanceModalOpen(true)} style={{...SANS, fontSize: 11, fontWeight: 700, padding: "8px 14px", borderRadius: 6, background: T.actionBase, border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, boxShadow: "0 2px 4px rgba(0,0,0,0.1)", transition: "background 0.2s"}} onMouseEnter={e=>e.currentTarget.style.background="#3b82f6"} onMouseLeave={e=>e.currentTarget.style.background=T.actionBase}>
+             <span>⚖</span> Rebalance Workload
+           </button>
+        </div>
+        
+        <div style={{display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16}}>
+          {capacityData.map(user => {
+            const isCritical = user.capacityPct > 85;
+            const isWarn = user.capacityPct > 60 && !isCritical;
+            const barColor = isCritical ? T.errorBase : isWarn ? T.warnBase : T.okBase;
+            
+            return (
+              <div key={user.id} className="fte-card" style={{background: T.cardBg, borderRadius: 8, padding: "16px", border: `1px solid ${isCritical ? T.errorBorder : T.border}`, display: "flex", flexDirection: "column", gap: 12, position: "relative"}}>
+                
+                {isCritical && <div style={{position: "absolute", top: -5, right: -5, width: 12, height: 12, borderRadius: "50%", background: T.errorBase, border: "2px solid #fff"}} title="Critical Capacity Limit" />}
+
+                <div style={{display: "flex", alignItems: "center", justifyContent: "space-between"}}>
+                  <div style={{display: "flex", alignItems: "center", gap: 10}}>
+                    <Avatar user={user} size={32} />
+                    <div>
+                      <div style={{...SANS, fontSize: 14, fontWeight: 700, color: T.textPrimary, lineHeight: 1.2}}>{user.name}</div>
+                      <div style={{...SANS, fontSize: 11, color: T.textMuted, marginTop: 2}}>{user.role}</div>
+                    </div>
+                  </div>
+                  <div style={{textAlign: "right"}}>
+                    <div style={{...MONO, fontSize: 16, fontWeight: 700, color: barColor}}>{user.capacityPct}%</div>
+                  </div>
+                </div>
+
+                <div style={{width: "100%", height: 6, background: T.appBg, borderRadius: 3, overflow: "hidden", border: `1px solid ${T.border}`}}>
+                  <div style={{ width: `${user.capacityPct}%`, height: "100%", background: barColor, transition: "width 0.5s ease" }} />
+                </div>
+
+                <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${T.border}`, paddingTop: 10, marginTop: 2}}>
+                  <div style={{display: "flex", flexDirection: "column", flex: 1}}>
+                    <span style={{...MONO, fontSize: 14, fontWeight: 700, color: T.textPrimary}}>{user.activeTasks}</span>
+                    <span style={{...SANS, fontSize: 10, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.02em"}}>{user.taskLabel}</span>
+                  </div>
+                  <div style={{width: 1, height: 28, background: T.border}} />
+                  <div style={{display: "flex", flexDirection: "column", flex: 1, alignItems: "flex-end"}}>
+                    <span style={{...MONO, fontSize: 14, fontWeight: 700, color: T.textPrimary}}>{user.filings}</span>
+                    <span style={{...SANS, fontSize: 10, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.02em"}}>Filings Due</span>
+                  </div>
+                </div>
+
+                {/* VISUALIZING ASSIGNED FUNDS */}
+                {user.assignedFunds.length > 0 && (
+                  <div style={{marginTop: 4, paddingTop: 12, borderTop: `1px dashed ${T.border}`}}>
+                    <div style={{...SANS, fontSize: 10, fontWeight: 600, color: T.textMuted, textTransform: "uppercase", marginBottom: 8}}>Assigned Coverage</div>
+                    <div style={{display: "flex", flexWrap: "wrap", gap: 6}}>
+                      {user.assignedFunds.slice(0, 3).map(f => (
+                        <span key={f.id} title={f.name} style={{...SANS, fontSize: 10, padding: "3px 8px", background: T.appBg, border: `1px solid ${T.border}`, borderRadius: 12, color: T.textPrimary, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 100}}>
+                          {f.name}
+                        </span>
+                      ))}
+                      {user.assignedFunds.length > 3 && (
+                        <span style={{...SANS, fontSize: 10, padding: "3px 8px", background: "#f8fafc", border: `1px solid ${T.border}`, borderRadius: 12, color: T.textMuted}}>
+                          +{user.assignedFunds.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ─── WORKLOAD REBALANCE MODAL ─── */}
+      {rebalanceModalOpen && (
+        <div className="modal-overlay" style={{position:"fixed", inset:0, background:"rgba(15,23,42,0.75)", zIndex:900, display:"flex", alignItems:"center", justifyContent:"center"}} onClick={() => setRebalanceModalOpen(false)}>
+          <div onClick={e => e.stopPropagation()} className="slide-in" style={{background: T.cardBg, borderRadius: 12, width: 600, boxShadow: "0 20px 60px rgba(0,0,0,0.3)", overflow: "hidden"}}>
+            <div style={{background: T.navyHeader, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center"}}>
+              <div>
+                <div style={{...SANS, fontWeight: 700, fontSize: 15, color: "#fff"}}>Workload Rebalancing</div>
+                <div style={{...SANS, fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 2}}>Shift fund assignments to relieve capacity bottlenecks.</div>
+              </div>
+              <button onClick={() => setRebalanceModalOpen(false)} style={{background: "none", border: "none", color: "#8898aa", cursor: "pointer", fontSize: 18}}>✕</button>
+            </div>
+            
+            <div style={{padding: "24px", maxHeight: "60vh", overflowY: "auto"}}>
+              <div style={{...SANS, fontSize: 12, fontWeight: 700, color: T.textPrimary, marginBottom: 12}}>Critical Capacity Offload</div>
+              
+              {capacityData.filter(u => u.capacityPct > 70).map(u => (
+                <div key={u.id} style={{background: T.appBg, border: `1px solid ${T.border}`, borderRadius: 8, padding: 16, marginBottom: 16}}>
+                  <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12}}>
+                    <div style={{display: "flex", alignItems: "center", gap: 10}}>
+                      <Avatar user={u} size={28} />
+                      <span style={{...SANS, fontSize: 13, fontWeight: 700, color: T.textPrimary}}>{u.name}</span>
+                      <span style={{...MONO, fontSize: 12, fontWeight: 700, color: T.errorBase}}>{u.capacityPct}%</span>
+                    </div>
+                  </div>
+                  
+                  {/* Mock UI to show offloading assignments */}
+                  {u.assignedFunds.slice(0, 2).map(f => (
+                    <div key={f.id} style={{display: "flex", alignItems: "center", justifyContent: "space-between", background: T.cardBg, border: `1px solid ${T.border}`, padding: "8px 12px", borderRadius: 6, marginBottom: 8}}>
+                      <div style={{...SANS, fontSize: 12, color: T.textPrimary, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{f.name}</div>
+                      <div style={{display: "flex", alignItems: "center", gap: 8}}>
+                        <span style={{...SANS, fontSize: 11, color: T.textMuted}}>Reassign to:</span>
+                        <select style={{...SANS, fontSize: 11, padding: "4px 8px", borderRadius: 4, border: `1px solid ${T.border}`, background: "#fff"}}>
+                          <option value="">Select Team Member...</option>
+                          {capacityData.filter(member => member.id !== u.id && member.capacityPct < 60).map(member => (
+                            <option key={member.id} value={member.id}>{member.name} ({member.capacityPct}%)</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+
+              <div style={{...SANS, fontSize: 12, color: T.textMuted, textAlign: "center", marginTop: 24}}>
+                Selecting a new team member will immediately update permissions and route future exceptions.
+              </div>
+            </div>
+
+            <div style={{padding: "16px 24px", background: T.appBg, borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "flex-end", gap: 12}}>
+              <button onClick={() => setRebalanceModalOpen(false)} style={{...SANS, fontSize: 13, fontWeight: 600, padding: "8px 16px", borderRadius: 6, border: `1px solid ${T.border}`, background: T.cardBg, color: T.textPrimary, cursor: "pointer"}}>Cancel</button>
+              <button onClick={() => setRebalanceModalOpen(false)} style={{...SANS, fontSize: 13, fontWeight: 600, padding: "8px 16px", borderRadius: 6, border: "none", background: T.actionBase, color: "#fff", cursor: "pointer"}}>Apply Assignments</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
@@ -5940,7 +6114,7 @@ function UploadModal({ onClose, onUploadComplete, currentUser }) {
     const newFeed = {
       id: feedId,
       period: "Dec 2024",
-      source: `Upload (${currentUser?.name.split(' ')[0].toLowerCase()||"user"}@torrance.com)`,
+      source: `${currentUser?.name.split(' ')[0].toLowerCase()||"user"}@torrance.com`,
       fund_id: "FND-2024-001", 
       fund: "Pennywise Global Diversified Fund",
       client: "Pennywise Capital Advisors",
@@ -6051,9 +6225,184 @@ function RawDataModal({ feed, onClose }) {
     </div>
   );
 }
+// ─── SPRINT 2: Global Schema Studio (C-08 Architectural Extension) ───────────
+// ─── SPRINT 2: Global Schema Studio (With Data Prep) ─────────────────────────
+function SchemaStudioView({ schemaId, onBack }) {
+  // Convert static mappings to state so we can apply Prep Rules
+  const [mappings, setMappings] = useState([
+    { id:"m1", source:"account_no", target:"account_number", type:"VARCHAR", req:true, conf:99, status:"accepted", sample:"1010", prepRule: null },
+    { id:"m2", source:"account_desc", target:"account_name", type:"VARCHAR", req:true, conf:99, status:"accepted", sample:"Investments in Securities", prepRule: null },
+    { id:"m3", source:"debit_amount", target:"debit", type:"DECIMAL", req:true, conf:99, status:"accepted", sample:"125000000.00", prepRule: null },
+    { id:"m4", source:"credit_amount", target:"credit", type:"DECIMAL", req:true, conf:99, status:"accepted", sample:"0.00", prepRule: null },
+    { id:"m5", source:"ccy", target:"currency", type:"CHAR(3)", req:true, conf:96, status:"accepted", sample:"USD", prepRule: null },
+    { id:"m6", source:"fund_code", target:"fund_id", type:"VARCHAR", req:true, conf:88, status:"pending", sample:"FND-2024-001", prepRule: null },
+    { id:"m7", source:"post_date", target:"posting_date", type:"DATE", req:true, conf:99, status:"accepted", sample:"2024-12-31", prepRule: null },
+    { id:"m8", source:"trade_ccy_amount", target:"local_amount", type:"DECIMAL", req:false, conf:72, status:"review", sample:"92357.12", prepRule: null },
+  ]);
+
+  const [prepRow, setPrepRow] = useState(null);
+
+  const handleApplyPrep = (rule) => {
+    setMappings(prev => prev.map(m => m.id === prepRow.id ? { ...m, prepRule: rule } : m));
+    setPrepRow(null);
+  };
+
+  const columns = mappings.map(m => m.source);
+
+  return (
+    <div className="fade-in" style={{display:"flex", flexDirection:"column", height:"100vh", background:T.appBg}}>
+      
+      {/* ─── STUDIO HEADER ─── */}
+      <div style={{padding:"16px 32px", background:T.navyHeader, display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0}}>
+        <div style={{display:"flex", alignItems:"center", gap:20}}>
+          <button onClick={onBack} style={{...SANS, background:"rgba(255,255,255,0.1)", border:"none", borderRadius:6, padding:"8px 14px", fontSize:12, cursor:"pointer", fontWeight:600, color:"#fff"}}>← Registry</button>
+          <div>
+            <h2 style={{...SANS, fontWeight:700, fontSize:18, color:"#fff", margin:0}}>Schema Studio: {schemaId || 'Global Custodian'}</h2>
+            <div style={{...SANS, fontSize:12, color:"rgba(255,255,255,0.6)", marginTop:2}}>Editing global master canonical mappings.</div>
+          </div>
+        </div>
+        <div style={{display:"flex", gap:12}}>
+          <button style={{...SANS, fontSize:12, fontWeight:600, padding:"8px 16px", borderRadius:6, border:`1px solid rgba(255,255,255,0.2)`, background:"transparent", color:"#fff", cursor:"pointer"}}>Re-Run AI Inference</button>
+          <button onClick={onBack} style={{...SANS, fontSize:12, fontWeight:700, padding:"8px 16px", borderRadius:6, border:"none", background:T.actionBase, color:"#fff", cursor:"pointer"}}>Commit to Global Registry</button>
+        </div>
+      </div>
+
+      {/* ─── SPLIT PANE WORKSPACE ─── */}
+      <div style={{display:"flex", flex:1, overflow:"hidden"}}>
+        
+        {/* LEFT PANE: Source Payload Stream */}
+        <div style={{flex:"0 0 30%", borderRight:`1px solid ${T.border}`, background:T.cardBg, display:"flex", flexDirection:"column"}}>
+          <div style={{padding:"12px 20px", borderBottom:`1px solid ${T.border}`, background:T.appBg, ...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textTransform:"uppercase", letterSpacing:"0.05em"}}>
+            Incoming Source Payload
+          </div>
+          <div style={{flex:1, overflowY:"auto", padding:"20px", ...MONO, fontSize:11, color:T.textPrimary, whiteSpace:"pre-wrap"}}>
+            {`{\n  "metadata": {\n    "custodian": "${schemaId || 'Custodian'}",\n    "type": "GL_Trial_Balance",\n    "extract_date": "2024-12-31T23:59:59Z"\n  },\n  "data": [\n    {\n      "account_no": "1010",\n      "account_desc": "Investments in Securities",\n      "debit_amount": "125000000.00",\n      "credit_amount": "0.00",\n      "ccy": "USD",\n      "fund_code": "FND-2024-001",\n      "post_date": "2024-12-31"\n    }\n  ]\n}`}
+          </div>
+        </div>
+
+        {/* RIGHT PANE: Target Canonical Mappings */}
+        <div style={{flex:1, background:T.appBg, display:"flex", flexDirection:"column"}}>
+          <div style={{padding:"12px 20px", borderBottom:`1px solid ${T.border}`, background:T.cardBg, ...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textTransform:"uppercase", letterSpacing:"0.05em", display:"flex", justifyContent:"space-between"}}>
+            <span>Canonical Target Mapping</span>
+            <span style={{color:T.aiBase}}>✦ AI Auto-Mapped 142/142 Fields</span>
+          </div>
+          <div style={{flex:1, overflowY:"auto", padding:"24px"}}>
+            <div style={{background:T.cardBg, border:`1px solid ${T.border}`, borderRadius:8, overflow:"hidden", boxShadow:"0 2px 4px rgba(0,0,0,0.02)"}}>
+              <table style={{width:"100%", borderCollapse:"collapse", textAlign:"left"}}>
+                <thead>
+                  <tr style={{background:T.appBg}}>
+                    {["Source Field", "Sample Value", "Type", "AI Confidence", "Canonical Target", "Data Prep", "Status"].map((h,i)=><th key={i} style={{...SANS, padding:"10px 16px", color:T.textMuted, fontWeight:700, fontSize:10, textTransform:"uppercase", borderBottom:`1px solid ${T.border}`}}>{h}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {mappings.map(m => (
+                    <tr key={m.id} style={{borderBottom:`1px solid ${T.border}`, transition:"background 0.15s"}} onMouseEnter={e=>e.currentTarget.style.background=T.appBg} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                      <td style={{padding:"12px 16px", ...MONO, fontSize:11, color:T.textPrimary, fontWeight:700}}>{m.source}</td>
+                      <td style={{padding:"12px 16px", ...MONO, fontSize:10, color:T.textMuted}}>{m.sample}</td>
+                      <td style={{padding:"12px 16px", ...SANS, fontSize:10, color:T.textMuted}}>{m.type}</td>
+                      <td style={{padding:"12px 16px"}}>
+                        <span style={{...MONO, fontSize:11, fontWeight:700, color:m.conf>90?T.okBase:T.warnBase}}>{m.conf}%</span>
+                      </td>
+                      <td style={{padding:"12px 16px"}}>
+                        <span style={{...MONO, fontSize:11, fontWeight:700, background:T.actionBg, color:T.actionBase, border:`1px solid #bfdbfe`, padding:"2px 6px", borderRadius:4}}>{m.target}</span>
+                      </td>
+                      
+                      {/* NEW DATA PREP COLUMN */}
+                      <td style={{padding:"12px 16px"}}>
+                        {m.prepRule ? (
+                          <span style={{...SANS, fontSize:10, fontWeight:700, background:"#f1f5f9", color:T.textPrimary, border:`1px solid ${T.border}`, padding:"4px 8px", borderRadius:4, display:"inline-block"}} title={m.prepRule.desc}>
+                            {m.prepRule.type === "Enhance" ? "🪄" : "🛠"} {m.prepRule.type}
+                          </span>
+                        ) : (
+                          <button onClick={() => setPrepRow(m)} style={{...SANS, fontSize:10, fontWeight:600, padding:"4px 8px", borderRadius:4, border:`1px dashed ${T.border}`, background:"transparent", color:T.textMuted, cursor:"pointer", transition:"color 0.2s"}} onMouseEnter={e=>e.currentTarget.style.color=T.actionBase} onMouseLeave={e=>e.currentTarget.style.color=T.textMuted}>
+                            + Add Rule
+                          </button>
+                        )}
+                      </td>
+
+                      <td style={{padding:"12px 16px"}}>
+                        {m.status === 'accepted' ? <span style={{...SANS, fontSize:10, fontWeight:700, color:T.okBase}}>✓ Accepted</span> : <button style={{...SANS, fontSize:10, fontWeight:700, background:T.warnBg, color:T.warnBase, border:`1px solid ${T.warnBorder}`, padding:"2px 8px", borderRadius:4, cursor:"pointer"}}>⚠ Review</button>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+
+      {/* Render the Prep Modal when a row is selected */}
+      {prepRow && (
+        <DataPrepModal 
+          row={{ sourceCol: prepRow.source, sampleValue: prepRow.sample }} 
+          columns={columns} 
+          onClose={() => setPrepRow(null)} 
+          onApply={handleApplyPrep} 
+        />
+      )}
+    </div>
+  );
+}
+// ─── SPRINT 2: Schema Registry View (C-08) ───────────────────────────────────
+function SchemaRegistryView({ onBack, onOpenStudio }) {
+  const schemas = [
+    { id:"SSB", name:"State Street Bank", type:"Global Custodian", fields: 142, confidence: 99.8 },
+    { id:"BNY", name:"BNY Mellon", type:"Global Custodian", fields: 118, confidence: 99.5 },
+    { id:"JPM", name:"J.P. Morgan", type:"Prime Broker", fields: 95, confidence: 98.9 },
+    { id:"CITI", name:"Citigroup", type:"Prime Broker", fields: 104, confidence: 99.2 },
+    { id:"NT", name:"Northern Trust", type:"Global Custodian", fields: 136, confidence: 99.4 },
+    { id:"MS", name:"Morgan Stanley", type:"Prime Broker", fields: 88, confidence: 98.1 },
+    { id:"BAM", name:"Bank of America", type:"Prime Broker", fields: 92, confidence: 97.8 },
+    { id:"UBS", name:"UBS", type:"Prime Broker", fields: 85, confidence: 98.5 }
+  ];
+
+  return (
+    <div className="fade-in" style={{display:"flex", flexDirection:"column", height:"calc(100vh - 52px)", background:T.appBg}}>
+      <div style={{padding:"24px 48px", background:T.cardBg, borderBottom:`1px solid ${T.border}`, display:"flex", alignItems:"center", gap:20}}>
+        <button onClick={onBack} style={{...SANS, background:T.appBg, border:`1px solid ${T.border}`, borderRadius:6, padding:"8px 14px", fontSize:12, cursor:"pointer", fontWeight:600, color:T.textPrimary}}>← Back to Ingestion</button>
+        <div>
+          <h2 style={{...SANS, fontWeight:700, fontSize:22, color:T.textPrimary, margin:0}}>Global Schema Registry</h2>
+          <div style={{...SANS, fontSize:13, color:T.textMuted, marginTop:4}}>Pre-certified AI mapping models for major institutional custodians.</div>
+        </div>
+      </div>
+
+      <div style={{flex:1, overflowY:"auto", padding:"32px 48px", display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(320px, 1fr))", gap:20, alignContent:"start"}}>
+        {schemas.map(s => (
+          <div key={s.id} style={{background:T.cardBg, border:`1px solid ${T.border}`, borderRadius:10, padding:"20px", boxShadow:"0 2px 4px rgba(0,0,0,0.02)"}}>
+             <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:16}}>
+               <div>
+                 <div style={{...SANS, fontSize:16, fontWeight:700, color:T.textPrimary}}>{s.name}</div>
+                 <div style={{...SANS, fontSize:12, color:T.textMuted, marginTop:2}}>{s.type}</div>
+               </div>
+               <span style={{...SANS, fontSize:10, fontWeight:700, background:T.okBg, color:T.okBase, padding:"3px 8px", borderRadius:4, border:`1px solid ${T.okBorder}`}}>CERTIFIED</span>
+             </div>
+             
+             <div style={{display:"flex", gap:12, marginBottom:20}}>
+               <div style={{flex:1, background:T.appBg, border:`1px solid ${T.border}`, borderRadius:6, padding:"10px", textAlign:"center"}}>
+                 <div style={{...MONO, fontSize:18, fontWeight:700, color:T.textPrimary}}>{s.fields}</div>
+                 <div style={{...SANS, fontSize:10, color:T.textMuted, textTransform:"uppercase", letterSpacing:"0.05em", marginTop:4}}>Mapped Fields</div>
+               </div>
+               <div style={{flex:1, background:T.aiBg, border:`1px solid ${T.aiBorder}`, borderRadius:6, padding:"10px", textAlign:"center"}}>
+                 <div style={{...MONO, fontSize:18, fontWeight:700, color:T.aiDark}}>{s.confidence}%</div>
+                 <div style={{...SANS, fontSize:10, color:T.aiDark, textTransform:"uppercase", letterSpacing:"0.05em", marginTop:4}}>AI Confidence</div>
+               </div>
+             </div>
+
+             <button onClick={() => onOpenStudio(s.id)} style={{...SANS, width:"100%", fontSize:12, fontWeight:600, padding:"8px", borderRadius:6, border:`1px solid ${T.border}`, background:"transparent", cursor:"pointer", color:T.textPrimary, transition:"background 0.2s"}} onMouseEnter={e=>e.currentTarget.style.background=T.appBg} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+  View Canonical Logic
+</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 // ─── Ingestion Status Widget ──────────────────────────────────────────────────
-function IngestionStatusWidget({feeds, setFeeds, onGoToDashboard, onOpenMapping, onGoToExceptions, currentUser}) {
+// ─── SPRINT 2: Clean API-First Ingestion Screen (C-07 - Final) ───────────────
+function IngestionStatusWidget({feeds, setFeeds, onGoToDashboard, onOpenMapping, onGoToExceptions, currentUser, setView}) {
   const [retrying,setRetrying] = useState(null);
   const [showUpload,setShowUpload] = useState(false);
   const [previewFeed,setPreviewFeed] = useState(null);
@@ -6067,19 +6416,18 @@ function IngestionStatusWidget({feeds, setFeeds, onGoToDashboard, onOpenMapping,
   const pending=feeds.filter(f=>f.status==="pending" || f.status==="needs_mapping").length;
   
   const STATUS_CFG={
-    success:{color:T.okBase,bg:T.okBg,border:T.okBorder,icon:"✓",label:"Success"},
-    failed:{color:T.errorBase,bg:T.errorBg,border:T.errorBorder,icon:"✕",label:"Failed"},
-    pending:{color:T.warnBase,bg:T.warnBg,border:T.warnBorder,icon:"⏳",label:"Pending"},
-    needs_mapping:{color:T.aiBase,bg:T.aiBg,border:T.aiBorder,icon:"✦",label:"Mapping Req."}
+    success:{color:T.okBase,icon:"✓",label:"Success"},
+    failed:{color:T.errorBase,icon:"✕",label:"Failed"},
+    pending:{color:T.warnBase,icon:"⏳",label:"Pending"},
+    needs_mapping:{color:T.aiBase,icon:"✦",label:"Mapping Req."}
   };
   
   const handleRetry=id=>{ setRetrying(id);setTimeout(()=>{setFeeds(prev=>prev.map(f=>f.id===id?{...f,status:"success",received:new Date().toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit'}),rows:203,exceptions:7,error:undefined}:f));setRetrying(null);},1800); };
   const handleUploadComplete = (newFeed, mappingRows) => {
     setFeeds(prev => [newFeed, ...prev]);
-    // Inject the real file's mapping data into our session dictionary!
     MAPPING_SESSIONS[newFeed.id] = {
       feedId: newFeed.id,
-      fileName: newFeed.file,
+      fileName: newFeed.payload || newFeed.file,
       fundName: newFeed.fund,
       rows: mappingRows
     };
@@ -6090,25 +6438,35 @@ function IngestionStatusWidget({feeds, setFeeds, onGoToDashboard, onOpenMapping,
     if (statusFilter !== "All") result = result.filter(f => f.status === statusFilter);
     if (search.trim()) {
       const q = search.toLowerCase();
-      result = result.filter(f => f.fund.toLowerCase().includes(q) || f.file.toLowerCase().includes(q) || f.client.toLowerCase().includes(q));
+      result = result.filter(f => f.fund.toLowerCase().includes(q) || (f.payload || f.file || "").toLowerCase().includes(q) || f.client.toLowerCase().includes(q));
     }
     result.sort((a, b) => {
       if (sortBy === "fund") return a.fund.localeCompare(b.fund);
       if (sortBy === "exceptions") return (b.exceptions || 0) - (a.exceptions || 0);
+      if (sortBy === "received") return b.id.localeCompare(a.id);
       return 0; 
     });
     return result;
   }, [feeds, search, statusFilter, sortBy]);
 
+  const getConnectionBadge = (src) => {
+    const s = (src || "").toUpperCase();
+    if (s.includes("API")) return <span style={{...MONO,fontSize:10,fontWeight:700,border:`1px solid ${T.okBorder}`,color:T.okBase,padding:"2px 6px",borderRadius:4}}>Direct API</span>;
+    if (s.includes("SFTP")) return <span style={{...MONO,fontSize:10,fontWeight:700,border:`1px solid ${T.warnBorder}`,color:T.warnBase,padding:"2px 6px",borderRadius:4}}>SFTP</span>;
+    return <span style={{...MONO,fontSize:10,fontWeight:700,border:`1px solid ${T.border}`,color:T.textMuted,padding:"2px 6px",borderRadius:4}}>Manual</span>;
+  };
+
+  const thStyle = { ...SANS, padding: "8px 12px", textAlign: "left", color: T.textMuted, fontWeight: 700, fontSize: 10, letterSpacing: "0.05em", textTransform: "uppercase", borderBottom: `2px solid ${T.border}`, whiteSpace: "nowrap" };
+  const tdStyle = { padding: "10px 12px", borderBottom: `1px solid ${T.border}` };
+
   return <div style={{padding:"20px 24px"}}>
-    {/* UPDATED: Aligned Header, Search, KPIs, and Action Buttons into a single compact area */}
     <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginBottom:18,flexWrap:"wrap",gap:16}}>
+    <button onClick={onGoToDashboard} style={{...SANS,background:"transparent",border:`1px solid ${T.border}`,color:T.textPrimary,borderRadius:7,padding:"0 18px",height:38,fontSize:13,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",gap:7}}>← Dashboard</button>
       <div style={{display:"flex", flexDirection:"column", justifyContent:"space-between"}}>
-        {/* Re-located Toolbar */}
         <div style={{display:"flex", gap:10, alignItems:"center"}}>
           <div style={{position:"relative", width: 280}}>
             <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:T.textMuted,fontSize:14}}>⌕</span>
-            <input type="text" placeholder="Search fund, client, or file..." value={search} onChange={e=>setSearch(e.target.value)} style={{...SANS, width:"100%", padding:"8px 12px 8px 32px", borderRadius:6, border:`1px solid ${T.border}`, fontSize:12, color:T.textPrimary, outline:"none"}} />
+            <input type="text" placeholder="Search fund, client, or payload..." value={search} onChange={e=>setSearch(e.target.value)} style={{...SANS, width:"100%", padding:"8px 12px 8px 32px", borderRadius:6, border:`1px solid ${T.border}`, fontSize:12, color:T.textPrimary, outline:"none"}} />
           </div>
           <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={{...SANS, padding:"8px 12px", borderRadius:6, border:`1px solid ${T.border}`, fontSize:12, color:T.textPrimary, background:"#fff", outline:"none", cursor:"pointer"}}>
             <option value="All">All Statuses</option>
@@ -6125,7 +6483,8 @@ function IngestionStatusWidget({feeds, setFeeds, onGoToDashboard, onOpenMapping,
       </div>
       
       <div style={{display:"flex",gap:10,alignItems:"center", height:"100%"}}>
-        {[{label:"Success",val:success,color:T.okBase,bg:T.okBg,bd:T.okBorder, icon:"✓"},{label:"Failed",val:failed,color:T.errorBase,bg:T.errorBg,bd:T.errorBorder, icon:"✕"},{label:"Pending",val:pending,color:T.warnBase,bg:T.warnBg,bd:T.warnBorder, icon:"⏳"}].map(k=>(
+        {/* NEW BUTTONS: Connect New Source & Schema Registry */}
+        {[{label:"Success",val:success,color:T.okBase,bg:T.cardBg,bd:T.okBorder, icon:"✓"},{label:"Failed",val:failed,color:T.errorBase,bg:T.cardBg,bd:T.errorBorder, icon:"✕"},{label:"Pending",val:pending,color:T.warnBase,bg:T.cardBg,bd:T.warnBorder, icon:"⏳"}].map(k=>(
           <div key={k.label} style={{background:k.bg,border:`1px solid ${k.bd}`,borderRadius:7,padding:"0 14px",height:38,display:"flex",alignItems:"center",gap:8}}>
             <span style={{fontSize:14, color:k.color, fontWeight:700}} aria-hidden="true">{k.icon}</span>
             <span style={{...MONO,fontSize:14,fontWeight:700,color:k.color, lineHeight:1}}>{k.val}</span>
@@ -6133,8 +6492,10 @@ function IngestionStatusWidget({feeds, setFeeds, onGoToDashboard, onOpenMapping,
           </div>
         ))}
         <div style={{width:1,height:24,background:T.border,margin:"0 4px"}}/>
-        <button onClick={()=>setShowUpload(true)} style={{...SANS,background:T.cardBg,color:T.textPrimary,border:`1px solid ${T.border}`,borderRadius:7,padding:"0 16px",height:38,fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:7}}><span>↑</span>Manual Upload</button>
-        <button onClick={onGoToDashboard} style={{...SANS,background:T.actionBase,color:"#fff",border:"none",borderRadius:7,padding:"0 18px",height:38,fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:7}}><span>→</span>View Funds</button>
+            <button onClick={() => setView('schemas')} style={{...SANS,background:T.cardBg,color:T.textPrimary,border:`1px solid ${T.border}`,borderRadius:7,padding:"0 16px",height:38,fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:7}}>Schema Registry</button>
+            <button onClick={()=>setShowUpload(true)} style={{...SANS,background:T.cardBg,color:T.textPrimary,border:`1px solid ${T.border}`,borderRadius:7,padding:"0 16px",height:38,fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:7}}><span>↑</span>Manual Upload</button>
+            <button style={{...SANS,background:T.cardBg,color:T.textPrimary,border:`1px solid ${T.border}`,borderRadius:7,padding:"0 16px",height:38,fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:7}}><span>⚡</span>Connect New Source</button>
+            
       </div>
     </div>
 
@@ -6147,44 +6508,90 @@ function IngestionStatusWidget({feeds, setFeeds, onGoToDashboard, onOpenMapping,
     </div>
 
     <div style={{background:T.cardBg,border:`1px solid ${T.border}`,borderRadius:10,overflowX:"auto"}}>
-      {/* Grid Toolbar removed from here to save vertical space */}
       <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-        <thead><tr style={{background:T.appBg}}>{["Status","Period","Source","Fund","File","Type","Received","Rows","Exceptions","Actions"].map((h,i)=><th key={h+i} style={{...SANS,padding:"8px 12px",textAlign:i>=7&&i<=8?"right":i===9?"center":"left",color:T.textMuted,fontWeight:700,fontSize:10,letterSpacing:"0.05em",textTransform:"uppercase",borderBottom:`2px solid ${T.border}`}}>{h}</th>)}</tr></thead>
-        <tbody>{displayFeeds.map(feed=>{ const cfg=STATUS_CFG[retrying===feed.id?"pending":feed.status];const isRetrying=retrying===feed.id; return(
-          <tr key={feed.id} className="feed-row"
-            onClick={!!MAPPING_SESSIONS[feed.id]&&feed.status==="success"&&feed.type==="GL" ? ()=>onOpenMapping(MAPPING_SESSIONS[feed.id]) : undefined}
-            style={{cursor:!!MAPPING_SESSIONS[feed.id]&&feed.status==="success"&&feed.type==="GL"?"pointer":"default"}}>
-            <td style={{padding:"10px 12px",borderBottom:`1px solid ${T.border}`}}><span style={{...SANS,fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:4,background:cfg.bg,color:cfg.color,border:`1px solid ${cfg.border}`,display:"inline-flex",alignItems:"center",gap:4}}>{isRetrying?<span style={{animation:"pulse 0.8s infinite"}}>⏳</span>:<span>{cfg.icon}</span>}{isRetrying?"Retrying…":cfg.label}</span></td>
-            <td style={{padding:"10px 12px",borderBottom:`1px solid ${T.border}`,...SANS,fontSize:11,fontWeight:600,color:T.textPrimary,whiteSpace:"nowrap"}}>{feed.period}</td>
-            <td style={{padding:"10px 12px",borderBottom:`1px solid ${T.border}`}}>
-              <span style={{...MONO,fontSize:10,padding:"2px 6px",borderRadius:4,background:T.appBg,border:`1px solid ${T.border}`,color:T.textMuted}}>{feed.source}</span>
-            </td>
-            <td style={{padding:"10px 12px",borderBottom:`1px solid ${T.border}`, whiteSpace:"nowrap"}}><div style={{...SANS,fontSize:12,fontWeight:600}}>{feed.fund}</div><div style={{...SANS,fontSize:10,color:T.textMuted}}>{feed.client}</div></td>
-            <td style={{...MONO,padding:"10px 12px",borderBottom:`1px solid ${T.border}`,fontSize:10,color:T.textMuted,maxWidth:180,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{feed.file}</td>
-            <td style={{padding:"10px 12px",borderBottom:`1px solid ${T.border}`}}><span style={{...SANS,fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:3,background:feed.type==="GL"?T.actionBg:T.aiBg,color:feed.type==="GL"?T.actionBase:T.aiBase,border:`1px solid ${feed.type==="GL"?"#bfdbfe":T.aiBorder}`}}>{feed.type}</span></td>
-            <td style={{...MONO,padding:"10px 12px",borderBottom:`1px solid ${T.border}`,fontSize:11,color:T.textMuted,whiteSpace:"nowrap"}}>{feed.received}</td>
-            <td style={{...MONO,padding:"10px 12px",textAlign:"right",borderBottom:`1px solid ${T.border}`,fontSize:11}}>{feed.rows>0?feed.rows.toLocaleString():"—"}</td>
-            <td style={{...MONO,padding:"10px 12px",textAlign:"right",borderBottom:`1px solid ${T.border}`,fontSize:11,color:feed.exceptions>0?T.errorBase:T.textMuted,fontWeight:feed.exceptions>0?700:400}}>{feed.exceptions>0?feed.exceptions:"—"}</td>
-            <td style={{padding:"10px 12px",borderBottom:`1px solid ${T.border}`,textAlign:"center",whiteSpace:"nowrap"}}>
-              <div style={{display:"flex",gap:6,justifyContent:"center"}}>
-                {feed.status==="success"&&feed.rows>0&&<button onClick={(e)=>{e.stopPropagation(); setPreviewFeed(feed);}} style={{...SANS,fontSize:10,fontWeight:600,padding:"4px 8px",borderRadius:4,border:`1px solid ${T.border}`,background:T.cardBg,color:T.textPrimary,cursor:"pointer",transition:"background 0.15s"}} onMouseEnter={e=>e.currentTarget.style.background=T.appBg} onMouseLeave={e=>e.currentTarget.style.background=T.cardBg}>🔍 Data</button>}
-                {feed.status==="needs_mapping"&&(
-                  <button onClick={()=>onOpenMapping(MAPPING_SESSIONS[feed.id])} style={{...SANS,fontSize:10,fontWeight:700,padding:"4px 8px",borderRadius:4,background:T.aiBg,color:T.aiBase,border:`1px solid ${T.aiBorder}`,cursor:"pointer",transition:"filter 0.15s"}} onMouseEnter={e=>e.currentTarget.style.filter="brightness(0.95)"} onMouseLeave={e=>e.currentTarget.style.filter="none"}>✦ Mapping</button>
-                )}
-                {feed.status==="success"&&feed.exceptions>0&&(
-                  <button onClick={()=>onGoToExceptions(feed.fund_id)} style={{...SANS,fontSize:10,fontWeight:600,padding:"4px 8px",borderRadius:4,border:`1px solid ${T.errorBorder}`,background:T.errorBg,color:T.errorBase,cursor:"pointer",transition:"filter 0.15s"}} onMouseEnter={e=>e.currentTarget.style.filter="brightness(0.95)"} onMouseLeave={e=>e.currentTarget.style.filter="none"}>⚠ Exceptions</button>
-                )}
-                {feed.status==="failed"&&!isRetrying&&<button onClick={()=>handleRetry(feed.id)} style={{...SANS,fontSize:10,fontWeight:600,padding:"4px 8px",borderRadius:4,border:`1px solid ${T.errorBorder}`,background:T.errorBg,color:T.errorBase,cursor:"pointer",transition:"filter 0.15s"}} onMouseEnter={e=>e.currentTarget.style.filter="brightness(0.95)"} onMouseLeave={e=>e.currentTarget.style.filter="none"}>↺ Retry</button>}
-              </div>
-              {feed.error&&!isRetrying&&<div style={{...SANS,fontSize:10,color:T.errorBase,marginTop:6,maxWidth:180,textAlign:"right"}}>{feed.error}</div>}
-            </td>
+        <thead>
+          <tr style={{background:T.appBg}}>
+            <th style={thStyle}>Status</th>
+            <th style={thStyle}>Period</th>
+            <th style={thStyle}>Connection</th>
+            <th style={thStyle}>Fund</th>
+            <th style={thStyle}>Payload</th>
+            <th style={thStyle}>Type</th>
+            <th style={thStyle}>Received</th>
+            <th style={thStyle}>Source</th>
+            {/* Split Exceptions into two columns */}
+            <th style={{...thStyle, textAlign:"right"}}>Auto-Resolved</th>
+            <th style={{...thStyle, textAlign:"right"}}>Requires Review</th>
+            <th style={{...thStyle, textAlign:"center"}}>Actions</th>
           </tr>
-        );})}
-        {displayFeeds.length === 0 && (
-          <tr>
-            <td colSpan="10" style={{padding:"40px 0", textAlign:"center", color:T.textMuted, ...SANS}}>No feeds match your search criteria.</td>
-          </tr>
-        )}
+        </thead>
+        <tbody>
+          {displayFeeds.map(feed=>{ 
+            const cfg=STATUS_CFG[retrying===feed.id?"pending":feed.status];
+            const isRetrying=retrying===feed.id; 
+            
+            // Generate deterministic mock numbers for Auto-Resolved based on rows
+            const autoResolved = feed.rows > 0 ? Math.floor(feed.rows * 0.08) : 0; 
+
+            return(
+              <tr key={feed.id} className="feed-row"
+                onClick={!!MAPPING_SESSIONS[feed.id]&&feed.status==="success"&&feed.type==="GL" ? ()=>onOpenMapping(MAPPING_SESSIONS[feed.id]) : undefined}
+                style={{cursor:!!MAPPING_SESSIONS[feed.id]&&feed.status==="success"&&feed.type==="GL"?"pointer":"default"}}>
+                
+                <td style={tdStyle}><span style={{...SANS,fontSize:11,fontWeight:700,color:cfg.color,display:"inline-flex",alignItems:"center",gap:4}}>{isRetrying?<span style={{animation:"pulse 0.8s infinite"}}>⏳</span>:<span>{cfg.icon}</span>}{isRetrying?"Retrying…":cfg.label}</span></td>
+                
+                <td style={{...tdStyle,...SANS,fontSize:11,fontWeight:600,color:T.textPrimary,whiteSpace:"nowrap"}}>{feed.period}</td>
+                
+                <td style={tdStyle}>{getConnectionBadge(feed.connType || feed.source)}</td>
+                
+                <td style={{...tdStyle, whiteSpace:"nowrap"}}><div style={{...SANS,fontSize:12,fontWeight:600}}>{feed.fund}</div><div style={{...SANS,fontSize:10,color:T.textMuted}}>{feed.client}</div></td>
+                
+                <td style={{...tdStyle,...MONO,fontSize:10,color:T.textMuted,maxWidth:180,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{feed.payload || feed.file}</td>
+                
+                {/* Type: Button look removed, combined with rows */}
+                <td style={tdStyle}>
+                  <div style={{...SANS,fontSize:12,fontWeight:600,color:T.textPrimary}}>{feed.type}</div>
+                  <div style={{...MONO,fontSize:10,color:T.textMuted,marginTop:2}}>{feed.rows>0?feed.rows.toLocaleString():"—"} rows</div>
+                </td>
+                
+                <td style={{...tdStyle,...MONO,fontSize:11,color:T.textMuted,whiteSpace:"nowrap"}}>{feed.received}</td>
+                
+                <td style={{...tdStyle,...MONO,fontSize:10,color:T.textMuted,whiteSpace:"nowrap"}}>{feed.sourceOrigin || feed.source || "System"}</td>
+                
+                {/* Auto-Resolved Column */}
+                <td style={{...tdStyle,...MONO,textAlign:"right",fontSize:11,color:autoResolved>0?T.aiBase:T.textMuted,fontWeight:autoResolved>0?700:400}}>
+                  {autoResolved>0 ? autoResolved : "—"}
+                </td>
+
+                {/* Requires Review Column (Old Exceptions Column) */}
+                <td style={{...tdStyle,...MONO,textAlign:"right",fontSize:11,color:feed.exceptions>0?T.warnBase:T.textMuted,fontWeight:feed.exceptions>0?700:400}}>
+                  {feed.exceptions>0 ? feed.exceptions : "—"}
+                </td>
+                
+                <td style={{...tdStyle,textAlign:"center",whiteSpace:"nowrap"}}>
+                  <div style={{display:"flex",gap:6,justifyContent:"center"}}>
+                    {feed.status==="success"&&feed.rows>0&&<button onClick={(e)=>{e.stopPropagation(); setPreviewFeed(feed);}} style={{...SANS,fontSize:10,fontWeight:600,padding:"4px 8px",borderRadius:4,border:`1px solid ${T.border}`,background:T.cardBg,color:T.textPrimary,cursor:"pointer",transition:"background 0.15s"}} onMouseEnter={e=>e.currentTarget.style.background=T.appBg} onMouseLeave={e=>e.currentTarget.style.background=T.cardBg}>🔍 Data</button>}
+                    
+                    {/* RESTORED: Now correctly looks at the status, and passes a fallback layout so it never crashes */}
+                    {feed.status==="needs_mapping"&&(
+                      <button onClick={(e)=>{e.stopPropagation(); onOpenMapping(MAPPING_SESSIONS[feed.id] || {feedId:feed.id, fundName:feed.fund, rows:[]});}} style={{...SANS,fontSize:10,fontWeight:700,padding:"4px 8px",borderRadius:4,background:T.aiBg,color:T.aiBase,border:`1px solid ${T.aiBorder}`,cursor:"pointer",transition:"filter 0.15s"}} onMouseEnter={e=>e.currentTarget.style.filter="brightness(0.95)"} onMouseLeave={e=>e.currentTarget.style.filter="none"}>✦ Mapping</button>
+                    )}
+                    
+                    {feed.status==="success"&&feed.exceptions>0&&(
+                      <button onClick={()=>onGoToExceptions(feed.fund_id)} style={{...SANS,fontSize:10,fontWeight:600,padding:"4px 8px",borderRadius:4,border:`1px solid ${T.warnBorder}`,background:T.warnBg,color:T.warnBase,cursor:"pointer",transition:"filter 0.15s"}} onMouseEnter={e=>e.currentTarget.style.filter="brightness(0.95)"} onMouseLeave={e=>e.currentTarget.style.filter="none"}>⚠ Review</button>
+                    )}
+                    {feed.status==="failed"&&!isRetrying&&<button onClick={()=>handleRetry(feed.id)} style={{...SANS,fontSize:10,fontWeight:600,padding:"4px 8px",borderRadius:4,border:`1px solid ${T.errorBorder}`,background:T.errorBg,color:T.errorBase,cursor:"pointer",transition:"filter 0.15s"}} onMouseEnter={e=>e.currentTarget.style.filter="brightness(0.95)"} onMouseLeave={e=>e.currentTarget.style.filter="none"}>↺ Retry</button>}
+                  </div>
+                  {feed.error&&!isRetrying&&<div style={{...SANS,fontSize:10,color:T.errorBase,marginTop:6,maxWidth:180,textAlign:"right"}}>{feed.error}</div>}
+                </td>
+              </tr>
+            );
+          })}
+          {displayFeeds.length === 0 && (
+            <tr>
+              <td colSpan="11" style={{padding:"40px 0", textAlign:"center", color:T.textMuted, ...SANS}}>No feeds match your search criteria.</td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
@@ -6544,6 +6951,7 @@ function InboxView({ notifications, onSelectFund }) {
     </div>
   );
 }
+
 function Dashboard({fundState, fundSeeds, approvalState, currentUser, notifications, onSelectFund, onReassign, onViewClientExceptions, onBulkApprove, onGlobalResolve, onGoToAudit}) {
   // Default Preparers to the Inbox, Controllers to the Client View
   const [dashView,setDashView]=useState(currentUser?.isController ? "team":"client");
@@ -6626,7 +7034,7 @@ function Dashboard({fundState, fundSeeds, approvalState, currentUser, notificati
       <div style={{display:"flex",gap:8,alignItems:"center"}}>
         <div style={{display:"flex",background:T.appBg,border:`1px solid ${T.border}`,borderRadius:7,padding:3,gap:2}}>
           {/* NEW: Added Inbox to the toggle array */}
-          {[{val:"client",label:"Client View"},{val:"inbox",label:"My Inbox"},{val:"team",label:"Team Capacity"},{val:"flow",label:"Pipeline Flow"}].map(v=> (
+          {[{val:"flow",label:"Autonomous Flow"},{val:"client",label:"Funds"},{val:"inbox",label:"Inbox"}].map(v=> (
             <button key={v.val} onClick={()=>setDashView(v.val)} style={{...SANS,fontSize:12,fontWeight:600,padding:"5px 12px",borderRadius:5,border:"none",background:dashView===v.val?T.cardBg:T.appBg,color:dashView===v.val?T.textPrimary:T.textMuted,cursor:"pointer",boxShadow:dashView===v.val?"0 1px 3px rgba(0,0,0,0.1)":"none",transition:"all 0.1s", display:"flex", alignItems:"center", gap:6}}>
               {v.label}
               {v.val === "inbox" && notifications.length > 0 && (
@@ -6635,12 +7043,12 @@ function Dashboard({fundState, fundSeeds, approvalState, currentUser, notificati
             </button>
           ))}
         </div>
-        {dashView === "client" && (
+      {/* {dashView === "client" && (
           <div style={{display:"flex",background:T.appBg,border:`1px solid ${T.border}`,borderRadius:7,padding:3,gap:2, marginLeft:12}}>
             <button onClick={()=>setLayoutStyle("list")} title="List View" style={{...SANS, fontSize:12, fontWeight:600, display:"flex", alignItems:"center", gap:5, background:layoutStyle==="list"?T.cardBg:"transparent", color:layoutStyle==="list"?T.textPrimary:T.textMuted, border:"none", borderRadius:5, padding:"5px 10px", cursor:"pointer", boxShadow:layoutStyle==="list"?"0 1px 3px rgba(0,0,0,0.1)":"none"}}><span style={{fontSize:14, opacity:layoutStyle==="list"?1:0.5}}>≡</span> List</button>
             <button onClick={()=>setLayoutStyle("grid")} title="Grid View" style={{...SANS, fontSize:12, fontWeight:600, display:"flex", alignItems:"center", gap:5, background:layoutStyle==="grid"?T.cardBg:"transparent", color:layoutStyle==="grid"?T.textPrimary:T.textMuted, border:"none", borderRadius:5, padding:"5px 10px", cursor:"pointer", boxShadow:layoutStyle==="grid"?"0 1px 3px rgba(0,0,0,0.1)":"none"}}><span style={{fontSize:14, opacity:layoutStyle==="grid"?1:0.5}}>⊞</span> Grid</button>
           </div>
-        )}
+      )} */}
         <button onClick={()=>setShowGlobalExcs(true)} style={{...SANS,fontSize:12,fontWeight:700,color:T.aiBase,padding:"7px 14px",borderRadius:7,border:`1px solid ${T.aiBorder}`,background:T.aiBg,cursor:"pointer",display:"flex",alignItems:"center",gap:6,marginLeft:12}}><span>🌍</span>Global Exceptions</button>
         <button onClick={()=>setShowClientPortal(true)} style={{...SANS,fontSize:12,fontWeight:600,color:T.textPrimary,padding:"7px 14px",borderRadius:7,border:`1px solid ${T.border}`,background:T.cardBg,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}><span>🏢</span>Client Portal</button>
         <button onClick={()=>setShowAuditorPortal(true)} style={{...SANS,fontSize:12,fontWeight:600,color:T.textPrimary,padding:"7px 14px",borderRadius:7,border:`1px solid ${T.border}`,background:T.cardBg,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}><span>🔒</span>Auditor Portal</button>
@@ -7183,7 +7591,7 @@ function LoginScreen({ onLogin }) {
 // ─── GlobalHeader (Upgraded with Fixed Radial Data Hub Menu) ─────────────────
 function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIngestion, onGoToFilings, onOpenAiSettings, onGoToDashboard, streak, notificationCount}) {
   const [hubOpen, setHubOpen] = useState(false);
-  const showDataFeedsBtn = view !== "ingestion" && view !== "login" && view !== "auditor_portal";
+  const showDataFeedsBtn = view !== "login" && view !== "auditor_portal";
 
   return (
     <header style={{background:T.navyHeader,color:"#fff",padding:"0 24px",height:52,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:200,boxShadow:"0 1px 4px rgba(0,0,0,0.1)"}}>
@@ -7203,25 +7611,13 @@ function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIn
       
       <div style={{position:"absolute", left:"50%", transform:"translateX(-50%)", display:"flex", alignItems:"left"}}>
         <span style={{...SANS,fontSize:11,color:"rgba(255,255,255,0.8)",background:"rgba(0,0,0,0.2)",padding:"4px 12px",borderRadius:4, border:"1px solid rgba(255,255,255,0.1)", letterSpacing:"0.02em"}}>
-          IT7 — The Overlook
+          IT8 — The Shining
         </span>
       </div>
 
       <div style={{display:"flex",alignItems:"center",gap:10}}>
-        {streak > 0 && (
-          <div style={{...SANS, fontSize:12, fontWeight:700, color:T.warnBase, display:"flex", alignItems:"center", gap:4, marginRight:16}} title="Gamified Exceptions Streak">
-            <span>🔥</span> {streak} Cleared Today
-          </div>
-        )}
         
-        <button onClick={() => onGoToDashboard("inbox")} style={{position:"relative", background:"none", border:"none", color:"rgba(255,255,255,0.7)", cursor:"pointer", fontSize:18, marginRight:8, transition:"color 0.2s"}} onMouseEnter={e=>e.currentTarget.style.color="#fff"} onMouseLeave={e=>e.currentTarget.style.color="rgba(255,255,255,0.7)"}>
-          🔔
-          {notificationCount > 0 && (
-            <span style={{position:"absolute", top:-4, right:-6, background:T.errorBase, color:"#fff", fontSize:9, fontWeight:700, padding:"2px 5px", borderRadius:10, border:"2px solid #0f172a", lineHeight:1}}>
-              {notificationCount}
-            </span>
-          )}
-        </button>
+        
 
         {/* RADIAL DATA HUB MENU (FIXED: Removed onMouseLeave, added invisible click-away overlay) */}
         {showDataFeedsBtn && (
@@ -7271,6 +7667,14 @@ function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIn
         <button onClick={onToggleRole} title="Toggle role (demo)" style={{...SANS,fontSize:12,fontWeight:600,padding:"0 8px",height:26,borderRadius:6,cursor:"pointer",background:currentUser.isController?T.controllerBg:T.preparerBg,color:currentUser.isController?T.controllerAccent:T.preparerAccent,border:`1px solid ${currentUser.isController?T.controllerBd:T.preparerBd}`,display:"flex",alignItems:"center",gap:6}}>
           <Avatar user={currentUser} size={20}/>{currentUser.name} · {currentUser.isController?"Controller":"Preparer"}<span style={{fontSize:10,opacity:0.7,marginLeft:4}}>⇄</span>
         </button>
+        <button onClick={() => onGoToDashboard("inbox")} style={{position:"relative", background:"none", border:"none", color:"rgba(255,255,255,0.7)", cursor:"pointer", fontSize:18, marginRight:8, transition:"color 0.2s"}} onMouseEnter={e=>e.currentTarget.style.color="#fff"} onMouseLeave={e=>e.currentTarget.style.color="rgba(255,255,255,0.7)"}>
+          🔔
+          {notificationCount > 0 && (
+            <span style={{position:"absolute", top:-4, right:-6, background:T.errorBase, color:"#fff", fontSize:9, fontWeight:700, padding:"2px 5px", borderRadius:10, border:"2px solid #0f172a", lineHeight:1}}>
+              {notificationCount}
+            </span>
+          )}
+        </button>
         <button onClick={onLogout} style={{background:"none",border:"none",color:"rgba(255,255,255,0.7)",cursor:"pointer",marginLeft:8,fontSize:13,fontWeight:600,transition:"color 0.15s"}} onMouseEnter={e=>e.currentTarget.style.color="#fff"} onMouseLeave={e=>e.currentTarget.style.color="rgba(255,255,255,0.7)"}>
           Sign Out
         </button>
@@ -7316,6 +7720,7 @@ export default function App() {
   const [mappingSession, setMappingSession] = useState(null);
   const [feeds, setFeeds] = useState(INGESTION_FEEDS); 
   const [streak, setStreak] = useState(12);
+  const [activeSchema, setActiveSchema] = useState(null);
   
   // NEW: Hoisted Filings State for STP
   const [filings, setFilings] = useState(BEVERLEY_FILINGS);
@@ -7460,6 +7865,7 @@ export default function App() {
   };
   const handleLogout = () => { setCurrentUserId(null); setSelectedFund(null); setView("login"); };
   const handleGoToIngestion = () => { setSelectedFund(null); setView("ingestion"); };
+  const handleGoToSchemaRegistryView = () => { setSelectedFund(null); setView("schemas"); };
 
   const handleGoToExceptions = (fundId) => {
     const targetFund = fundSeeds.find(f => f.fund_id === fundId);
@@ -7584,6 +7990,7 @@ export default function App() {
         onToggleRole={handleToggleRole} 
         onLogout={handleLogout} 
         onGoToIngestion={handleGoToIngestion}
+        onGoToSchemaRegistryView={handleGoToSchemaRegistryView}
         onGoToFilings={handleGoToFilings}
         onOpenAiSettings={()=>setShowAiSettings(true)}
         onGoToDashboard={(target) => {
@@ -7595,8 +8002,9 @@ export default function App() {
         streak={streak}
         notificationCount={notifications.length} // Pass the count here
       />
-      {view==="ingestion"&&!selectedFund&&<IngestionStatusWidget feeds={feeds} setFeeds={setFeeds} currentUser={currentUser} onGoToDashboard={()=>{setView("dashboard");}} onOpenMapping={session=>setMappingSession(session)} onGoToExceptions={handleGoToExceptions} />}
-      
+      {view==="ingestion"&&!selectedFund&&<IngestionStatusWidget feeds={feeds} setFeeds={setFeeds} currentUser={currentUser} onGoToDashboard={()=>{setView("dashboard");}} onOpenMapping={session=>setMappingSession(session)} onGoToExceptions={handleGoToExceptions} setView={setView}/>}
+      {view === "schemas" && <SchemaRegistryView onBack={() => setView("ingestion")} onOpenStudio={(id) => { setActiveSchema(id); setView("schema_studio"); }} />}
+      {view === "schema_studio" && <SchemaStudioView schemaId={activeSchema} onBack={() => setView("schemas")} />}  
       {/* NOTE: BeverleyFilingTracker now accepts `filings` as a prop rather than keeping it in local state. 
         Update the component signature in your file to match this: `function BeverleyFilingTracker({ filings, onGoToDashboard })`
       */}
