@@ -173,6 +173,18 @@ const AI_PARAM_DEFAULTS = {
   allCodes:      ["CATEGORY_MISMATCH","MISSING_ACCOUNT_NUMBER","FX_MISMATCH","FX_RATE_VARIANCE","INVALID_ACCOUNT","MISSING_FUND_ID","HOLDINGS_CROSS_CHECK","ACCRUAL_VARIANCE","NAV_MISMATCH","STALE_PRICE","COUNTERPARTY_MISSING"],
 };
 
+// ─── SPRINT 1 DATA: Autonomous Log & AI Decisions (C-02 & C-03) ─────────────
+
+// ─── SPRINT 1 DATA: Autonomous Log & AI Decisions (Updated) ─────────────────
+const AI_DECISION_LOG = [
+  { id: 'log-1', timestamp: 'Dec 31, 23:46:01', type: 'autonomous', exceptionId: 'EXC-A01', rule: 'Bloomberg FX tolerance rule (< 0.05%)', confidence: 99, status: 'auto-resolved', impact: 'Variance Cleared', details: 'FX rate variance below threshold. Source: Bloomberg B-PIPE.', originalValue: '1.0845', correctedValue: '1.0842' },
+  { id: 'log-2', timestamp: 'Dec 31, 23:46:02', type: 'autonomous', exceptionId: 'EXC-A02', rule: 'Bloomberg FX tolerance rule (< 0.05%)', confidence: 99, status: 'auto-resolved', impact: 'Variance Cleared', details: 'FX rate variance below threshold. Source: Bloomberg B-PIPE.', originalValue: '1.2610', correctedValue: '1.2611' },
+  { id: 'log-3', timestamp: 'Dec 31, 23:46:03', type: 'autonomous', exceptionId: 'EXC-A03', rule: 'T+1 settlement match', confidence: 98, status: 'auto-resolved', impact: 'Trade Reconciled', details: 'T+1 settlement variance matches confirmed trade record.', originalValue: 'Unsettled', correctedValue: 'Settled' },
+  { id: 'log-4', timestamp: 'Dec 31, 23:46:04', type: 'autonomous', exceptionId: 'EXC-A04', rule: 'Prior-period frequency match (6 periods)', confidence: 96, status: 'auto-resolved', impact: 'Acknowledged', details: 'Routine accrual rounding variance.', originalValue: '$4,500.01', correctedValue: '$4,500.00' },
+  { id: 'log-5', timestamp: 'Jan 01, 09:22:15', type: 'human-certified', exceptionId: 'EXC-003', rule: 'Prior-period resolution + Bloomberg 4PM fix', confidence: 92, status: 'human-accepted', impact: 'Value Overridden', details: 'Overridden EUR dividend income. Accepted by S. Chen.', originalValue: '$200,000.00', correctedValue: '$108,420.00' },
+  { id: 'log-6', timestamp: 'Jan 01, 09:25:10', type: 'human-certified', exceptionId: 'EXC-H01', rule: 'Regex pattern extraction', confidence: 88, status: 'human-accepted', impact: 'Entity Extracted', details: 'Extracted counterparty name from unstructured wire detail.', originalValue: 'WIRE IN GS&CO NYC', correctedValue: 'Goldman Sachs & Co.' },
+  { id: 'log-7', timestamp: 'Jan 01, 09:30:00', type: 'human-certified', exceptionId: 'EXC-006', rule: 'GL to Holdings Reconciliation', confidence: 94, status: 'human-accepted', impact: 'Mapped ID', details: 'Reconciled orphaned holding based on CUSIP fuzzy match.', originalValue: 'Unknown Asset', correctedValue: 'ID-8821' }
+];
 const SOC1_ACCESS_LOG = [
   {ts:"Dec 31, 11:58 PM",user:"u1",action:"GL ingested",detail:"RB_GL_20241231.csv — 131 rows, 8 exceptions raised"},
   {ts:"Dec 31, 9:14 AM", user:"u1",action:"Exception flagged",detail:"EXC-001: CATEGORY_MISMATCH — Account 1010 classification error"},
@@ -528,6 +540,9 @@ const CROSS_CHECKS_DATA = [
   { id: "BS-01", category: "Balance Sheet", target: "Both", description: "Net assets tie between balance sheet and statement of changes", status: "Pass", value: "$0 variance", aiFlag: null },
   { id: "BS-02", category: "Balance Sheet", target: "Retail", description: "Net asset components foot to total net assets", status: "Fail", value: "$150,000 variance", aiFlag: "pop_fail", aiNote: "Chronically failing: Has failed in 4 consecutive periods due to unmapped suspense accounts." },
   { id: "BS-03", category: "Balance Sheet", target: "Alt / Private", description: "Partners' / members' capital ties across all statements and by class/series", status: "Pass", value: "Ties exactly", aiFlag: null },
+  { id: "FE-01", category: "Fees & Accruals", target: "Both", description: "Independent AI recalculation of advisory fee vs. GL reported amount", status: "Fail", value: "$1,800 variance", aiFlag: "pop_fail", aiNote: "Pattern suggests a timing difference in fee accrual calculation (calendar month vs. business days)." },
+  { id: "FE-02", category: "Fees & Accruals", target: "Alt / Private", description: "Performance fee consistency against high-water mark", status: "Pass", value: "Verified", aiFlag: null },
+  { id: "FE-03", category: "Fees & Accruals", target: "Retail", description: "Expense ratio vs. prospectus cap limits", status: "Pass", value: "Within 1.50% cap", aiFlag: null },
   { id: "IS-01", category: "Income Statement", target: "Both", description: "Total investment income agrees to note detail", status: "Pass", value: "$0 variance", aiFlag: null },
   { id: "IS-04", category: "Income Statement", target: "Both", description: "Expense ratios are within prospectus/PPM caps and consistent with prior year", status: "Fail", value: "Exceeds cap by 2 bps", aiFlag: "pop_fail", aiNote: "Chronically failing: Expense ratio cap exceeded for 2 consecutive periods due to unmapped legal fees." },
   { id: "SC-01", category: "Statement of Changes", target: "Both", description: "Statement of changes arithmetic: beginning + activity = ending", status: "Pass", value: "Math verified", aiFlag: null },
@@ -539,6 +554,7 @@ const CROSS_CHECKS_DATA = [
   { id: "NT-01", category: "Notes", target: "Both", description: "Related party transactions are complete and dollar amounts agree", status: "Pass", value: "Agrees to IS", aiFlag: null },
   { id: "TX-03", category: "Tax", target: "Both", description: "Section 988 FX gain/loss character is properly classified", status: "Fail", value: "Character Mismatch", aiFlag: "multi_fund", aiNote: "Systemic issue: Currently failing across 3 other funds for this client." },
   { id: "TX-04", category: "Tax", target: "Alt / Private", description: "K-1 items tie to partnership tax return and financial statements", status: "Pass", value: "Verified", aiFlag: null }
+
 ];
 
 // Current FV total = 608748500+73450000+39000000+34450000+1250000+1020000+520000 = 758,438,500
@@ -1306,10 +1322,12 @@ function ResolutionForm({exc,onResolve,onUpdate,onAddThread,currentUserId}) {
     </button>
   </div>;
 }
+// ─── SPRINT 3: Automated Journal Entry Link (C-10) ───────────────────────────
 function ResolutionAuditRecord({exc,onReopen,onAddThread,currentUserId}) {
   const resolver=exc.resolvedBy?TEAM.find(m=>m.id===exc.resolvedBy):null;
   const assignee=exc.assignee?TEAM.find(m=>m.id===exc.assignee):null;
   const resOption=[...RESOLUTIONS.error,...RESOLUTIONS.warning].find(r=>r.value===exc.resolution);
+  
   return <Card title="Resolution Record" accessory={<span style={{...SANS,fontSize:11,fontWeight:700,padding:"3px 9px",borderRadius:5,background:T.okBg,color:T.okBase,border:`1px solid ${T.okBorder}`,display:"flex",alignItems:"center",gap:4}}><span>✓</span>Resolved</span>}>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
       <div><div style={{...SANS,fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:5}}>Resolution Action</div><div style={{display:"flex",alignItems:"center",gap:7}}><span style={{fontSize:16}}>{resOption?.icon}</span><span style={{...SANS,fontSize:13,fontWeight:600,color:T.okBase}}>{resOption?.label||exc.resolution}</span></div></div>
@@ -1317,6 +1335,24 @@ function ResolutionAuditRecord({exc,onReopen,onAddThread,currentUserId}) {
       {exc.overrideValue&&<div><div style={{...SANS,fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:5}}>Override Value</div><span style={{...MONO,fontSize:13,fontWeight:600,padding:"2px 7px",borderRadius:4,background:T.warnBg,color:T.warnBase,border:`1px solid ${T.warnBorder}`}}>{exc.overrideValue}</span></div>}
       {assignee&&<div><div style={{...SANS,fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:5}}>Assigned To</div><div style={{display:"flex",alignItems:"center",gap:7}}><Avatar user={assignee} size={24}/><span style={{...SANS,fontSize:13}}>{assignee.name}</span></div></div>}
     </div>
+
+    {/* ─── C-10: AUTOMATED JE BANNER ─── */}
+    {exc.resolution === "override_value" && (
+      <div style={{marginBottom: 16, padding: "12px 16px", background: T.okBg, border: `1px solid ${T.okBorder}`, borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center"}}>
+         <div>
+           <div style={{...SANS, color: T.okBase, fontSize: 12, fontWeight: 700, marginBottom: 2}}>
+             <span style={{marginRight: 6}}>✓</span> Adjusting journal entry auto-generated
+           </div>
+           <div style={{...MONO, color: T.textMuted, fontSize: 10}}>
+             DR Suspense / CR {exc.account_number || 'Acct'}
+           </div>
+         </div>
+         <button onClick={() => window.dispatchEvent(new CustomEvent("open-journal", { detail: exc }))} style={{...SANS, fontSize: 11, fontWeight: 700, padding: "6px 12px", background: "#fff", border: `1px solid ${T.okBorder}`, borderRadius: 4, cursor: "pointer", color: T.okBase, transition:"all 0.2s"}}>
+           Review in Journals
+         </button>
+      </div>
+    )}
+
     <Card title="Audit Thread" accessory={<span style={{...SANS,fontSize:11,color:T.textMuted}}>{exc.thread.length} messages</span>}><ThreadedComments thread={exc.thread} onAddMessage={onAddThread} currentUserId={currentUserId}/></Card>
     <button className="reopen-btn" onClick={()=>onReopen(exc.id)} style={{...SANS,background:T.cardBg,color:T.textMuted,border:`1px solid ${T.border}`,borderRadius:6,padding:"8px 16px",fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:7}}><span>↺</span>Reopen Exception</button>
   </Card>;
@@ -1410,33 +1446,210 @@ function DetailPane({exc,onResolve,onReopen,onUpdate,onAddThread,currentUserId})
     {showPdf&&<PdfModal onClose={()=>setShowPdf(false)}/>}
   </div>;
 }
+// ─── SPRINT 1: Inline AI Decision Detail Pane ────────────────────────────────
+function AiDecisionDetailPane({ log }) {
+  if (!log) return null;
+  return (
+    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#fff' }}>
+      
+      {/* 1. Header (Mimicking the standard Exception DetailPane) */}
+      <div style={{ padding: '24px 32px', borderBottom: `1px solid ${T.border}`, background: '#fff' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+              <span style={{ padding: '4px 8px', borderRadius: 4, background: log.type === 'autonomous' ? T.okBg : T.actionBg, color: log.type === 'autonomous' ? T.okBase : T.actionBase, ...SANS, fontSize: 11, fontWeight: 700, border: `1px solid ${log.type === 'autonomous' ? T.okBorder : '#bfdbfe'}` }}>
+                {log.type === 'autonomous' ? '🛡 Autonomously Resolved' : '👤 Human-Certified'}
+              </span>
+              <div style={{ ...MONO, fontSize: 12, color: T.textMuted }}>{log.exceptionId}</div>
+            </div>
+            <h2 style={{ ...SANS, fontSize: 24, fontWeight: 700, color: T.textPrimary, margin: 0 }}>
+              {log.details.split('.')[0]}
+            </h2>
+          </div>
+        </div>
 
+        {/* Metadata Strip */}
+        <div style={{ display: 'flex', gap: 32, ...SANS, fontSize: 12 }}>
+          <div><span style={{ color: T.textMuted, marginRight: 8 }}>Time:</span><span style={{ fontWeight: 600, color: T.textPrimary }}>{log.timestamp}</span></div>
+          <div><span style={{ color: T.textMuted, marginRight: 8 }}>Impact:</span><span style={{ fontWeight: 600, color: T.textPrimary }}>{log.impact}</span></div>
+          <div><span style={{ color: T.textMuted, marginRight: 8 }}>Model Confidence:</span><span style={{ fontWeight: 600, color: T.aiBase }}>{log.confidence}%</span></div>
+        </div>
+      </div>
+
+      <div style={{ padding: '32px', flex: 1, overflowY: 'auto', background: '#f8fafc' }}>
+
+        {/* 2. Auto-Correction Execution (Before & After) */}
+        <div style={{ ...SANS, fontSize: 13, color: T.textMuted, textTransform: 'uppercase', fontWeight: 700, marginBottom: 12, letterSpacing: '0.05em' }}>Auto-Correction Execution</div>
+        <div style={{ background: '#fff', border: `1px solid ${T.border}`, borderRadius: 8, padding: '20px', marginBottom: 32, boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
+           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+             <div style={{ flex: 1 }}>
+               <div style={{ ...SANS, fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Original Payload Value</div>
+               <div style={{ ...MONO, fontSize: 15, color: T.errorBase, textDecoration: 'line-through', background: T.errorBg, padding: '6px 12px', borderRadius: 4, display: 'inline-block' }}>{log.originalValue}</div>
+             </div>
+             <div style={{ fontSize: 24, color: T.textMuted, padding: '0 20px' }}>→</div>
+             <div style={{ flex: 1, textAlign: 'right' }}>
+               <div style={{ ...SANS, fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Corrected Ledger Value</div>
+               <div style={{ ...MONO, fontSize: 15, color: T.okBase, fontWeight: 700, background: T.okBg, padding: '6px 12px', borderRadius: 4, border: `1px solid ${T.okBorder}`, display: 'inline-block' }}>{log.correctedValue}</div>
+             </div>
+           </div>
+        </div>
+
+        {/* 3. Applied Rule Logic */}
+        <div style={{ ...SANS, fontSize: 13, color: T.textMuted, textTransform: 'uppercase', fontWeight: 700, marginBottom: 12, letterSpacing: '0.05em' }}>Applied Rule Logic</div>
+        <div style={{ background: T.aiBg, border: `1px solid ${T.aiBorder}`, padding: '20px', borderRadius: 8, marginBottom: 32 }}>
+          <div style={{ ...SANS, fontSize: 14, fontWeight: 700, color: T.aiBase, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{fontSize: 18}}>✦</span> {log.rule}
+          </div>
+          <div style={{ ...SANS, fontSize: 13, color: T.aiDark, lineHeight: 1.6 }}>
+            {log.details}
+          </div>
+        </div>
+        
+        {/* 4. Activity Thread (Mimics the user audit thread) */}
+        <div style={{ ...SANS, fontSize: 13, color: T.textMuted, textTransform: 'uppercase', fontWeight: 700, marginBottom: 12, letterSpacing: '0.05em' }}>Activity & Resolution</div>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
+          <div style={{ width: 32, height: 32, borderRadius: '50%', background: T.aiBase, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>✦</div>
+          <div>
+            <div style={{ ...SANS, fontSize: 13, fontWeight: 700, color: T.textPrimary }}>Torrance Autonomous Engine</div>
+            <div style={{ ...SANS, fontSize: 12, color: T.textMuted, marginTop: 2 }}>{log.timestamp}</div>
+            <div style={{ ...SANS, fontSize: 13, color: T.textPrimary, marginTop: 8, background: '#fff', padding: '12px 16px', borderRadius: 8, border: `1px solid ${T.border}` }}>
+              Exception flagged, matched to established resolution rule, and auto-resolved with {log.confidence}% confidence. 
+              Audit trace locked.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+// ─── SPRINT 1: AI Decision Log Tab (C-03) ────────────────────────────────────
+function AIDecisionLogTab() {
+  const [filter, setFilter] = useState('all');
+  const filteredLogs = AI_DECISION_LOG.filter(log => filter === 'all' || log.type === filter);
+
+  return (
+    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', background: T.appBg }}>
+      <div style={{ padding: '16px 24px', background: T.cardBg, borderBottom: `1px solid ${T.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ ...SANS, fontSize: 13, color: T.textMuted }}>
+          <span style={{ fontWeight: 700, color: T.textPrimary }}>{AI_DECISION_LOG.length} AI decisions this close period</span> — 4 autonomous, 3 human-certified, 0 overridden.
+        </div>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <select value={filter} onChange={e => setFilter(e.target.value)} style={{ ...SANS, padding: '6px 12px', borderRadius: 4, border: `1px solid ${T.border}`, fontSize: 12, outline: 'none' }}>
+            <option value="all">All Decisions</option>
+            <option value="autonomous">Autonomous Only</option>
+            <option value="human-certified">Human-Certified Only</option>
+          </select>
+          <button style={{ ...SANS, padding: '6px 12px', background: T.actionBase, color: '#fff', borderRadius: 4, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>Export PDF</button>
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', background: T.cardBg, borderRadius: 8, overflow: 'hidden', border: `1px solid ${T.border}`, boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
+          <thead style={{ background: T.appBg }}>
+            <tr>
+              {['Timestamp', 'Exception', 'Decision Type', 'Rule / Basis', 'Impact', 'Status'].map(h => (
+                <th key={h} style={{ padding: '12px 16px', ...SANS, fontSize: 10, fontWeight: 700, color: T.textMuted, textTransform: 'uppercase', borderBottom: `2px solid ${T.border}` }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filteredLogs.map(log => (
+              <tr key={log.id} style={{ borderBottom: `1px solid ${T.border}`, transition: "background 0.15s" }} onMouseEnter={e=>e.currentTarget.style.background=T.appBg} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                <td style={{ padding: '12px 16px', ...MONO, fontSize: 11, color: T.textMuted, whiteSpace:"nowrap" }}>{log.timestamp}</td>
+                <td style={{ padding: '12px 16px', ...MONO, fontSize: 12, fontWeight: 700, color: T.textPrimary }}>{log.exceptionId}</td>
+                <td style={{ padding: '12px 16px', ...SANS, fontSize: 11 }}>
+                  {log.type === 'autonomous' ? <span style={{ color: T.okBase, fontWeight: 700, background: T.okBg, padding: "2px 6px", borderRadius: 4, border: `1px solid ${T.okBorder}` }}>🛡 Autonomous</span> : <span style={{ color: T.actionBase, fontWeight: 700, background: T.actionBg, padding: "2px 6px", borderRadius: 4, border: `1px solid #bfdbfe` }}>👤 Suggested</span>}
+                </td>
+                <td style={{ padding: '12px 16px' }}>
+                  <div style={{ ...SANS, fontSize: 12, color: T.textPrimary, fontWeight: 600 }}>{log.rule}</div>
+                  <div style={{ ...MONO, fontSize: 10, color: T.aiBase, marginTop: 4, background: T.aiBg, padding: "2px 6px", borderRadius: 4, border: `1px solid ${T.aiBorder}`, display:"inline-block" }}>✦ Conf: {log.confidence}%</div>
+                </td>
+                <td style={{ padding: '12px 16px', ...SANS, fontSize: 11, color: T.textMuted }}>{log.impact}</td>
+                <td style={{ padding: '12px 16px' }}>
+                   <span style={{ padding: '4px 8px', borderRadius: 4, background: log.status === 'auto-resolved' ? T.okBg : T.okBg, color: T.okBase, ...SANS, fontSize: 10, fontWeight: 700, border: `1px solid ${T.okBorder}` }}>
+                     ✓ {log.status}
+                   </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+// ─── SPRINT 1: Provenance Drilldown Panel (C-06) ─────────────────────────────
+function ProvenancePanel({ trace, onClose }) {
+  if (!trace) return null;
+  return (
+    <div className="slide-in" style={{ position: 'fixed', right: 0, top: 0, bottom: 0, width: 500, background: T.cardBg, borderLeft: `1px solid ${T.border}`, boxShadow: '-4px 0 24px rgba(0,0,0,0.1)', zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '20px 24px', background: T.navyHeader, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+           <div style={{ ...SANS, color: '#fff', fontSize: 16, fontWeight: 700 }}>Data Provenance</div>
+           <div style={{ ...SANS, color: '#8898aa', fontSize: 11, marginTop: 2 }}>Cryptographic lineage trace</div>
+        </div>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: 18 }}>✕</button>
+      </div>
+
+      <div style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
+        <div style={{ ...SANS, fontSize: 12, color: T.textMuted, textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>Financial Statement Line</div>
+        <div style={{ ...SANS, fontSize: 18, fontWeight: 700, color: T.textPrimary, marginBottom: 4 }}>{trace.lineItem}</div>
+        <div style={{ ...MONO, fontSize: 24, fontWeight: 700, color: T.okBase, marginBottom: 32 }}>{trace.value}</div>
+
+        <div style={{ ...SANS, fontSize: 12, color: T.textMuted, textTransform: 'uppercase', fontWeight: 700, marginBottom: 12 }}>Derived Target</div>
+        <div style={{ ...MONO, fontSize: 12, padding: '10px 12px', background: T.appBg, borderRadius: 6, border: `1px solid ${T.border}`, marginBottom: 24, color: T.textPrimary }}>
+          {trace.derivedField}
+        </div>
+
+        <div style={{ ...SANS, fontSize: 12, color: T.textMuted, textTransform: 'uppercase', fontWeight: 700, marginBottom: 12 }}>AI Decisions & Interventions</div>
+        <div style={{ background: T.aiBg, border: `1px solid ${T.aiBorder}`, padding: '16px', borderRadius: 8, marginBottom: 24 }}>
+          <div style={{ ...SANS, fontSize: 12, fontWeight: 700, color: T.aiBase, marginBottom: 8, display:"flex", alignItems:"center", gap:6 }}>
+            <span>✦</span> Exception {trace.exception.id} — {trace.exception.status}
+          </div>
+          <div style={{ ...SANS, fontSize: 12, color: T.aiDark, lineHeight: 1.6 }}>
+            {trace.aiDecision}
+          </div>
+        </div>
+
+        <div style={{ ...SANS, fontSize: 12, color: T.textMuted, textTransform: 'uppercase', fontWeight: 700, marginBottom: 12 }}>Raw Payload Source</div>
+        {trace.rawRows.map(row => (
+           <div key={row.id} style={{ background: T.appBg, border: `1px solid ${T.border}`, padding: '14px', borderRadius: 8 }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+               <span style={{ ...SANS, fontSize: 13, fontWeight: 700, color: T.textPrimary }}>{row.source}</span>
+               <span style={{ ...MONO, fontSize: 10, color: T.textMuted, background: T.cardBg, padding: "2px 6px", borderRadius: 4, border: `1px solid ${T.border}` }}>Row {row.id}</span>
+             </div>
+             <div style={{ ...MONO, fontSize: 11, color: T.textMuted, marginBottom: 8 }}>File: {row.payload}</div>
+             <div style={{ ...MONO, fontSize: 12, color: T.errorBase, textDecoration: 'line-through', background: T.errorBg, padding: "4px 8px", borderRadius: 4, display: "inline-block" }}>Original Value: {row.originalValue}</div>
+           </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 // ─── Exceptions Tab (Updated with Inbox Zero Reward) ─────────────────────────
+// ─── SPRINT 1: Exception Queue Reframe (C-02 & C-04) ─────────────────────────
 function ExceptionsTab({exceptions,approval,onResolve,onReopen,onUpdate,onAddThread,currentUserId,onSubmit}) {
   const [activeId,setActiveId]=useState(exceptions[0]?.id||null);
   const [selected,setSelected]=useState(new Set());
-  const [forceShowResolved, setForceShowResolved]=useState(false); // Allows bypassing Inbox Zero
-  
-  const activeExc=exceptions.find(e=>e.id===activeId);
+  const [forceShowResolved, setForceShowResolved]=useState(false); 
+  const [showAutoResolved, setShowAutoResolved] = useState(false); // C-02 State
+
   const toggleSel=useCallback(id=>setSelected(prev=>{const n=new Set(prev);n.has(id)?n.delete(id):n.add(id);return n;}),[]);
   const toggleAll=()=>setSelected(s=>s.size===exceptions.length?new Set():new Set(exceptions.map(e=>e.id)));
   
-  const holdingsExcs=exceptions.filter(e=>e.code==="HOLDINGS_CROSS_CHECK");
-  const errorExcs=exceptions.filter(e=>e.severity==="error"&&e.code!=="HOLDINGS_CROSS_CHECK");
-  const warnExcs=exceptions.filter(e=>e.severity==="warning");
-  const aiCount=exceptions.filter(e=>!!AI_SUGGESTIONS[e.id]&&e.status==="open").length;
   const openErrors=exceptions.filter(e=>e.severity==="error"&&e.status==="open");
+  const autoResolvedCount = AI_DECISION_LOG.filter(log => log.type === 'autonomous').length;
 
-  // HABIT LOOP: INBOX ZERO STATE
+  // C-04: Close Certified State
   if (openErrors.length === 0 && exceptions.length > 0 && approval?.status === "open" && !forceShowResolved) {
     return (
       <div className="fade-in" style={{display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:"100%", background:T.appBg}}>
-        <div style={{fontSize: 72, marginBottom: 16, animation: "slideUp 0.6s ease forwards"}}>🎉</div>
-        <div style={{...SANS, fontSize: 26, fontWeight: 700, color: T.textPrimary, marginBottom: 8}}>Inbox Zero!</div>
-        <div style={{...SANS, fontSize: 15, color: T.textMuted, marginBottom: 32, maxWidth: 400, textAlign: "center", lineHeight:1.5}}>
-          Amazing work. All blocking exceptions have been resolved for this fund. The ledger is clean and balanced.
+        <div style={{fontSize: 72, marginBottom: 16, animation: "slideUp 0.6s ease forwards"}}>📜</div>
+        <div style={{...SANS, fontSize: 26, fontWeight: 700, color: T.textPrimary, marginBottom: 8}}>Review Complete — Ready for Sign-off</div>
+        <div style={{...SANS, fontSize: 15, color: T.textMuted, marginBottom: 32, maxWidth: 450, textAlign: "center", lineHeight:1.5}}>
+          The residual queue is empty. The autonomous close is ready for certification. The AI Decision Log has been fully audited.
         </div>
-       {/* Replaced vibrant emerald gradient with T.okBase */}
        <button onClick={onSubmit} className="glow-btn" style={{...SANS, fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 6, border: "none", background: T.okBase, color: "#fff", cursor: "pointer", display:"flex", alignItems:"center", gap:8}}>
           <span>↑</span> Submit Fund for Controller Review
         </button>
@@ -1447,25 +1660,85 @@ function ExceptionsTab({exceptions,approval,onResolve,onReopen,onUpdate,onAddThr
     );
   }
 
-  return <div style={{display:"flex",height:"100%"}}>
-    <aside style={{flex:"0 0 40%", borderRight:`1px solid ${T.border}`,background:T.cardBg,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-      <div style={{padding:"13px 12px 10px",borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.cardBg,zIndex:5}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><input type="checkbox" checked={selected.size===exceptions.length&&exceptions.length>0} ref={el=>{if(el)el.indeterminate=selected.size>0&&selected.size<exceptions.length;}} onChange={toggleAll} aria-label="Select all"/><div style={{...SANS,fontWeight:700,fontSize:13}}>Exception Queue</div></div>
-        <div style={{...SANS,fontSize:11,color:T.textMuted,paddingLeft:23}}><span style={{color:T.errorBase,fontWeight:600}}>{exceptions.filter(e=>e.severity==="error"&&e.status==="open").length} errors</span>{" · "}<span style={{color:T.warnBase,fontWeight:600}}>{exceptions.filter(e=>e.severity==="warning"&&e.status==="open").length} warnings</span>{" · "}<span style={{color:T.okBase,fontWeight:600}}>{exceptions.filter(e=>e.status==="resolved").length} resolved</span></div>
-        {aiCount>0&&<div style={{marginTop:7,padding:"4px 8px",borderRadius:5,background:T.aiBg,border:`1px solid ${T.aiBorder}`,display:"inline-flex",alignItems:"center",gap:5}}><span style={{...MONO,fontSize:9,color:T.aiBase,fontWeight:700}}>✦ AI</span><span style={{...SANS,fontSize:10,color:T.aiBase}}>{aiCount} suggestion{aiCount!==1?"s":""} available</span></div>}
-        <div style={{marginTop:9,height:4,background:T.border,borderRadius:2}}><div style={{height:"100%",borderRadius:2,background:T.okBase,transition:"width 0.4s",width:`${exceptions.length?(exceptions.filter(e=>e.status==="resolved").length/exceptions.length)*100:100}%`}}/></div>
+  return (
+    <div style={{display:"flex",height:"100%"}}>
+      
+      {/* ─── LEFT PANE: QUEUE LIST ─── */}
+      <aside style={{flex:"0 0 40%", borderRight:`1px solid ${T.border}`,background:T.cardBg,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+        {/* C-04 Header Reframe */}
+        <div style={{padding:"16px 16px",borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.cardBg,zIndex:5}}>
+          <div style={{...SANS,fontWeight:700,fontSize:18, color:T.textPrimary, marginBottom:6}}>Exception Engine</div>
+          <div style={{...MONO,fontSize:11,color:T.textMuted, display:"flex", gap:12}}>
+             <span style={{color:T.okBase,fontWeight:700}}>✓ Auto-resolved: {autoResolvedCount}</span>
+             <span style={{color:openErrors.length>0?T.warnBase:T.okBase,fontWeight:700}}>⚠ Requires review: {openErrors.length}</span>
+          </div>
+        </div>
+        
+        <div style={{flex:1,overflowY:"auto",paddingBottom:100, background:T.appBg}}>
+          
+          {/* C-02 Auto-Resolved Collapsible Section */}
+          <div style={{borderBottom:`1px solid ${T.border}`, background:T.cardBg}}>
+            <div onClick={()=>setShowAutoResolved(!showAutoResolved)} style={{padding:"12px 16px", background:T.okBg, borderBottom: showAutoResolved ? `1px solid ${T.okBorder}` : "none", cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+              <div style={{...SANS, fontSize:12, fontWeight:700, color:T.okBase, display:"flex", alignItems:"center", gap:8}}>
+                 <span>🛡</span> Autonomously Resolved ({autoResolvedCount})
+              </div>
+              <span style={{color:T.okBase, fontSize:10}}>{showAutoResolved ? "▲" : "▼"}</span>
+            </div>
+            
+            {showAutoResolved && (
+               <div style={{padding:"8px 16px"}}>
+                 {AI_DECISION_LOG.filter(l => l.type === "autonomous").map(log => (
+                    <div key={log.id} onClick={() => setActiveId(log.id)} style={{padding:"10px 12px", margin:"0 -12px", borderRadius:6, borderBottom:`1px dashed ${T.border}`, display:"flex", justifyContent:"space-between", alignItems:"flex-start", cursor:"pointer", transition:"background 0.2s", background: activeId === log.id ? T.appBg : "transparent"}} onMouseEnter={e=>e.currentTarget.style.background=T.appBg} onMouseLeave={e=>e.currentTarget.style.background= activeId === log.id ? T.appBg : "transparent"}>
+                       <div style={{flex:1, paddingRight:12}}>
+                         <div style={{...SANS, fontSize:12, fontWeight:700, color:T.textPrimary, marginBottom:2}}>{log.exceptionId}</div>
+                         <div style={{...SANS, fontSize:11, color:T.textMuted, lineHeight:1.4}}>{log.details}</div>
+                       </div>
+                       <div style={{textAlign:"right", flexShrink:0}}>
+                         <div style={{...SANS, fontSize:10, fontWeight:700, color:T.aiBase, background:T.aiBg, padding:"2px 6px", borderRadius:4, border:`1px solid ${T.aiBorder}`}}>{log.rule}</div>
+                         <div style={{...MONO, fontSize:10, color:T.textMuted, marginTop:4}}>{log.confidence}% Conf</div>
+                       </div>
+                    </div>
+                  ))}
+               </div>
+            )}
+          </div>
+
+          {/* Residual Queue Header */}
+          <div style={{padding:"12px 16px", background:T.cardBg, borderBottom:`1px solid ${T.border}`, ...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textTransform:"uppercase", letterSpacing:"0.05em", display:"flex", alignItems:"center", gap:8}}>
+             <input type="checkbox" checked={selected.size===exceptions.length&&exceptions.length>0} ref={el=>{if(el)el.indeterminate=selected.size>0&&selected.size<exceptions.length;}} onChange={toggleAll} aria-label="Select all" style={{margin:0}}/>
+             Requires Your Judgment
+          </div>
+
+          {exceptions.map(e=>(
+            <ExcCard key={e.id} exc={e} active={activeId===e.id} selected={selected.has(e.id)} onClick={()=>setActiveId(e.id)} onToggleSelect={toggleSel}/>
+          ))}
+        </div>
+      </aside>
+
+      {/* ─── RIGHT PANE: DETAIL VIEW (Exception OR AI Log) ─── */}
+      <div style={{flex:1,overflowY:"auto",background:T.cardBg,position:"relative"}}>
+        {(() => {
+          const activeExc = exceptions.find(e => e.id === activeId);
+          const activeAiLog = AI_DECISION_LOG.find(l => l.id === activeId);
+
+          if (activeExc) {
+            return <DetailPane exc={activeExc} onResolve={onResolve} onReopen={onReopen} onUpdate={onUpdate} onAddThread={onAddThread} currentUserId={currentUserId}/>;
+          } 
+          if (activeAiLog) {
+            return <AiDecisionDetailPane log={activeAiLog} />;
+          }
+          return (
+            <div style={{display:"flex", alignItems:"center", justifyContent:"center", height:"100%", color:T.textMuted, ...SANS}}>
+              Select an exception or AI decision to view details
+            </div>
+          );
+        })()}
       </div>
-      <div style={{overflowY:"auto",flex:1}}>
-        {holdingsExcs.length>0&&<><div style={{padding:"5px 13px",background:"#f5f3ff",borderBottom:`1px solid #ddd6fe`,display:"flex",alignItems:"center",gap:6}}><span style={{...SANS,fontSize:10,fontWeight:700,color:T.catCap,letterSpacing:"0.06em",textTransform:"uppercase"}}>Holdings Cross-Check</span><span style={{...MONO,fontSize:10,color:T.catCap,fontWeight:700}}>({holdingsExcs.length})</span></div>{holdingsExcs.map(exc=><ExcCard key={exc.id} exc={exc} active={activeId===exc.id} selected={selected.has(exc.id)} onClick={()=>setActiveId(exc.id)} onToggleSelect={toggleSel}/>)}</>}
-        {errorExcs.length>0&&<><SectionDivider label="Errors" count={errorExcs.length} color={T.errorBase} bg={T.errorBg} border={T.errorBorder}/>{errorExcs.map(exc=><ExcCard key={exc.id} exc={exc} active={activeId===exc.id} selected={selected.has(exc.id)} onClick={()=>setActiveId(exc.id)} onToggleSelect={toggleSel}/>)}</>}
-        {warnExcs.length>0&&<><SectionDivider label="Warnings" count={warnExcs.length} color={T.warnBase} bg={T.warnBg} border={T.warnBorder}/>{warnExcs.map(exc=><ExcCard key={exc.id} exc={exc} active={activeId===exc.id} selected={selected.has(exc.id)} onClick={()=>setActiveId(exc.id)} onToggleSelect={toggleSel}/>)}</>}
-      </div>
-      <BulkActionBar selected={selected} exceptions={exceptions} onBulkResolve={(ids,action)=>{ if(action==="reopen")ids.forEach(id=>onReopen(id));else ids.forEach(id=>{const e=exceptions.find(x=>x.id===id);if(e&&e.status==="open")onResolve(id,action,"","");});setSelected(new Set()); }} onBulkAssign={(ids,aId)=>ids.forEach(id=>onUpdate(id,{assignee:aId}))} onClear={()=>setSelected(new Set())}/>
-    </aside>
-    <main style={{flex:"0 0 60%",overflowY:"auto",background:T.appBg}}>
-      {activeExc?<DetailPane key={activeExc.id} exc={activeExc} onResolve={onResolve} onReopen={onReopen} onUpdate={onUpdate} onAddThread={txt=>onAddThread(activeExc.id,txt)} currentUserId={currentUserId}/>:<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100%",flexDirection:"column",gap:10,color:T.textMuted}}><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" strokeLinecap="round"/></svg><span style={{...SANS,fontSize:13,fontWeight:500}}>Select an exception to review</span></div>}
-    </main>
-  </div>;
+      
+      {/* ─── ACTION BAR ─── */}
+      <BulkActionBar selected={selected} exceptions={exceptions} onBulkResolve={(ids,res)=>{ids.forEach(id=>{if(res==="reopen")onReopen(id);else onResolve(id,res,"","");});setSelected(new Set());}} onBulkAssign={(ids,uid)=>{ids.forEach(id=>onUpdate(id,{assignee:uid}));setSelected(new Set());}} onClear={()=>setSelected(new Set())}/>
+    </div>
+  );
 }
 
 // ─── UNIVERSAL EDITABLE GRID (For In-App Corrections) ─────────────────────────
@@ -1566,7 +1839,139 @@ function EditableGrid({ data, columns, onUpdateRecord, feedId }) {
     </div>
   );
 }
+// ─── SPRINT 3: LPA Terms Verification Engine (New C-09) ──────────────────────
+function LpaVerificationTab() {
+  const LPA_CHECKS = [
+    {
+      id: "lpa-1",
+      term: "Management Fee",
+      rule: "2.00% × Average Daily NAV",
+      details: "Calculated using average daily NAV of $687,400,000.",
+      torranceCalc: 13748000,
+      glReported: 13748000,
+      status: "Pass"
+    },
+    {
+      id: "lpa-2",
+      term: "Performance Fee (Incentive)",
+      rule: "20% above 8.00% Hard Hurdle",
+      details: "Hurdle cleared. High Water Mark: $620.0M. Eligible profit: $21.4M.",
+      torranceCalc: 4280000,
+      glReported: 4280000,
+      status: "Pass"
+    }
+  ];
 
+  const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
+
+  return (
+    <div className="fade-in" style={{ display: "flex", flexDirection: "column", height: "100%", background: T.appBg }}>
+      
+      {/* Header */}
+      <div style={{ padding: "24px 32px", background: T.cardBg, borderBottom: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <h2 style={{ ...SANS, fontSize: 20, fontWeight: 700, color: T.textPrimary, margin: 0, display: "flex", alignItems: "center", gap: 10 }}>
+            LPA Terms Verification Engine
+          </h2>
+          <div style={{ ...SANS, fontSize: 13, color: T.textMuted, marginTop: 6, maxWidth: 600, lineHeight: 1.5 }}>
+            Independent recalculation of economic terms derived from the Limited Partnership Agreement. Parameters are locked at fund setup.
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#f8fafc", padding: "8px 12px", borderRadius: 6, border: `1px solid ${T.border}` }}>
+          <span style={{ fontSize: 14 }}>🔒</span>
+          <div style={{ ...SANS, fontSize: 11, fontWeight: 700, color: T.textPrimary }}>Controller-Only Access</div>
+        </div>
+      </div>
+
+      {/* Main Workspace */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "32px" }}>
+        
+        <div style={{ ...SANS, fontSize: 12, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 16 }}>
+          Hedge Fund Parameters — Pennywise Global Diversified
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          {LPA_CHECKS.map(check => {
+            const variance = Math.abs(check.torranceCalc - check.glReported);
+            
+            return (
+              <div key={check.id} style={{ background: T.cardBg, borderRadius: 12, border: `1px solid ${T.border}`, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+                
+                {/* Rule Header */}
+                <div style={{ padding: "16px 24px", background: "#f8fafc", borderBottom: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ ...SANS, fontSize: 15, fontWeight: 700, color: T.textPrimary }}>{check.term}</div>
+                    <div style={{ ...MONO, fontSize: 12, color: T.textMuted, marginTop: 4 }}>Parameter: {check.rule}</div>
+                  </div>
+                  <span style={{ ...SANS, fontSize: 11, fontWeight: 700, background: check.status === "Pass" ? T.okBg : T.errorBg, color: check.status === "Pass" ? T.okBase : T.errorBase, padding: "4px 10px", borderRadius: 4, border: `1px solid ${check.status === "Pass" ? T.okBorder : T.errorBorder}` }}>
+                    {check.status === "Pass" ? "✓ Verified Match" : "⚠ Variance Detected"}
+                  </span>
+                </div>
+
+                {/* Calculation Comparison */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1 }}>
+                  
+                  {/* Torrance Column */}
+                  <div style={{ padding: "24px", background: T.cardBg }}>
+                    <div style={{ ...SANS, fontSize: 11, fontWeight: 700, color: T.aiBase, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                      <span>✦</span> Torrance AI Calculation
+                    </div>
+                    <div style={{ ...MONO, fontSize: 24, fontWeight: 700, color: T.textPrimary, marginBottom: 8 }}>
+                      {formatCurrency(check.torranceCalc)}
+                    </div>
+                    <div style={{ ...SANS, fontSize: 12, color: T.textMuted, lineHeight: 1.4 }}>
+                      {check.details}
+                    </div>
+                  </div>
+
+                  {/* GL Reported Column */}
+                  <div style={{ padding: "24px", background: T.cardBg, borderLeft: `1px solid ${T.border}`, borderRight: `1px solid ${T.border}` }}>
+                    <div style={{ ...SANS, fontSize: 11, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 12 }}>
+                      System of Record (GL)
+                    </div>
+                    <div style={{ ...MONO, fontSize: 24, fontWeight: 700, color: T.textPrimary, marginBottom: 8 }}>
+                      {formatCurrency(check.glReported)}
+                    </div>
+                    <div style={{ ...SANS, fontSize: 12, color: T.textMuted, lineHeight: 1.4 }}>
+                      Payload extracted from State Street Trial Balance (Acct 5010).
+                    </div>
+                  </div>
+
+                  {/* Variance Column */}
+                  <div style={{ padding: "24px", background: variance === 0 ? "#f8fafc" : T.errorBg }}>
+                    <div style={{ ...SANS, fontSize: 11, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 12 }}>
+                      Calculated Variance
+                    </div>
+                    <div style={{ ...MONO, fontSize: 24, fontWeight: 700, color: variance === 0 ? T.okBase : T.errorBase }}>
+                      {formatCurrency(variance)}
+                    </div>
+                    {variance > 0 && (
+                      <button style={{ ...SANS, marginTop: 12, fontSize: 12, fontWeight: 700, background: T.errorBase, color: "#fff", border: "none", padding: "6px 12px", borderRadius: 4, cursor: "pointer" }}>
+                        Investigate Exception
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Private Equity Stub Note for the Demo */}
+        <div style={{ marginTop: 32, padding: "16px", borderRadius: 8, border: `1px dashed ${T.border}`, background: "transparent", display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ fontSize: 20 }}>💡</div>
+          <div>
+            <div style={{ ...SANS, fontSize: 13, fontWeight: 700, color: T.textPrimary }}>Private Equity Waterfall Support</div>
+            <div style={{ ...SANS, fontSize: 12, color: T.textMuted, marginTop: 2 }}>
+              For closed-end funds, this engine processes full distribution waterfalls (Return of Capital → Preferred Return → Catch-up → Carried Interest Split).
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
 // ─── DATA EXPLORER TAB (Complete 12 Canonical Feeds) ────────────
 function DataExplorerTab({ masterFeeds, onUpdateFeedRecord }) {
   const [subTab, setSubTab] = useState("gl_001");
@@ -3181,6 +3586,7 @@ function FinancialStatementsTab({ fund }) {
   const [generating, setGenerating] = useState(false);
   const [generated,  setGenerated]  = useState(false);
   const [showPdf,    setShowPdf]    = useState(false);
+  const [provenanceTrace, setProvenanceTrace] = useState(null);
 
   // Dynamic GAAP Statement Routing based on Fund Type
   const isAlt = ["Hedge Fund", "Private Equity", "Real Estate Fund"].includes(fund?.fundType);
@@ -3304,11 +3710,17 @@ function FinancialStatementsTab({ fund }) {
             {s.label}
           </button>
         ))}
-        <div style={{ flex:1 }}/>
+ <div style={{ flex:1 }}/>
         <div style={{ padding:"14px 16px", borderTop:`1px solid ${T.border}` }}>
           <button disabled={generating} onClick={generated ? () => setShowPdf(true) : handleGenerate} style={{ ...SANS, width:"100%", border:"none", borderRadius:7, padding:"10px", fontSize:12, fontWeight:700, cursor:generating?"not-allowed":"pointer", background:generating?"#374151":T.okBase, color:generating?"#6b7280":"#fff", display:"flex", alignItems:"center", justifyContent:"center", gap:7, transition:"background 0.2s" }}>
             {generating?<><span style={{animation:"pulse 0.8s infinite"}}>●</span>Generating…</> :generated?<><span>↓</span>Download Outputs</> :<><span>↓</span>Generate Output</>}
           </button>
+          <button style={{ ...SANS, width:"100%", fontSize:12, fontWeight:600, padding:"8px 10px", borderRadius:6, border:`1px solid ${T.border}`, background:"#fff", color:T.textPrimary, cursor:"pointer" }}>
+              Audit Package
+            </button>
+            <button onClick={() => alert("Simulating AI Period Comparison Report Generation...")} style={{ ...SANS, width:"100%", fontSize:12, fontWeight:600, padding:"8px 10px", borderRadius:6, border:`1px dashed ${T.aiBase}`, background:T.aiBg, color:T.aiDark, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+              <span>✦</span> Period Comparison
+            </button>
           {generated&&!generating&&(<div style={{ ...SANS, fontSize:10, color:T.okBase, textAlign:"center", marginTop:6, display:"flex", alignItems:"center", justifyContent:"center", gap:4 }}><span>✓</span>PDF + Excel ready</div>)}
         </div>
       </div>
@@ -3358,7 +3770,19 @@ function FinancialStatementsTab({ fund }) {
             <FsHeader title="Statement of Operations" subtitle="For the Year Ended December 31, 2024"/>
             <FsSection title="Investment Income"/>
             <FsLine label="Dividend Income — Domestic" value={FS_DYNAMIC.div_income_domestic} indent={1}/>
-            <FsLine label="Dividend Income — Foreign" value={FS_DYNAMIC.div_income_foreign} indent={1}/>
+            <div onClick={() => setProvenanceTrace({
+    lineItem: 'Dividend Income - Foreign',
+    value: '$108,420',
+    derivedField: 'derived.fs_income.dividend_foreign',
+    rawRows: [{ id: '129', source: 'State Street GL', payload: 'PW_GL_Dec31_Final.json', originalValue: '$200,000' }],
+    exception: { id: 'EXC-003', status: 'Resolved (Human-Accepted)' },
+    aiDecision: 'Overridden from $200,000 to $108,420. AI suggestion accepted by Sarah Chen at 9:22 AM based on November 30 prior-period resolution and Bloomberg WM/Reuters 4PM fix (EUR/USD 1.0842).'
+})} style={{ cursor: "pointer", borderRadius: 6, transition: "background 0.2s", margin: "0 -16px", padding: "0 16px" }} onMouseEnter={e=>e.currentTarget.style.background=T.appBg} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+   
+   <FsLine label="Dividend Income — Foreign" value={108420} />
+
+</div>
+
             <FsLine label="Interest Income" value={FS_DYNAMIC.interest_income} indent={1}/>
             <FsLine label="Total Investment Income" value={FS_DYNAMIC.total_investment_income} bold topBorder="single"/>
             
@@ -3511,6 +3935,7 @@ function FinancialStatementsTab({ fund }) {
         </div>
       </div>
       {showPdf && <PdfModal onClose={() => setShowPdf(false)} fund={fund} fsData={FS_DYNAMIC} tbData={TB_ROWS} />}
+      {provenanceTrace && <ProvenancePanel trace={provenanceTrace} onClose={() => setProvenanceTrace(null)} />}
     </div>
   );
 }
@@ -4575,6 +5000,8 @@ function FundSelectorCombobox({fund, fundSeeds, onSelectFund}) {
   const [search, setSearch] = useState("");
   const ref = useRef();
 
+
+
   useEffect(() => {
     const handleClickOutside = (event) => { if (ref.current && !ref.current.contains(event.target)) setOpen(false); };
     document.addEventListener("mousedown", handleClickOutside);
@@ -4958,14 +5385,16 @@ function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFee
 
   const TABS = [
     {key:"exceptions",   label:`Exceptions (${exceptions.length})`},
+    {key:"ai_log", label:"AI Decision Log", ai:true},
     {key:"explorer",     label:"Data Explorer"},
     {key:"journals",     label:"Journal Entries"},
     {key:"workpapers",   label:"Workpapers", ai:true},
     {key:"cross_checks", label:"Cross Checks", ai:true},
+    {key:"lpa_terms", label:"Key Economic Terms"},
     {key:"statements",   label:"Financial Statements"},
     {key:"footnotes",    label:"Footnote Editor", ai:true},
   ]; 
-  
+  useEffect(() => { const handle = () => setTab("journals"); window.addEventListener("open-journal", handle); return () => window.removeEventListener("open-journal", handle); }, []);
   return <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 52px)"}}>
     <div style={{background:T.navyHeader,padding:"8px 24px",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
       <div style={{display:"flex",alignItems:"center",gap:12}}>
@@ -4995,10 +5424,12 @@ function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFee
 
     <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>
       {tab==="exceptions"  &&<ExceptionsTab exceptions={exceptions} approval={approval} onResolve={onResolve} onReopen={onReopen} onUpdate={onUpdate} onAddThread={onAddThread} currentUserId={currentUser.id} onSubmit={onSubmit}/>}
+      {tab==="ai_log" && <AIDecisionLogTab />}
       {tab==="explorer"    &&<DataExplorerTab masterFeeds={masterFeeds} onUpdateFeedRecord={onUpdateFeedRecord}/>}
       {tab==="journals" && <JournalEntriesTab fund={fund} fundSeeds={fundSeeds} masterFeeds={masterFeeds} currentUser={currentUser} onPostJE={() => {}} />}
       {tab==="workpapers"  &&<WorkpapersTab fund={fund} masterFeeds={masterFeeds} />} {/* <-- ADD THIS LINE */}
       {tab==="cross_checks"&&<CrossChecksTab currentUser={currentUser}/>}
+      {tab==="lpa_terms" && <LpaVerificationTab />}
       {tab==="statements"  &&<FinancialStatementsTab fund={fund} />}
       {tab==="footnotes"   &&<FootnoteEditorTab fund={fund} />}
     </div>
@@ -5535,11 +5966,13 @@ function BeverleyFilingTracker({ filings, onGoToDashboard }) {
             Review Filed Returns
           </button>
         </div>
+
       </div>
     );
   }
 
   return (
+    
     <div style={{display:"flex", flexDirection:"column", background:T.appBg, height:"calc(100vh - 52px)", overflow:"hidden"}}>
       <div style={{padding:"12px 24px", background:T.cardBg, borderBottom:`1px solid ${T.border}`, flexShrink:0}}>
         <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:16, flexWrap:"wrap", marginBottom:12}}>
@@ -5561,7 +5994,20 @@ function BeverleyFilingTracker({ filings, onGoToDashboard }) {
             </button>
           </div>
         </div>
-
+          {/* ─── SPRINT 4: Regulatory Change Detector (C-15) ─── */}
+          <div className="slide-in" style={{background: "#fff", border: `1px solid ${T.border}`, borderRadius: 8, padding: "16px", marginBottom: 24, display: "flex", alignItems: "flex-start", gap: 16}}>
+          <div style={{fontSize: 24}}>🏛</div>
+          <div style={{flex: 1}}>
+            <div style={{...SANS, fontSize: 14, fontWeight: 700, color: T.textPrimary, marginBottom: 4}}>SEC EDGAR Change Detected: Form N-PORT</div>
+            <div style={{...SANS, fontSize: 12, color: T.textMuted, lineHeight: 1.5}}>
+              SEC amended Part C reporting for derivatives — effective March 31, 2025. <br/>
+              <strong>Impact:</strong> 3 of your filing templates require mapping updates. Torrance AI has generated draft mapping proposals.
+            </div>
+          </div>
+          <button style={{...SANS, fontSize: 12, fontWeight: 600, background: T.warnBg, color: T.warnBase, border: `1px solid ${T.warnBorder}`, padding: "6px 12px", borderRadius: 4, cursor: "pointer"}}>
+            Review AI Proposals
+          </button>
+        </div>
         <div style={{display:"flex", gap:10, alignItems:"center"}}>
           <div style={{position:"relative", minWidth: 280}}>
             <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:T.textMuted,fontSize:14}}>⌕</span>
@@ -6951,7 +7397,66 @@ function InboxView({ notifications, onSelectFund }) {
     </div>
   );
 }
+// ─── SPRINT 4: Natural Language Query (C-14) ─────────────────────────────────
+// ─── SPRINT 4: Natural Language Query Pop-out (C-14) ─────────────────────────
+function NaturalLanguageQuery() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState("");
 
+  return (
+    <div style={{ position: "fixed", bottom: 32, right: 32, zIndex: 9999, display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+      
+      {/* Pop-out Panel */}
+      {isOpen && (
+        <div className="fade-in" style={{ background: T.cardBg, border: `1px solid ${T.aiBorder}`, borderRadius: 12, padding: "20px", marginBottom: 16, width: 380, boxShadow: "0 10px 25px rgba(0,0,0,0.1)", display: "flex", flexDirection: "column", animation: "slideUp 0.2s ease-out" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ background: T.aiBase, color: "#fff", width: 24, height: 24, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>✦</div>
+              <h3 style={{ ...SANS, fontSize: 16, fontWeight: 700, margin: 0, color: T.textPrimary }}>Ask Torrance</h3>
+            </div>
+            <button onClick={() => setIsOpen(false)} style={{ background: "none", border: "none", color: T.textMuted, cursor: "pointer", fontSize: 18, transition: "color 0.2s" }} onMouseEnter={e=>e.currentTarget.style.color=T.textPrimary} onMouseLeave={e=>e.currentTarget.style.color=T.textMuted}>✕</button>
+          </div>
+          
+          <div style={{ position: "relative", marginBottom: 16 }}>
+            <input 
+              type="text" 
+              placeholder="Ask anything about the close..." 
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              style={{ ...SANS, width: "100%", padding: "12px 14px", paddingRight: 60, fontSize: 13, borderRadius: 8, border: `1px solid ${T.border}`, outline: "none", boxShadow: "inset 0 1px 3px rgba(0,0,0,0.02)" }}
+            />
+            <button style={{ position: "absolute", right: 4, top: 4, bottom: 4, background: T.actionBase, color: "#fff", border: "none", borderRadius: 6, padding: "0 12px", ...SANS, fontWeight: 600, fontSize: 12, cursor: "pointer" }}>Run</button>
+          </div>
+          
+          <div style={{ ...SANS, fontSize: 11, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", marginBottom: 8, letterSpacing: "0.05em" }}>Suggested Queries</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {["Which funds have > 2 residual exceptions?", "What is the most common exception type today?", "Show me funds where AI confidence < 85%"].map(q => (
+              <button key={q} onClick={() => setQuery(q)} style={{ ...SANS, fontSize: 12, padding: "8px 12px", background: T.appBg, border: `1px solid ${T.border}`, borderRadius: 6, color: T.textPrimary, cursor: "pointer", textAlign: "left", transition: "background 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "#f1f5f9"} onMouseLeave={e => e.currentTarget.style.background = T.appBg}>
+                {q}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Floating Action Button (FAB) */}
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        style={{ 
+          width: 56, height: 56, borderRadius: "50%", background: isOpen ? T.cardBg : T.aiBase, border: isOpen ? `1px solid ${T.border}` : "none", 
+          boxShadow: isOpen ? "0 4px 12px rgba(0,0,0,0.05)" : "0 4px 12px rgba(99,102,241,0.3)", cursor: "pointer", 
+          display: "flex", alignItems: "center", justifyContent: "center", color: isOpen ? T.textMuted : "#fff", fontSize: 24,
+          transition: "transform 0.2s, background 0.2s"
+        }}
+        onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
+        onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+        title="Ask Torrance"
+      >
+        {isOpen ? "✕" : "✦"}
+      </button>
+    </div>
+  );
+}
 function Dashboard({fundState, fundSeeds, approvalState, currentUser, notifications, onSelectFund, onReassign, onViewClientExceptions, onBulkApprove, onGlobalResolve, onGoToAudit}) {
   // Default Preparers to the Inbox, Controllers to the Client View
   const [dashView,setDashView]=useState(currentUser?.isController ? "team":"client");
@@ -7105,7 +7610,8 @@ function Dashboard({fundState, fundSeeds, approvalState, currentUser, notificati
         </div>
       </div>
     )}
-
+   {/* ─── SPRINT 4: Render Natural Language Query for Controllers (C-14) ─── */}
+   {currentUser?.isController && <NaturalLanguageQuery />}
     {dashView === "client" && filteredAndSortedFunds.filter(f => f.sla_days <= 1 && getStats(f).status === "BLOCKED").length > 0 && (
       <div className="slide-in" style={{background: T.cardBg, border:`1px solid ${T.border}`, borderLeft:`4px solid ${T.errorBase}`, borderRadius:8, padding:"14px 20px", marginBottom:20, display:"flex", alignItems:"center", justifyContent:"space-between", boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
         <div style={{display:"flex", alignItems:"center", gap:12}}>
