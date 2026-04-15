@@ -7992,6 +7992,7 @@ function LoginScreen({ onLogin }) {
   const [mfaCode, setMfaCode] = useState("");
   const [error, setError] = useState("");
   const [valuePropIdx, setValuePropIdx] = useState(0);
+  const [ssoLoading, setSsoLoading] = useState(false);
 
   const valueProps = [
     "High-velocity financial reporting.",
@@ -8022,9 +8023,8 @@ function LoginScreen({ onLogin }) {
     }
   };
 
-  // FIX: Make the Enterprise SSO button actually do something
   const handleSsoClick = () => {
-    setEmail("sarah.chen@Pennywisecapital.com");
+    setSsoLoading(true);
     setTimeout(() => {
       onLogin("u1", "dashboard");
     }, 600);
@@ -8075,26 +8075,28 @@ function LoginScreen({ onLogin }) {
                 </div>
               )}
               
-              <button 
-  onClick={handleSsoClick} 
-  style={{ 
-    width: "100%", 
-    padding: "12px", 
-    borderRadius: 6, 
-    border: `1px solid ${T.actionBase}`, 
-    background: "transparent", 
-    color: T.actionBase, 
-    fontSize: 13, 
-    fontWeight: 600, 
-    cursor: "pointer", 
-    marginBottom: 24, 
-    transition: "all 0.15s" 
-  }} 
-  onMouseEnter={e => e.currentTarget.style.background = T.actionBg} 
-  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
->
-  Continue with Enterprise SSO
-</button>
+              <button
+                onClick={handleSsoClick}
+                disabled={ssoLoading}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: 6,
+                  border: `1px solid ${T.actionBase}`,
+                  background: "transparent",
+                  color: T.actionBase,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: ssoLoading ? "not-allowed" : "pointer",
+                  marginBottom: 24,
+                  transition: "all 0.15s",
+                  opacity: ssoLoading ? 0.6 : 1,
+                }}
+                onMouseEnter={e => { if (!ssoLoading) e.currentTarget.style.background = T.actionBg; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+              >
+                {ssoLoading ? "Redirecting to SSO..." : "Continue with Enterprise SSO"}
+              </button>
               
               <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:24 }}>
                 <div style={{ flex:1, height:1, background:"#eef1f5" }} />
