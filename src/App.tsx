@@ -3215,7 +3215,6 @@ function IntegrationsAndArchitectureHub({ fundSeeds, masterFeeds, onBack }) {
       {/* Header */}
       <div style={{padding:"16px 24px", background:T.cardBg, borderBottom:`1px solid ${T.border}`, display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0}}>
         <div style={{display:"flex", alignItems:"center", gap:16}}>
-          <button onClick={onBack} style={{...SANS, background:"transparent", border:`1px solid ${T.border}`, borderRadius:5, padding:"4px 10px", fontSize:11, cursor:"pointer", fontWeight:600, color:T.textPrimary}}>← Dashboard</button>
           <div>
             <div style={{...SANS, fontWeight:700, fontSize:18, color:T.textPrimary}}>Integrations & Data Architecture</div>
             <div style={{...SANS, fontSize:12, color:T.textMuted, marginTop:2}}>Manage API connections, system flows, and global mapping schemas.</div>
@@ -4900,7 +4899,6 @@ function GlobalEntityManager({ fundSeeds, onBack }) {
       {/* Header */}
       <div style={{padding:"16px 24px", background:T.cardBg, borderBottom:`1px solid ${T.border}`, display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0}}>
         <div style={{display:"flex", alignItems:"center", gap:16}}>
-          <button onClick={onBack} style={{...SANS, background:"transparent", border:`1px solid ${T.border}`, borderRadius:5, padding:"4px 10px", fontSize:11, cursor:"pointer", fontWeight:600, color:T.textPrimary}}>← Dashboard</button>
           <div>
             <div style={{...SANS, fontWeight:700, fontSize:18, color:T.textPrimary}}>Global Entity Setup</div>
             <div style={{...SANS, fontSize:12, color:T.textMuted, marginTop:2}}>Manage Master Data, RBAC, and Assignment Rules.</div>
@@ -5455,20 +5453,19 @@ function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFee
 
   const TABS = [
     {key:"exceptions",   label:`Exceptions (${exceptions.length})`},
-    {key:"ai_log", label:"AI Decision Log", ai:true},
+    {key:"ai_log", label:"AI Decision Log" },
     {key:"explorer",     label:"Data Explorer"},
     {key:"journals",     label:"Journal Entries"},
-    {key:"workpapers",   label:"Workpapers", ai:true},
-    {key:"cross_checks", label:"Cross Checks", ai:true},
+    {key:"workpapers",   label:"Workpapers" },
+    {key:"cross_checks", label:"Cross Checks" },
     {key:"lpa_terms", label:"Key Economic Terms"},
     {key:"statements",   label:"Financial Statements"},
-    {key:"footnotes",    label:"Footnote Editor", ai:true},
+    {key:"footnotes",    label:"Footnote Editor"},
   ]; 
   useEffect(() => { const handle = () => setTab("journals"); window.addEventListener("open-journal", handle); return () => window.removeEventListener("open-journal", handle); }, []);
   return <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 52px)"}}>
     <div style={{background:T.navyHeader,padding:"8px 24px",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
       <div style={{display:"flex",alignItems:"center",gap:12}}>
-        <button onClick={onBack} style={{...SANS,background:"transparent",border:`1px solid #374151`,color:"#8898aa",borderRadius:5,padding:"4px 10px",fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>← Dashboard</button>
         <FundSelectorCombobox fund={fund} fundSeeds={fundSeeds} onSelectFund={onSelectFund} />
         <div style={{fontWeight:400,color:"#8898aa",fontSize:12, ...SANS}}>| {fund.series} · {fund.period}</div>
         <SlaPill daysLeft={fund.sla_days}/>
@@ -6047,7 +6044,6 @@ function BeverleyFilingTracker({ filings, onGoToDashboard }) {
       <div style={{padding:"12px 24px", background:T.cardBg, borderBottom:`1px solid ${T.border}`, flexShrink:0}}>
         <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:16, flexWrap:"wrap", marginBottom:12}}>
           <div style={{display:"flex", alignItems:"center", gap:12}}>
-            <button onClick={onGoToDashboard} style={{...SANS,background:"transparent",border:`1px solid ${T.border}`,color:T.textPrimary,borderRadius:5,padding:"4px 10px",fontSize:11,cursor:"pointer",fontWeight:600}}>← Dashboard</button>
             <div style={{...SANS,fontWeight:700,fontSize:18, color:T.textPrimary, display:"flex", alignItems:"center", gap:10}}>
               Beverley Filing Workflow <span style={{color:T.textMuted, fontSize:16, fontWeight:400}}>|</span>
               <select value={period} onChange={e=>setPeriod(e.target.value)} style={{...SANS, fontSize:16, fontWeight:700, color:T.actionBase, background:"transparent", border:"none", outline:"none", cursor:"pointer", appearance:"none", paddingRight:16, backgroundImage:"url('data:image/svg+xml;utf8,<svg fill=%22%234a7cff%22 height=%2224%22 viewBox=%220 0 24 24%22 width=%2224%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/></svg>')", backgroundRepeat:"no-repeat", backgroundPosition:"right center"}}>
@@ -6407,7 +6403,6 @@ function GlobalAuditLogView({ onBack }) {
       {/* Header */}
       <div style={{padding:"16px 24px", background:T.cardBg, borderBottom:`1px solid ${T.border}`, display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0}}>
         <div style={{display:"flex", alignItems:"center", gap:16}}>
-          <button onClick={onBack} style={{...SANS, background:"transparent", border:`1px solid ${T.border}`, borderRadius:5, padding:"4px 10px", fontSize:11, cursor:"pointer", fontWeight:600, color:T.textPrimary}}>← Dashboard</button>
           <div>
             <div style={{...SANS, fontWeight:700, fontSize:18, color:T.textPrimary}}>Global Audit & Compliance Ledger</div>
             <div style={{...SANS, fontSize:12, color:T.textMuted, marginTop:2}}>Immutable system-wide tracking for SOC 1 Type II compliance.</div>
@@ -6977,7 +6972,6 @@ function IngestionStatusWidget({feeds, setFeeds, onGoToDashboard, onOpenMapping,
 
   return <div style={{padding:"20px 24px"}}>
     <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginBottom:18,flexWrap:"wrap",gap:16}}>
-    <button onClick={onGoToDashboard} style={{...SANS,background:"transparent",border:`1px solid ${T.border}`,color:T.textPrimary,borderRadius:7,padding:"0 18px",height:38,fontSize:13,cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",gap:7}}>← Dashboard</button>
       <div style={{display:"flex", flexDirection:"column", justifyContent:"space-between"}}>
         <div style={{display:"flex", gap:10, alignItems:"center"}}>
           <div style={{position:"relative", width: 280}}>
@@ -7527,12 +7521,16 @@ function NaturalLanguageQuery() {
     </div>
   );
 }
-function Dashboard({fundState, fundSeeds, approvalState, currentUser, notifications, onSelectFund, onReassign, onViewClientExceptions, onBulkApprove, onGlobalResolve, onGoToAudit}) {
-  // Default Preparers to the Inbox, Controllers to the Client View
-  const [dashView,setDashView]=useState(currentUser?.isController ? "team":"client");
+function Dashboard({dashSubView, fundState, fundSeeds, approvalState, currentUser, notifications, onSelectFund, onReassign, onViewClientExceptions, onBulkApprove, onGlobalResolve, onGoToAudit}) {
+  const [dashView,setDashView]=useState(currentUser?.isController ? "flow":"client");
   const [layoutStyle,setLayoutStyle]=useState("list");
   const [collapsed,setCollapsed]=useState({});
-  const [hideEmpty, setHideEmpty] = useState(false); // NEW Focus Mode Toggle
+  const [hideEmpty, setHideEmpty] = useState(false);
+
+  useEffect(() => {
+    if (dashSubView) setDashView(dashSubView);
+    else setDashView(currentUser?.isController ? "flow" : "client");
+  }, [dashSubView, currentUser]);
   
   const [showTemplates,setShowTemplates]=useState(false);
   const [showAuditorPortal,setShowAuditorPortal]=useState(false);
@@ -7607,9 +7605,13 @@ function Dashboard({fundState, fundSeeds, approvalState, currentUser, notificati
       </div>
 {/** TODO: Make {val:"flow",label:"Autonomous Flow"}, default for Controler logim, Remove view from preparer  */}
       <div style={{display:"flex",gap:8,alignItems:"center"}}>
-        <div style={{display:"flex",background:T.appBg,border:`1px solid ${T.border}`,borderRadius:7,padding:3,gap:2}}>
-          {/* NEW: Added Inbox to the toggle array */}
-          {[{val:"flow",label:"Autonomous Flow"},{val:"client",label:"Funds"},{val:"inbox",label:"Inbox"}].map(v=> (
+      <div style={{display:"flex",background:T.appBg,border:`1px solid ${T.border}`,borderRadius:7,padding:3,gap:2}}>
+          {/* NEW: Conditionally render Autonomous Flow for Controllers only */}
+          {[
+            ...(currentUser?.isController ? [{val:"flow",label:"Autonomous Flow"}] : []),
+            {val:"client",label:"Funds"},
+            {val:"inbox",label:"Inbox"}
+          ].map(v=> (
             <button key={v.val} onClick={()=>setDashView(v.val)} style={{...SANS,fontSize:12,fontWeight:600,padding:"5px 12px",borderRadius:5,border:"none",background:dashView===v.val?T.cardBg:T.appBg,color:dashView===v.val?T.textPrimary:T.textMuted,cursor:"pointer",boxShadow:dashView===v.val?"0 1px 3px rgba(0,0,0,0.1)":"none",transition:"all 0.1s", display:"flex", alignItems:"center", gap:6}}>
               {v.label}
               {v.val === "inbox" && notifications.length > 0 && (
@@ -7745,9 +7747,25 @@ function Dashboard({fundState, fundSeeds, approvalState, currentUser, notificati
               {funds.map(f=>{ const stats=getStats(f);const approv=approvalState[f.fund_id];const pct=stats.total>0?Math.round((stats.resolved/stats.total)*100):100;const assignedUser=TEAM.find(m=>m.id===f.assignedTo); return(
                 <div key={f.fund_id} role="button" tabIndex={0} className="fund-card" onClick={()=>onSelectFund(f)} onKeyDown={e=>e.key==="Enter"&&onSelectFund(f)} style={{border:`1px solid ${stats.status==="BLOCKED"?T.errorBorder:T.okBorder}`,borderRadius:9,padding:"14px 16px",background:T.cardBg}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}><div style={{flex:1,minWidth:0}}><div style={{...SANS,fontWeight:700,fontSize:13,marginBottom:1,color:T.textPrimary}}>{f.name}</div><div style={{...SANS,fontSize:10,color:T.textMuted}}>{f.fund_id}</div></div><span style={{...SANS,fontSize:10,fontWeight:700,padding:"3px 9px",borderRadius:4,flexShrink:0,marginLeft:8,display:"flex",alignItems:"center",gap:4,background:stats.status==="BLOCKED"?T.errorBg:T.okBg,color:stats.status==="BLOCKED"?T.errorBase:T.okBase,border:`1px solid ${stats.status==="BLOCKED"?T.errorBorder:T.okBorder}`}}>{stats.status==="BLOCKED"?<><span>✕</span>BLOCKED</>:<><span>✓</span>READY</>}</span></div>
-                  <div style={{marginBottom:10}}><div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:4}}><span style={{...SANS,color:T.textMuted}}>{stats.resolved}/{stats.total} exceptions</span><span style={{...MONO,fontWeight:700,color:stats.status==="BLOCKED"?T.warnBase:T.okBase}}>{pct}%</span></div><div style={{height:4,background:T.border,borderRadius:2}}><div style={{height:"100%",width:`${pct}%`,background:stats.status==="BLOCKED"?T.warnBase:T.okBase,borderRadius:2,transition:"width 0.4s"}}/></div></div>
-                  <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",marginBottom:6}}><SlaPill daysLeft={f.sla_days}/><ApprovalPill status={approv?.status||"open"}/></div>
-                  <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>{stats.errors>0&&<span style={{...SANS,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:3,background:T.errorBg,color:T.errorBase,border:`1px solid ${T.errorBorder}`,display:"flex",alignItems:"center",gap:3}}><span>✕</span>{stats.errors} Error</span>}{stats.warnings>0&&<span style={{...SANS,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:3,background:T.warnBg,color:T.warnBase,border:`1px solid ${T.warnBorder}`,display:"flex",alignItems:"center",gap:3}}><span>!</span>{stats.warnings} Warn</span>}{assignedUser&&<div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4}}><Avatar user={assignedUser} size={18}/></div>}</div>
+                  <div style={{marginBottom:10}}><div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:4}}><span style={{...SANS,color:T.textMuted}}>Workflow Progress</span><span style={{...MONO,fontWeight:700,color:stats.status==="BLOCKED"?T.warnBase:T.okBase}}>{pct}%</span></div><div style={{height:4,background:T.border,borderRadius:2}}><div style={{height:"100%",width:`${pct}%`,background:stats.status==="BLOCKED"?T.warnBase:T.okBase,borderRadius:2,transition:"width 0.4s"}}/></div></div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",marginBottom:8}}><SlaPill daysLeft={f.sla_days}/><ApprovalPill status={approv?.status||"open"}/></div>
+                  
+                  {/* NEW: Split Exception Badges */}
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+                    <span style={{...SANS,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:3,background:T.okBg,color:T.okBase,border:`1px solid ${T.okBorder}`,display:"flex",alignItems:"center",gap:3}}>
+                      <span>🛡</span> {(f.fund_id.charCodeAt(f.fund_id.length-1) % 5) + 3} Auto-Resolved
+                    </span>
+                    {stats.errors > 0 || stats.warnings > 0 ? (
+                      <span style={{...SANS,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:3,background:T.warnBg,color:T.warnBase,border:`1px solid ${T.warnBorder}`,display:"flex",alignItems:"center",gap:3}}>
+                        <span>⚠</span> {stats.errors + stats.warnings} Requires Review
+                      </span>
+                    ) : (
+                      <span style={{...SANS,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:3,background:T.appBg,color:T.textMuted,border:`1px solid ${T.border}`,display:"flex",alignItems:"center",gap:3}}>
+                        <span>✓</span> 0 Review
+                      </span>
+                    )}
+                    {assignedUser&&<div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4}}><Avatar user={assignedUser} size={18}/></div>}
+                  </div>
                 </div>
               );})}
             </div>
@@ -7757,19 +7775,18 @@ function Dashboard({fundState, fundSeeds, approvalState, currentUser, notificati
          {isOpen && layoutStyle === "list" && (
             <div style={{overflowX:"auto"}}>
               <table style={{width:"100%", borderCollapse:"collapse", fontSize:12, textAlign:"left", tableLayout:"fixed"}}>
-                <thead>
+              <thead>
                   <tr style={{background:"#f9fafb", borderBottom:`1px solid ${T.border}`}}>
                     <th style={{padding:"8px 12px", width:"4%"}}></th>
-                    <th style={{padding:"8px 12px", width:"22%", ...SANS, fontWeight:600, color:T.textMuted}}>Fund Name / ID</th>
+                    <th style={{padding:"8px 12px", width:"20%", ...SANS, fontWeight:600, color:T.textMuted}}>Fund Name / ID</th>
                     <th style={{padding:"8px 12px", width:"9%", ...SANS, fontWeight:600, color:T.textMuted}}>Status</th>
-                    <th style={{padding:"8px 12px", width:"14%", ...SANS, fontWeight:600, color:T.textMuted}}>Workflow Progress</th>
-                    <th style={{padding:"8px 12px", width:"11%", ...SANS, fontWeight:600, color:T.textMuted}}>Exceptions</th>
-                    {/* NEW VARIANCE HEADER */}
-                    <th style={{padding:"8px 12px", width:"11%", ...SANS, fontWeight:600, color:T.textMuted}}>PoP Δ</th>
-                    <th style={{padding:"8px 12px", width:"11%", ...SANS, fontWeight:600, color:T.textMuted}}>Last Draft</th>
-                    <th style={{padding:"8px 12px", width:"11%", ...SANS, fontWeight:600, color:T.textMuted}}>SLA</th>
-                    <th style={{padding:"8px 12px", width:"11%", ...SANS, fontWeight:600, color:T.textMuted}}>Stage</th>
-                    <th style={{padding:"8px 12px", width:"7%", ...SANS, fontWeight:600, color:T.textMuted, textAlign:"right"}}>Assignee</th>
+                    <th style={{padding:"8px 12px", width:"12%", ...SANS, fontWeight:600, color:T.textMuted}}>Workflow Progress</th>
+                    <th style={{padding:"8px 12px", width:"10%", ...SANS, fontWeight:600, color:T.textMuted, textAlign:"right"}}>Auto-Resolved</th>
+                    <th style={{padding:"8px 12px", width:"10%", ...SANS, fontWeight:600, color:T.textMuted, textAlign:"right"}}>Requires Review</th>
+                    <th style={{padding:"8px 12px", width:"9%", ...SANS, fontWeight:600, color:T.textMuted}}>PoP Δ</th>
+                    <th style={{padding:"8px 12px", width:"9%", ...SANS, fontWeight:600, color:T.textMuted}}>Last Draft</th>
+                    <th style={{padding:"8px 12px", width:"9%", ...SANS, fontWeight:600, color:T.textMuted}}>SLA</th>
+                    <th style={{padding:"8px 12px", width:"8%", ...SANS, fontWeight:600, color:T.textMuted}}>Stage</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -7801,10 +7818,18 @@ function Dashboard({fundState, fundSeeds, approvalState, currentUser, notificati
         <td style={{padding:"10px 12px"}}>
           <WorkflowProgress stats={stats} approval={approv || {status:"open"}} />
         </td>
-        <td style={{padding:"10px 12px"}}>
-          <div style={{display:"flex", gap:6}}>
-            {stats.errors > 0 ? <span style={{...SANS, padding:"2px 6px", borderRadius:4, background:T.errorBg, border:`1px solid ${T.errorBorder}`, color:T.errorBase, fontWeight:700, fontSize:10}}>✕ {stats.errors} Errors</span> : <span style={{color:T.textMuted}}>—</span>}
-          </div>
+        {/* AUTO-RESOLVED CELL */}
+        <td style={{padding:"10px 12px", textAlign:"right"}}>{(f.fund_id.charCodeAt(f.fund_id.length-1) % 5) + 3}</td>
+
+        {/* REQUIRES REVIEW CELL */}
+        <td style={{padding:"10px 12px", textAlign:"right"}}>
+          {stats.errors > 0 || stats.warnings > 0 ? (
+            <span style={{...SANS, fontSize:11, fontWeight:700, color:T.warnBase, background:T.warnBg, padding:"2px 8px", borderRadius:4, border:`1px solid ${T.warnBorder}`, display:"inline-flex", alignItems:"center", gap:4}}>
+              {stats.errors + stats.warnings}
+            </span>
+          ) : (
+            <span style={{color:T.textMuted}}>—</span>
+          )}
         </td>
 
         {/* NEW VARIANCE CELL */}
@@ -7867,7 +7892,6 @@ function DataExchangeView({ onBack }) {
       {/* Header */}
       <div style={{padding:"16px 24px", background:T.cardBg, borderBottom:`1px solid ${T.border}`, display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0}}>
         <div style={{display:"flex", alignItems:"center", gap:16}}>
-          <button onClick={onBack} style={{...SANS, background:"transparent", border:`1px solid ${T.border}`, borderRadius:5, padding:"4px 10px", fontSize:11, cursor:"pointer", fontWeight:600, color:T.textPrimary}}>← Dashboard</button>
           <div>
             <div style={{...SANS, fontWeight:700, fontSize:18, color:T.textPrimary}}>Data Exchange Hub</div>
             <div style={{...SANS, fontSize:12, color:T.textMuted, marginTop:2}}>Configure bespoke file formats, API webhooks, and external transmission schedules.</div>
@@ -8184,21 +8208,26 @@ function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIn
           {view==="data_exchange" && "Data Exchange Hub"}
           {view==="fund" && fund && <span style={{color:"#fff",fontWeight:600}}>{fund.name}</span> }
         </div>
-      </div>
-      
-      <div style={{position:"absolute", left:"50%", transform:"translateX(-50%)", display:"flex", alignItems:"left"}}>
+        <div style={{ display:"flex", alignItems:"left"}}>
         <span style={{...SANS,fontSize:11,color:"rgba(255,255,255,0.8)",background:"rgba(0,0,0,0.2)",padding:"4px 12px",borderRadius:4, border:"1px solid rgba(255,255,255,0.1)", letterSpacing:"0.02em"}}>
           IT8 — The Shining
         </span>
       </div>
+      </div>
+      
+
 
       <div style={{display:"flex",alignItems:"center",gap:10}}>
         
-        
+      <button onClick={() => onGoToDashboard("dashboard")} style={{...SANS,fontSize:12,fontWeight:600,padding:"0 12px",height:26,borderRadius:6,cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",gap:6,marginRight:4,transition:"all 0.2s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.2)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
+              <span>📊</span> Dashboard
+            </button>
 
         {/* RADIAL DATA HUB MENU (FIXED: Removed onMouseLeave, added invisible click-away overlay) */}
         {showDataFeedsBtn && (
+          
           <div style={{position:"relative"}}>
+            
             {/* Invisible overlay catches clicks outside the menu to close it */}
             {hubOpen && <div style={{position:"fixed", inset:0, zIndex:299}} onClick={() => setHubOpen(false)} />}
               {/** TODO: Add a button called dashboard before Daat Hub which brings user back to default dashboard view  */}
@@ -8389,7 +8418,19 @@ export default function App() {
   const blockedFundsList = useMemo(() => fundSeeds.filter(f => getStats(f).status === "BLOCKED"), [fundSeeds, getStats]);
 
   const currentUser = TEAM.find(m=>m.id===currentUserId) || TEAM[0];
-  const handleGoToDashboard = (target = "dashboard") => { setSelectedFund(null); setView(target); };
+  const [dashSubView, setDashSubView] = useState(null);
+  const handleGoToDashboard = (target = "dashboard") => { 
+    setSelectedFund(null); 
+    if (target === "inbox") {
+      setDashSubView("inbox");
+      setView("dashboard");
+    } else if (target === "dashboard") {
+      setDashSubView(null); // Resets to the default role-based view
+      setView("dashboard");
+    } else {
+      setView(target);
+    }
+  };
   const handleGoToFilings   = () => { setSelectedFund(null); setView("filings"); };
 
   // NEW: Dynamic Notification Engine
@@ -8571,14 +8612,9 @@ export default function App() {
         onGoToSchemaRegistryView={handleGoToSchemaRegistryView}
         onGoToFilings={handleGoToFilings}
         onOpenAiSettings={()=>setShowAiSettings(true)}
-        onGoToDashboard={(target) => {
-           setSelectedFund(null); 
-           setView(target === "inbox" ? "dashboard" : target); 
-           // If they clicked the bell, we route to dashboard, and the Dashboard component handles the "inbox" toggle state internally,
-           // but for simplicity we can just handle it via the dashView state inside the Dashboard itself.
-        }}
+        onGoToDashboard={handleGoToDashboard} 
         streak={streak}
-        notificationCount={notifications.length} // Pass the count here
+        notificationCount={notifications.length} 
       />
       {view==="ingestion"&&!selectedFund&&<IngestionStatusWidget feeds={feeds} setFeeds={setFeeds} currentUser={currentUser} onGoToDashboard={()=>{setView("dashboard");}} onOpenMapping={session=>setMappingSession(session)} onGoToExceptions={handleGoToExceptions} setView={setView}/>}
       {view === "schemas" && <SchemaRegistryView onBack={() => setView("ingestion")} onOpenStudio={(id) => { setActiveSchema(id); setView("schema_studio"); }} />}
@@ -8593,7 +8629,7 @@ export default function App() {
       {view==="data_architecture"&&!selectedFund&&<IntegrationsAndArchitectureHub fundSeeds={fundSeeds} masterFeeds={masterFeeds} onBack={()=>setView("dashboard")} />}
       {view==="data_exchange"&&!selectedFund&&<DataExchangeView onBack={()=>setView("dashboard")} />}
       {/* Update Dashboard to receive notifications */}
-      {view==="dashboard"&&!selectedFund&&<Dashboard fundState={fundState} fundSeeds={fundSeeds} approvalState={approvalState} currentUser={currentUser} notifications={notifications} onSelectFund={f=>{setSelectedFund(f); setView("fund");}} onReassign={handleReassign} onViewClientExceptions={handleViewClientExceptions} onBulkApprove={handleBulkApprove} onGlobalResolve={handleGlobalResolve} onGoToAudit={()=>setView("audit_logs")} />} {selectedFund&&<FundView fund={selectedFund} fundSeeds={fundSeeds} onSelectFund={f=>{setSelectedFund(f); setView("fund");}} exceptions={getExceptions(selectedFund.fund_id)} approval={approvalState[selectedFund.fund_id] || {status:"open"}} currentUser={currentUser} masterFeeds={masterFeeds} blockedFunds={blockedFundsList}
+      {view==="dashboard"&&!selectedFund&&<Dashboard dashSubView={dashSubView} fundState={fundState} fundSeeds={fundSeeds} approvalState={approvalState} currentUser={currentUser} notifications={notifications} onSelectFund={f=>{setSelectedFund(f); setView("fund");}} onReassign={handleReassign} onViewClientExceptions={handleViewClientExceptions} onBulkApprove={handleBulkApprove} onGlobalResolve={handleGlobalResolve} onGoToAudit={()=>setView("audit_logs")} />} {selectedFund&&<FundView fund={selectedFund} fundSeeds={fundSeeds} onSelectFund={f=>{setSelectedFund(f); setView("fund");}} exceptions={getExceptions(selectedFund.fund_id)} approval={approvalState[selectedFund.fund_id] || {status:"open"}} currentUser={currentUser} masterFeeds={masterFeeds} blockedFunds={blockedFundsList}
     onUpdateFeedRecord={handleUpdateFeedRecord} 
     onResolve={(id,res,ov)=>handleResolve(selectedFund.fund_id,id,res,ov)} onReopen={id=>handleReopen(selectedFund.fund_id,id)} onUpdate={(id,patch)=>handleUpdate(selectedFund.fund_id,id,patch)} onAddThread={(excId,txt)=>handleAddThread(selectedFund.fund_id,excId,txt)} onSubmit={()=>handleSubmit(selectedFund.fund_id)} onApprove={()=>handleApprove(selectedFund.fund_id)} onBack={()=>{ setSelectedFund(null); setView("dashboard"); }}/>}
     </div>
