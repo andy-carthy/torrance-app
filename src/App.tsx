@@ -7605,7 +7605,7 @@ function Dashboard({fundState, fundSeeds, approvalState, currentUser, notificati
           </select>
         </div>
       </div>
-
+{/** TODO: Make {val:"flow",label:"Autonomous Flow"}, default for Controler logim, Remove view from preparer  */}
       <div style={{display:"flex",gap:8,alignItems:"center"}}>
         <div style={{display:"flex",background:T.appBg,border:`1px solid ${T.border}`,borderRadius:7,padding:3,gap:2}}>
           {/* NEW: Added Inbox to the toggle array */}
@@ -8163,7 +8163,7 @@ function LoginScreen({ onLogin }) {
   );
 }
 
-
+{/** TODO: M  */}
 // ─── GlobalHeader (Upgraded with Fixed Radial Data Hub Menu) ─────────────────
 function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIngestion, onGoToFilings, onOpenAiSettings, onGoToDashboard, streak, notificationCount}) {
   const [hubOpen, setHubOpen] = useState(false);
@@ -8172,6 +8172,7 @@ function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIn
   return (
     <header style={{background:T.navyHeader,color:"#fff",padding:"0 24px",height:52,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:200,boxShadow:"0 1px 4px rgba(0,0,0,0.1)"}}>
       <div style={{display:"flex",alignItems:"center",gap:14}}>
+        {/** TODO: FIX bug, when the user clicks on Torrance they should be briught to their default dasboard  */}
         <div onClick={() => onGoToDashboard("dashboard")} style={{...SANS,fontWeight:700,fontSize:16,letterSpacing:"0.04em",cursor:"pointer"}}><span style={{color:T.actionBase}}>T</span>ORRANCE</div>
         <div style={{width:1,height:22,background:"rgba(255,255,255,0.15)"}}/>
         <div style={{...SANS,fontSize:12,color:"rgba(255,255,255,0.7)"}}>
@@ -8200,7 +8201,7 @@ function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIn
           <div style={{position:"relative"}}>
             {/* Invisible overlay catches clicks outside the menu to close it */}
             {hubOpen && <div style={{position:"fixed", inset:0, zIndex:299}} onClick={() => setHubOpen(false)} />}
-            
+              {/** TODO: Add a button called dashboard before Daat Hub which brings user back to default dashboard view  */}
             <button onClick={() => setHubOpen(!hubOpen)} style={{...SANS,fontSize:12,fontWeight:600,padding:"0 12px",height:26,borderRadius:6,cursor:"pointer",background:hubOpen?"rgba(255,255,255,0.2)":"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",gap:6,marginRight:4,transition:"all 0.2s", position:"relative", zIndex:300}}>
               <span>🗄</span> Data Hub {hubOpen ? "▲" : "▼"}
             </button>
@@ -8243,6 +8244,7 @@ function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIn
         <button onClick={onToggleRole} title="Toggle role (demo)" style={{...SANS,fontSize:12,fontWeight:600,padding:"0 8px",height:26,borderRadius:6,cursor:"pointer",background:currentUser.isController?T.controllerBg:T.preparerBg,color:currentUser.isController?T.controllerAccent:T.preparerAccent,border:`1px solid ${currentUser.isController?T.controllerBd:T.preparerBd}`,display:"flex",alignItems:"center",gap:6}}>
           <Avatar user={currentUser} size={20}/>{currentUser.name} · {currentUser.isController?"Controller":"Preparer"}<span style={{fontSize:10,opacity:0.7,marginLeft:4}}>⇄</span>
         </button>
+        {/** TODO: Fix Bug: When the user clicks on the bell icon they should be brough to their indox  */}
         <button onClick={() => onGoToDashboard("inbox")} style={{position:"relative", background:"none", border:"none", color:"rgba(255,255,255,0.7)", cursor:"pointer", fontSize:18, marginRight:8, transition:"color 0.2s"}} onMouseEnter={e=>e.currentTarget.style.color="#fff"} onMouseLeave={e=>e.currentTarget.style.color="rgba(255,255,255,0.7)"}>
           🔔
           {notificationCount > 0 && (
