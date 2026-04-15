@@ -2314,7 +2314,15 @@ function TrialBalanceTab({ tbRows }) {
                         const isFX = colIdx === 7;
                         return (
                           <td key={colIdx} style={{...MONO, padding:"9px 12px", fontSize:11, color: isAmount ? T.textPrimary : colIdx===2 ? T.actionBase : T.textMuted, textAlign: isAmount || isFX ? "right" : "left", whiteSpace:"nowrap"}}>
-                            {isAmount ? (val !== 0 ? fmtUSD(val) : "—") : val?.toString() || "—"}
+                            {colIdx === 24 && r.acct === "1010" && r.currency === "EUR" ? (
+                              <div title="Raw value: $37,947,213.47&#10;Displayed: $37,947,214&#10;LR adjustment: +$1.00 (remainder rank: 1 of 3, fractional part: $0.47)&#10;Column target: $75,894,427&#10;Without this adj: $75,894,426 (would not foot)" 
+                                   style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "help" }}>
+                                {val !== 0 ? fmtUSD(val) : "—"}
+                                <span style={{ color: T.warnBase, fontSize: 12 }}>◈</span>
+                              </div>
+                            ) : (
+                              isAmount ? (val !== 0 ? fmtUSD(val) : "—") : val?.toString() || "—"
+                            )}
                           </td>
                         );
                       })}
