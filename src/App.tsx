@@ -183,7 +183,9 @@ const AI_DECISION_LOG = [
   { id: 'log-4', timestamp: 'Dec 31, 23:46:04', type: 'autonomous', exceptionId: 'EXC-A04', rule: 'Prior-period frequency match (6 periods)', confidence: 96, status: 'auto-resolved', impact: 'Acknowledged', details: 'Routine accrual rounding variance.', originalValue: '$4,500.01', correctedValue: '$4,500.00' },
   { id: 'log-5', timestamp: 'Jan 01, 09:22:15', type: 'human-certified', exceptionId: 'EXC-003', rule: 'Prior-period resolution + Bloomberg 4PM fix', confidence: 92, status: 'human-accepted', impact: 'Value Overridden', details: 'Overridden EUR dividend income. Accepted by S. Chen.', originalValue: '$200,000.00', correctedValue: '$108,420.00' },
   { id: 'log-6', timestamp: 'Jan 01, 09:25:10', type: 'human-certified', exceptionId: 'EXC-H01', rule: 'Regex pattern extraction', confidence: 88, status: 'human-accepted', impact: 'Entity Extracted', details: 'Extracted counterparty name from unstructured wire detail.', originalValue: 'WIRE IN GS&CO NYC', correctedValue: 'Goldman Sachs & Co.' },
-  { id: 'log-7', timestamp: 'Jan 01, 09:30:00', type: 'human-certified', exceptionId: 'EXC-006', rule: 'GL to Holdings Reconciliation', confidence: 94, status: 'human-accepted', impact: 'Mapped ID', details: 'Reconciled orphaned holding based on CUSIP fuzzy match.', originalValue: 'Unknown Asset', correctedValue: 'ID-8821' }
+  { id: 'log-7', timestamp: 'Jan 01, 09:30:00', type: 'human-certified', exceptionId: 'EXC-006', rule: 'GL to Holdings Reconciliation', confidence: 94, status: 'human-accepted', impact: 'Mapped ID', details: 'Reconciled orphaned holding based on CUSIP fuzzy match.', originalValue: 'Unknown Asset', correctedValue: 'ID-8821' },
+  { id: 'FOOT-AR-001', timestamp: 'Dec 31, 11:59 PM', type: 'footing', exceptionId: 'FOOTING_VARIANCE', rule: 'Largest Remainder Method', confidence: 99.8, status: 'auto_accepted', impact: 'Debit column corrected by $1', details: '3 EUR-translated positions in Account 1010 produced $1 column rounding residual. Largest Remainder applied: +$1 distributed to Account 1010-EUR-01 (largest remainder: $0.47).', originalValue: '$75,894,426 (Floored)', correctedValue: '$75,894,427 (Target)' },
+  { id: 'FOOT-AR-002', timestamp: 'Dec 31, 11:59 PM', type: 'footing', exceptionId: 'FOOTING_VARIANCE', rule: 'Largest Remainder Method', confidence: 99.9, status: 'auto_accepted', impact: 'SOI subtotal corrected by $7', details: '7 Common Stock positions produced $7 subtotal rounding residual. Largest Remainder applied: +$1 distributed to each position.', originalValue: '$608,748,493 (Floored)', correctedValue: '$608,748,500 (Target)' }
 ];
 const SOC1_ACCESS_LOG = [
   {ts:"Dec 31, 11:58 PM",user:"u1",action:"GL ingested",detail:"RB_GL_20241231.csv — 131 rows, 8 exceptions raised"},
@@ -540,6 +542,12 @@ const CROSS_CHECKS_DATA = [
   { id: "BS-01", category: "Balance Sheet", target: "Both", description: "Net assets tie between balance sheet and statement of changes", status: "Pass", value: "$0 variance", aiFlag: null },
   { id: "BS-02", category: "Balance Sheet", target: "Retail", description: "Net asset components foot to total net assets", status: "Fail", value: "$150,000 variance", aiFlag: "pop_fail", aiNote: "Chronically failing: Has failed in 4 consecutive periods due to unmapped suspense accounts." },
   { id: "BS-03", category: "Balance Sheet", target: "Alt / Private", description: "Partners' / members' capital ties across all statements and by class/series", status: "Pass", value: "Ties exactly", aiFlag: null },
+  { id: "SOI-01a", category: "Footing & Precision", target: "Both", description: "SOI total raw precision = SOA investments raw precision", status: "Pass", value: "Verified at DECIMAL(18,4)", aiFlag: null },
+  { id: "SOI-01b", category: "Footing & Precision", target: "Both", description: "SOI total after LR = SOA investments line after LR", status: "Pass", value: "Matched ($462,698,500)", aiFlag: null },
+  { id: "SOI-01c", category: "Footing & Precision", target: "Both", description: "LR adjustment applied to both paths used consistent target", status: "Info", value: "Target: $462,698,500", aiFlag: null },
+  { id: "FOOT-01", category: "Footing & Precision", target: "Both", description: "TB debit column foots (sum of displayed = rounded sum of raw)", status: "LR Adjusted", value: "◈ +$1 applied", aiFlag: null },
+  { id: "FOOT-02", category: "Footing & Precision", target: "Both", description: "TB credit column foots", status: "Pass", value: "No residual", aiFlag: null },
+  { id: "FOOT-03", category: "Footing & Precision", target: "Both", description: "TB net column = TB debit − TB credit", status: "LR Adjusted", value: "Computed from adjusted", aiFlag: null },
   { id: "FE-01", category: "Fees & Accruals", target: "Both", description: "Independent AI recalculation of advisory fee vs. GL reported amount", status: "Fail", value: "$1,800 variance", aiFlag: "pop_fail", aiNote: "Pattern suggests a timing difference in fee accrual calculation (calendar month vs. business days)." },
   { id: "FE-02", category: "Fees & Accruals", target: "Alt / Private", description: "Performance fee consistency against high-water mark", status: "Pass", value: "Verified", aiFlag: null },
   { id: "FE-03", category: "Fees & Accruals", target: "Retail", description: "Expense ratio vs. prospectus cap limits", status: "Pass", value: "Within 1.50% cap", aiFlag: null },
@@ -1523,22 +1531,28 @@ function AiDecisionDetailPane({ log }) {
     </div>
   );
 }
-// ─── SPRINT 1: AI Decision Log Tab (C-03) ────────────────────────────────────
+// ─── SPRINT 4: AI Decision Log Tab (Updated for C-19) ──────────────────────
 function AIDecisionLogTab() {
   const [filter, setFilter] = useState('all');
   const filteredLogs = AI_DECISION_LOG.filter(log => filter === 'all' || log.type === filter);
+
+  const aiCount = AI_DECISION_LOG.filter(l => l.type === 'autonomous').length;
+  const humanCount = AI_DECISION_LOG.filter(l => l.type === 'human-certified').length;
+  const footingCount = AI_DECISION_LOG.filter(l => l.type === 'footing').length;
+  const totalCount = AI_DECISION_LOG.length;
 
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', background: T.appBg }}>
       <div style={{ padding: '16px 24px', background: T.cardBg, borderBottom: `1px solid ${T.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ ...SANS, fontSize: 13, color: T.textMuted }}>
-          <span style={{ fontWeight: 700, color: T.textPrimary }}>{AI_DECISION_LOG.length} AI decisions this close period</span> — 4 autonomous, 3 human-certified, 0 overridden.
+          <span style={{ fontWeight: 700, color: T.textPrimary }}>{totalCount} decisions this close period</span> — {aiCount} AI autonomous, {humanCount} human-certified, {footingCount} footing adjustments (LR).
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
           <select value={filter} onChange={e => setFilter(e.target.value)} style={{ ...SANS, padding: '6px 12px', borderRadius: 4, border: `1px solid ${T.border}`, fontSize: 12, outline: 'none' }}>
             <option value="all">All Decisions</option>
             <option value="autonomous">Autonomous Only</option>
             <option value="human-certified">Human-Certified Only</option>
+            <option value="footing">Footing Adjustments (LR)</option>
           </select>
           <button style={{ ...SANS, padding: '6px 12px', background: T.actionBase, color: '#fff', borderRadius: 4, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>Export PDF</button>
         </div>
@@ -1559,15 +1573,25 @@ function AIDecisionLogTab() {
                 <td style={{ padding: '12px 16px', ...MONO, fontSize: 11, color: T.textMuted, whiteSpace:"nowrap" }}>{log.timestamp}</td>
                 <td style={{ padding: '12px 16px', ...MONO, fontSize: 12, fontWeight: 700, color: T.textPrimary }}>{log.exceptionId}</td>
                 <td style={{ padding: '12px 16px', ...SANS, fontSize: 11 }}>
-                  {log.type === 'autonomous' ? <span style={{ color: T.okBase, fontWeight: 700, background: T.okBg, padding: "2px 6px", borderRadius: 4, border: `1px solid ${T.okBorder}` }}>🛡 Autonomous</span> : <span style={{ color: T.actionBase, fontWeight: 700, background: T.actionBg, padding: "2px 6px", borderRadius: 4, border: `1px solid #bfdbfe` }}>👤 Suggested</span>}
+                  <span style={{ 
+                    color: log.type === 'footing' ? T.warnBase : (log.type === 'autonomous' ? T.okBase : T.actionBase), 
+                    fontWeight: 700, 
+                    background: log.type === 'footing' ? T.warnBg : (log.type === 'autonomous' ? T.okBg : T.actionBg), 
+                    padding: "2px 6px", borderRadius: 4, 
+                    border: `1px solid ${log.type === 'footing' ? T.warnBorder : (log.type === 'autonomous' ? T.okBorder : '#bfdbfe')}` 
+                  }}>
+                    {log.type === 'footing' ? '◈ Algorithmic' : (log.type === 'autonomous' ? '🛡 Autonomous' : '👤 Suggested')}
+                  </span>
                 </td>
                 <td style={{ padding: '12px 16px' }}>
                   <div style={{ ...SANS, fontSize: 12, color: T.textPrimary, fontWeight: 600 }}>{log.rule}</div>
-                  <div style={{ ...MONO, fontSize: 10, color: T.aiBase, marginTop: 4, background: T.aiBg, padding: "2px 6px", borderRadius: 4, border: `1px solid ${T.aiBorder}`, display:"inline-block" }}>✦ Conf: {log.confidence}%</div>
+                  <div style={{ ...MONO, fontSize: 10, color: log.type === 'footing' ? T.warnBase : T.aiBase, marginTop: 4, background: log.type === 'footing' ? T.warnBg : T.aiBg, padding: "2px 6px", borderRadius: 4, border: `1px solid ${log.type === 'footing' ? T.warnBorder : T.aiBorder}`, display:"inline-block" }}>
+                    {log.type === 'footing' ? '◈' : '✦'} Conf: {log.confidence}%
+                  </div>
                 </td>
                 <td style={{ padding: '12px 16px', ...SANS, fontSize: 11, color: T.textMuted }}>{log.impact}</td>
                 <td style={{ padding: '12px 16px' }}>
-                   <span style={{ padding: '4px 8px', borderRadius: 4, background: log.status === 'auto-resolved' ? T.okBg : T.okBg, color: T.okBase, ...SANS, fontSize: 10, fontWeight: 700, border: `1px solid ${T.okBorder}` }}>
+                   <span style={{ padding: '4px 8px', borderRadius: 4, background: T.okBg, color: T.okBase, ...SANS, fontSize: 10, fontWeight: 700, border: `1px solid ${T.okBorder}` }}>
                      ✓ {log.status}
                    </span>
                 </td>
@@ -1975,6 +1999,7 @@ function LpaVerificationTab() {
 // ─── DATA EXPLORER TAB (Complete 12 Canonical Feeds) ────────────
 function DataExplorerTab({ masterFeeds, onUpdateFeedRecord }) {
   const [subTab, setSubTab] = useState("gl_001");
+ 
 
   const SUB_TABS = [
     { key:"gl_001", label:"GL-001 (Trial Balance)" },
@@ -2119,6 +2144,7 @@ function TrialBalanceTab({ tbRows }) {
   const [drillRow, setDrillRow] = useState(null);
   const [showAiInsight, setShowAiInsight] = useState(false);
   const [showAllCols, setShowAllCols] = useState(false); // NEW: Hierarchy Toggle
+  const [showLrDetails, setShowLrDetails] = useState(false);
   
   const totalDebit = tbRows.reduce((s,r)=>s+r.debit,0);
   const totalCredit = tbRows.reduce((s,r)=>s+r.credit,0);
@@ -2176,6 +2202,40 @@ function TrialBalanceTab({ tbRows }) {
           <span style={{fontSize:12, color:balanced?T.okBase:T.errorBase}}>{balanced?"✓":"✕"}</span>
           <span style={{...SANS,fontSize:12,fontWeight:700,color:balanced?T.okBase:T.errorBase,textTransform:"uppercase",letterSpacing:"0.03em"}}>{balanced?"Balanced":"Out of Balance"}</span>
         </div>
+        <div style={{ position: "relative" }}>
+  <button onClick={() => setShowLrDetails(!showLrDetails)} style={{ ...SANS, fontSize: 12, fontWeight: 700, padding: "6px 12px", borderRadius: 6, border: `1px solid ${T.warnBorder}`, background: T.warnBg, color: T.warnBase, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+    <span>◈</span> LR Adjusted — $1 distributed
+  </button>
+
+  {showLrDetails && (
+    <div className="slide-in" style={{ position: "absolute", top: 40, right: 0, width: 350, background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: 8, boxShadow: "0 10px 25px rgba(0,0,0,0.1)", zIndex: 100 }}>
+      <div style={{ padding: "16px", borderBottom: `1px solid ${T.border}`, background: "#f8fafc", borderRadius: "8px 8px 0 0" }}>
+        <div style={{ ...SANS, fontSize: 14, fontWeight: 700, color: T.textPrimary }}>Largest Remainder Adjustment</div>
+        <div style={{ ...SANS, fontSize: 12, color: T.textMuted, marginTop: 4 }}>Trial Balance Vertical Footing</div>
+      </div>
+      <div style={{ padding: "16px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, ...SANS, fontSize: 12 }}>
+          <span style={{ color: T.textMuted }}>Total Residual Distributed:</span>
+          <span style={{ fontWeight: 700, color: T.warnBase }}>+$1.00</span>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16, ...SANS, fontSize: 12 }}>
+          <span style={{ color: T.textMuted }}>Accounts Adjusted:</span>
+          <span style={{ fontWeight: 700, color: T.textPrimary }}>1</span>
+        </div>
+        <div style={{ ...SANS, fontSize: 11, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", marginBottom: 8 }}>Adjustment Detail</div>
+        <div style={{ background: T.appBg, border: `1px solid ${T.border}`, borderRadius: 6, padding: "12px", ...MONO, fontSize: 11 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+            <span style={{ color: T.textPrimary, fontWeight: 700 }}>Acct 1010-EUR-01</span>
+            <span style={{ color: T.warnBase, fontWeight: 700 }}>+$1.00</span>
+          </div>
+          <div style={{ color: T.textMuted }}>Raw: 37,947,213.47</div>
+          <div style={{ color: T.textMuted }}>Floored: 37,947,213</div>
+          <div style={{ color: T.textPrimary, marginTop: 4 }}>Displayed: 37,947,214</div>
+        </div>
+      </div>
+    </div>
+  )}
+</div>
         
         {!balanced && (
           <button onClick={()=>setShowAiInsight(!showAiInsight)} style={{...SANS,fontSize:11,fontWeight:700,height:34,padding:"0 12px",borderRadius:6,border:`1px solid ${T.aiBorder}`,background:showAiInsight?T.aiBase:T.aiBg,color:showAiInsight?"#fff":T.aiBase,cursor:"pointer",display:"flex",alignItems:"center",gap:6,transition:"all 0.15s",boxShadow:showAiInsight?"none":"0 2px 8px rgba(124,58,237,0.15)"}}>
@@ -2213,6 +2273,8 @@ function TrialBalanceTab({ tbRows }) {
 
     <div style={{background:T.cardBg,border:`1px solid ${T.border}`,borderRadius:10,overflowX:"auto", flex:1, display:"flex", flexDirection:"column"}}>
       <div style={{overflowY:"auto", flex:1}}>
+        {/* Drop this into the toolbar above the TB table */}
+
         <table style={{width:"100%",borderCollapse:"collapse",fontSize:12, textAlign:"left"}}>
           <thead style={{position:"sticky", top:0, zIndex:10}}>
             <tr style={{background:T.appBg}}>
