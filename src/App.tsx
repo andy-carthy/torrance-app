@@ -8245,7 +8245,7 @@ function LoginScreen({ onLogin }) {
 
 {/** TODO: M  */}
 // ─── GlobalHeader (Upgraded with Fixed Radial Data Hub Menu) ─────────────────
-function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIngestion, onGoToFilings, onOpenAiSettings, onGoToDashboard, streak, notificationCount}) {
+function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIngestion, onGoToFilings, onGoToEntities, onOpenAiSettings, onGoToDashboard, streak, notificationCount}) {
   const [hubOpen, setHubOpen] = useState(false);
   const showDataFeedsBtn = view !== "login" && view !== "auditor_portal";
 
@@ -8317,6 +8317,9 @@ function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIn
 
         <button onClick={onGoToFilings} style={{...SANS,fontSize:11,fontWeight:600,padding:"5px 12px",height:26,borderRadius:6,cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",gap:6,marginRight:8,transition:"background 0.15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.15)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
           <span style={{fontSize:13}}>📋</span> Filings
+        </button>
+        <button onClick={onGoToEntities} style={{...SANS,fontSize:11,fontWeight:600,padding:"5px 12px",height:26,borderRadius:6,cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",gap:6,marginRight:8,transition:"background 0.15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.15)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
+          <span style={{fontSize:13}}>🏢</span> Entities
         </button>
         <span style={{...MONO,fontSize:12,fontWeight:700,padding:"0 10px",height:26,borderRadius:6,background:T.aiBase,color:"#fff",display:"flex",alignItems:"center",gap:6,marginRight:8,boxShadow:"0 1px 2px rgba(0,0,0,0.1)"}}>
           <span>✦</span>AI Active
@@ -8488,6 +8491,7 @@ export default function App() {
     }
   };
   const handleGoToFilings   = () => { setSelectedFund(null); setView("filings"); };
+  const handleGoToEntities  = () => { setSelectedFund(null); setView("entities"); };
 
   // NEW: Dynamic Notification Engine
   const notifications = useMemo(() => {
@@ -8681,6 +8685,7 @@ export default function App() {
         onGoToIngestion={handleGoToIngestion}
         onGoToSchemaRegistryView={handleGoToSchemaRegistryView}
         onGoToFilings={handleGoToFilings}
+        onGoToEntities={handleGoToEntities}
         onOpenAiSettings={()=>setShowAiSettings(true)}
         onGoToDashboard={handleGoToDashboard} 
         streak={streak}
