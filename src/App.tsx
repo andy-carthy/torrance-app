@@ -5760,7 +5760,7 @@ function TouchlessFlowDashboard({ fundSeeds, onReassign }) {
             <div style={{padding: "24px", maxHeight: "60vh", overflowY: "auto"}}>
               <div style={{...SANS, fontSize: 12, fontWeight: 700, color: T.textPrimary, marginBottom: 12}}>Critical Capacity Offload</div>
               
-              {capacityData.filter(u => u.capacityPct > 70).map(u => (
+              {capacityData.filter(u => u.capacityPct > 40).map(u => (
                 <div key={u.id} style={{background: T.appBg, border: `1px solid ${T.border}`, borderRadius: 8, padding: 16, marginBottom: 16}}>
                   <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12}}>
                     <div style={{display: "flex", alignItems: "center", gap: 10}}>
