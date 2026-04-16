@@ -6988,7 +6988,7 @@ function IngestionStatusWidget({feeds, setFeeds, onGoToDashboard, onOpenMapping,
     return <span style={{...MONO,fontSize:10,fontWeight:700,border:`1px solid ${T.border}`,color:T.textMuted,padding:"2px 6px",borderRadius:4}}>Manual</span>;
   };
 
-  const thStyle = { ...SANS, padding: "8px 12px", textAlign: "left", color: T.textMuted, fontWeight: 700, fontSize: 10, letterSpacing: "0.05em", textTransform: "uppercase", borderBottom: `2px solid ${T.border}`, whiteSpace: "nowrap" };
+  const thStyle = { ...SANS, padding: "8px 12px", textAlign: "left", color: T.textMuted, fontWeight: 700, fontSize: 10, letterSpacing: "0.05em", borderBottom: `2px solid ${T.border}`, whiteSpace: "nowrap" };
   const tdStyle = { padding: "10px 12px", borderBottom: `1px solid ${T.border}` };
 
   return <div style={{padding:"20px 24px"}}>
@@ -7823,8 +7823,8 @@ function Dashboard({onBulkSubmitForReview,dashSubView, fundState, fundSeeds, app
                     <th style={{padding:"8px 12px", width:"20%", ...SANS, fontWeight:600, color:T.textMuted}}>Fund Name / ID</th>
                     <th style={{padding:"8px 12px", width:"9%", ...SANS, fontWeight:600, color:T.textMuted}}>Status</th>
                     <th style={{padding:"8px 12px", width:"12%", ...SANS, fontWeight:600, color:T.textMuted}}>Workflow Progress</th>
-                    <th style={{padding:"8px 12px", width:"10%", ...SANS, fontWeight:600, color:T.aiBase, textAlign:"right"}}>Auto-Resolved</th>
-                    <th style={{padding:"8px 12px", width:"10%", ...SANS, fontWeight:600, color:T.errorBase, textAlign:"right"}}>Requires Review</th>
+                    <th style={{padding:"8px 12px", width:"10%", ...SANS, fontWeight:600, color:T.textMuted, textAlign:"right"}}>Auto-Resolved</th>
+                    <th style={{padding:"8px 12px", width:"10%", ...SANS, fontWeight:600, color:T.textMuted, textAlign:"right"}}>Requires Review</th>
                     <th style={{padding:"8px 16px 8px 20px", width:"9%", ...SANS, fontWeight:600, color:T.textMuted}}>PoP Δ</th>
                     <th style={{padding:"8px 12px", width:"9%", ...SANS, fontWeight:600, color:T.textMuted}}>Last Draft</th>
                     <th style={{padding:"8px 12px", width:"9%", ...SANS, fontWeight:600, color:T.textMuted}}>SLA</th>
