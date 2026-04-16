@@ -5580,8 +5580,9 @@ function AuditorPortal({onClose}) {
 // IT6: THE BOILERROOM COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 // ─── COMBINED: Autonomous Flow & Team Capacity Dashboard (With Rebalancing) ──
-function TouchlessFlowDashboard() {
+function TouchlessFlowDashboard({ fundSeeds, onReassign }) {
   const [rebalanceModalOpen, setRebalanceModalOpen] = useState(false);
+  const [reassignments, setReassignments] = useState({});
 
   // 1. Aggregate Data for Pipeline
   const allExceptions = Object.values(FUND_EXCEPTIONS).flat();
@@ -5612,7 +5613,7 @@ function TouchlessFlowDashboard() {
     const userExcs = openExcs.filter(e => e.assignee === user.id);
     
     // Safely handle if assignedTo is an array (multiple users) or a string (single user)
-    const userFunds = FUNDS_SEED.filter(f => {
+    const userFunds = fundSeeds.filter(f => {
       const assigned = Array.isArray(f.assignedTo) ? f.assignedTo : [f.assignedTo];
       return assigned.includes(user.id);
     });
@@ -5746,14 +5747,14 @@ function TouchlessFlowDashboard() {
 
       {/* ─── WORKLOAD REBALANCE MODAL ─── */}
       {rebalanceModalOpen && (
-        <div className="modal-overlay" style={{position:"fixed", inset:0, background:"rgba(15,23,42,0.75)", zIndex:900, display:"flex", alignItems:"center", justifyContent:"center"}} onClick={() => setRebalanceModalOpen(false)}>
+        <div className="modal-overlay" style={{position:"fixed", inset:0, background:"rgba(15,23,42,0.75)", zIndex:900, display:"flex", alignItems:"center", justifyContent:"center"}} onClick={() => { setRebalanceModalOpen(false); setReassignments({}); }}>
           <div onClick={e => e.stopPropagation()} className="slide-in" style={{background: T.cardBg, borderRadius: 12, width: 600, boxShadow: "0 20px 60px rgba(0,0,0,0.3)", overflow: "hidden"}}>
             <div style={{background: T.navyHeader, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center"}}>
               <div>
                 <div style={{...SANS, fontWeight: 700, fontSize: 15, color: "#fff"}}>Workload Rebalancing</div>
                 <div style={{...SANS, fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 2}}>Shift fund assignments to relieve capacity bottlenecks.</div>
               </div>
-              <button onClick={() => setRebalanceModalOpen(false)} style={{background: "none", border: "none", color: "#8898aa", cursor: "pointer", fontSize: 18}}>✕</button>
+              <button onClick={() => { setRebalanceModalOpen(false); setReassignments({}); }} style={{background: "none", border: "none", color: "#8898aa", cursor: "pointer", fontSize: 18}}>✕</button>
             </div>
             
             <div style={{padding: "24px", maxHeight: "60vh", overflowY: "auto"}}>
@@ -5775,7 +5776,11 @@ function TouchlessFlowDashboard() {
                       <div style={{...SANS, fontSize: 12, color: T.textPrimary, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{f.name}</div>
                       <div style={{display: "flex", alignItems: "center", gap: 8}}>
                         <span style={{...SANS, fontSize: 11, color: T.textMuted}}>Reassign to:</span>
-                        <select style={{...SANS, fontSize: 11, padding: "4px 8px", borderRadius: 4, border: `1px solid ${T.border}`, background: "#fff"}}>
+                        <select
+                          value={reassignments[f.fund_id] || ""}
+                          onChange={e => setReassignments(prev => ({...prev, [f.fund_id]: e.target.value}))}
+                          style={{...SANS, fontSize: 11, padding: "4px 8px", borderRadius: 4, border: `1px solid ${T.border}`, background: "#fff"}}
+                        >
                           <option value="">Select Team Member...</option>
                           {capacityData.filter(member => member.id !== u.id && member.capacityPct < 60).map(member => (
                             <option key={member.id} value={member.id}>{member.name} ({member.capacityPct}%)</option>
@@ -5793,8 +5798,16 @@ function TouchlessFlowDashboard() {
             </div>
 
             <div style={{padding: "16px 24px", background: T.appBg, borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "flex-end", gap: 12}}>
-              <button onClick={() => setRebalanceModalOpen(false)} style={{...SANS, fontSize: 13, fontWeight: 600, padding: "8px 16px", borderRadius: 6, border: `1px solid ${T.border}`, background: T.cardBg, color: T.textPrimary, cursor: "pointer"}}>Cancel</button>
-              <button onClick={() => setRebalanceModalOpen(false)} style={{...SANS, fontSize: 13, fontWeight: 600, padding: "8px 16px", borderRadius: 6, border: "none", background: T.actionBase, color: "#fff", cursor: "pointer"}}>Apply Assignments</button>
+              <button onClick={() => { setRebalanceModalOpen(false); setReassignments({}); }} style={{...SANS, fontSize: 13, fontWeight: 600, padding: "8px 16px", borderRadius: 6, border: `1px solid ${T.border}`, background: T.cardBg, color: T.textPrimary, cursor: "pointer"}}>Cancel</button>
+              <button
+                disabled={!Object.values(reassignments).some(v => v)}
+                onClick={() => {
+                  Object.entries(reassignments).forEach(([fid, uid]) => { if (uid) onReassign(fid, uid); });
+                  setRebalanceModalOpen(false);
+                  setReassignments({});
+                }}
+                style={{...SANS, fontSize: 13, fontWeight: 600, padding: "8px 16px", borderRadius: 6, border: "none", background: Object.values(reassignments).some(v => v) ? T.actionBase : T.border, color: Object.values(reassignments).some(v => v) ? "#fff" : T.textMuted, cursor: Object.values(reassignments).some(v => v) ? "pointer" : "not-allowed"}}
+              >Apply Assignments</button>
             </div>
           </div>
         </div>
@@ -7694,7 +7707,7 @@ function Dashboard({fundState, fundSeeds, approvalState, currentUser, notificati
     )}
 
 {dashView==="inbox" ? <InboxView notifications={notifications} onSelectFund={onSelectFund} /> : 
-     dashView==="flow" ? <TouchlessFlowDashboard fundSeeds={fundSeeds} approvalState={approvalState} fundState={fundState}/> : 
+     dashView==="flow" ? <TouchlessFlowDashboard fundSeeds={fundSeeds} approvalState={approvalState} fundState={fundState} onReassign={onReassign}/> :
      dashView==="team" ? <TeamCapacityView fundState={fundState} fundSeeds={filteredAndSortedFunds} onSelectFund={onSelectFund} onReassign={onReassign}/> : 
       Object.keys(grouped).length === 0 ? (
         <div style={{textAlign:"center", padding:"60px 0", color:T.textMuted, ...SANS, fontSize:14}}>No funds match your current filters.</div>
