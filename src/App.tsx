@@ -5760,7 +5760,7 @@ function TouchlessFlowDashboard({ fundSeeds, onReassign }) {
             <div style={{padding: "24px", maxHeight: "60vh", overflowY: "auto"}}>
               <div style={{...SANS, fontSize: 12, fontWeight: 700, color: T.textPrimary, marginBottom: 12}}>Critical Capacity Offload</div>
               
-              {capacityData.filter(u => u.capacityPct > 40).map(u => (
+              {capacityData.filter(u => u.capacityPct > 25).map(u => (
                 <div key={u.id} style={{background: T.appBg, border: `1px solid ${T.border}`, borderRadius: 8, padding: 16, marginBottom: 16}}>
                   <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12}}>
                     <div style={{display: "flex", alignItems: "center", gap: 10}}>
@@ -5772,7 +5772,7 @@ function TouchlessFlowDashboard({ fundSeeds, onReassign }) {
                   
                   {/* Mock UI to show offloading assignments */}
                   {u.assignedFunds.slice(0, 2).map(f => (
-                    <div key={f.id} style={{display: "flex", alignItems: "center", justifyContent: "space-between", background: T.cardBg, border: `1px solid ${T.border}`, padding: "8px 12px", borderRadius: 6, marginBottom: 8}}>
+                    <div key={f.fund_id} style={{display: "flex", alignItems: "center", justifyContent: "space-between", background: T.cardBg, border: `1px solid ${T.border}`, padding: "8px 12px", borderRadius: 6, marginBottom: 8}}>
                       <div style={{...SANS, fontSize: 12, color: T.textPrimary, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{f.name}</div>
                       <div style={{display: "flex", alignItems: "center", gap: 8}}>
                         <span style={{...SANS, fontSize: 11, color: T.textMuted}}>Reassign to:</span>
