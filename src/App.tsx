@@ -1416,8 +1416,18 @@ function ExcCard({exc,active,selected,onClick,onToggleSelect}) {
   const assignee=exc.assignee?TEAM.find(m=>m.id===exc.assignee):null;
   const hasAI=!!AI_SUGGESTIONS[exc.id];
   const hasRCA=!!AI_ROOT_CAUSE[exc.id];
-  
-  return <div role="button" tabIndex={0} className="exc-card" onClick={onClick} onKeyDown={e=>e.key==="Enter"&&onClick()} style={{padding:"8px 12px 8px 0",borderBottom:`1px solid ${T.border}`,borderLeft:`3px solid ${selected||active?T.actionBase:"transparent"}`,background:selected?"#f0f4ff":active?"#f8fafc":T.cardBg,opacity:resolved?0.55:1,cursor:"pointer",display:"flex",alignItems:"center"}}>
+
+  // Fade-out animation when exception transitions to resolved (Instruction 5)
+  const [fading, setFading] = useState(false);
+  const prevStatus = useRef(exc.status);
+  useEffect(()=>{
+    if(prevStatus.current !== 'resolved' && exc.status === 'resolved') {
+      setFading(true);
+    }
+    prevStatus.current = exc.status;
+  },[exc.status]);
+
+  return <div role="button" tabIndex={0} className="exc-card" onClick={onClick} onKeyDown={e=>e.key==="Enter"&&onClick()} style={{padding:"8px 12px 8px 0",borderBottom:`1px solid ${T.border}`,borderLeft:`3px solid ${selected||active?T.actionBase:"transparent"}`,background:selected?"#f0f4ff":active?"#f8fafc":T.cardBg,opacity:fading?0:resolved?0.55:1,transition:"opacity 0.3s",cursor:"pointer",display:"flex",alignItems:"center"}}>
     <div style={{width:36,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}} onClick={e=>{e.stopPropagation();onToggleSelect(exc.id);}}>
       <input type="checkbox" checked={selected} onChange={()=>{}} style={{margin:0}}/>
     </div>
@@ -3695,7 +3705,7 @@ function JournalEntriesTab({ fund, fundSeeds, masterFeeds, currentUser, onPostJE
 // FINANCIAL STATEMENT PREVIEW TAB (Cleaned up - Checks moved to CrossChecksTab)
 // ═══════════════════════════════════════════════════════════════════════════════
 // ─── Dynamic GAAP Financial Statements ───────────────────────────────────────
-function FinancialStatementsTab({ fund }) {
+function FinancialStatementsTab({ fund, fxOverrideActive }) {
   const [activeStmt, setActiveStmt] = useState("soa");
   const [generating, setGenerating] = useState(false);
   const [generated,  setGenerated]  = useState(false);
@@ -3758,7 +3768,7 @@ function FinancialStatementsTab({ fund }) {
     const net_assets_r6 = -sumAcct(["3030"]);
 
     const div_income_domestic = -sumAcct(["4010"]);
-    const div_income_foreign = -sumAcct(["4020"]) || 108420;
+    const div_income_foreign = fxOverrideActive ? 108420 : (-sumAcct(["4020"]) || 108420);
     const interest_income = -sumAcct(["4030"]);
     const total_investment_income = div_income_domestic + div_income_foreign + interest_income;
 
@@ -3796,7 +3806,7 @@ function FinancialStatementsTab({ fund }) {
       net_investment_income, realized_gain, unrealized_change, net_increase_ops,
       subscriptions, redemptions, reinvestments, distributions, net_capital_txns, beginning_net_assets_actual
     };
-  }, []);
+  }, [fxOverrideActive]);
 
   const handleGenerate = () => {
     setGenerating(true);
@@ -5542,7 +5552,7 @@ function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFee
       {tab==="workpapers"  &&<WorkpapersTab fund={fund} masterFeeds={masterFeeds} />} {/* <-- ADD THIS LINE */}
       {tab==="cross_checks"&&<CrossChecksTab currentUser={currentUser}/>}
       {tab==="lpa_terms" && <LpaVerificationTab />}
-      {tab==="statements"  &&<FinancialStatementsTab fund={fund} />}
+      {tab==="statements"  &&<FinancialStatementsTab fund={fund} fxOverrideActive={fxOverrideActive}/>}
       {tab==="footnotes"   &&<FootnoteEditorTab fund={fund} />}
     </div>
   </div>;
@@ -8758,6 +8768,7 @@ export default function App() {
 
   const handleResolve = useCallback((fid,id,res,ov)=>{
     setStreak(s=>s+1);
+    if(id==='EXC-003' && res==='override_value') setFxOverrideActive(true);
     setFundState(prev=>{
       const realFid = getRealFid(prev, fid, id);
       if(!prev[realFid]) return prev;
