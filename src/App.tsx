@@ -5585,8 +5585,9 @@ function AuditorPortal({onClose}) {
 // IT6: THE BOILERROOM COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 // ─── COMBINED: Autonomous Flow & Team Capacity Dashboard (With Rebalancing) ──
-function TouchlessFlowDashboard() {
+function TouchlessFlowDashboard({ fundSeeds, onReassign }) {
   const [rebalanceModalOpen, setRebalanceModalOpen] = useState(false);
+  const [reassignments, setReassignments] = useState({});
 
   // 1. Aggregate Data for Pipeline
   const allExceptions = Object.values(FUND_EXCEPTIONS).flat();
@@ -5617,7 +5618,7 @@ function TouchlessFlowDashboard() {
     const userExcs = openExcs.filter(e => e.assignee === user.id);
     
     // Safely handle if assignedTo is an array (multiple users) or a string (single user)
-    const userFunds = FUNDS_SEED.filter(f => {
+    const userFunds = fundSeeds.filter(f => {
       const assigned = Array.isArray(f.assignedTo) ? f.assignedTo : [f.assignedTo];
       return assigned.includes(user.id);
     });
@@ -5751,55 +5752,75 @@ function TouchlessFlowDashboard() {
 
       {/* ─── WORKLOAD REBALANCE MODAL ─── */}
       {rebalanceModalOpen && (
-        <div className="modal-overlay" style={{position:"fixed", inset:0, background:"rgba(15,23,42,0.75)", zIndex:900, display:"flex", alignItems:"center", justifyContent:"center"}} onClick={() => setRebalanceModalOpen(false)}>
+        <div className="modal-overlay" style={{position:"fixed", inset:0, background:"rgba(15,23,42,0.75)", zIndex:900, display:"flex", alignItems:"center", justifyContent:"center"}} onClick={() => { setRebalanceModalOpen(false); setReassignments({}); }}>
           <div onClick={e => e.stopPropagation()} className="slide-in" style={{background: T.cardBg, borderRadius: 12, width: 600, boxShadow: "0 20px 60px rgba(0,0,0,0.3)", overflow: "hidden"}}>
             <div style={{background: T.navyHeader, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center"}}>
               <div>
                 <div style={{...SANS, fontWeight: 700, fontSize: 15, color: "#fff"}}>Workload Rebalancing</div>
                 <div style={{...SANS, fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 2}}>Shift fund assignments to relieve capacity bottlenecks.</div>
               </div>
-              <button onClick={() => setRebalanceModalOpen(false)} style={{background: "none", border: "none", color: "#8898aa", cursor: "pointer", fontSize: 18}}>✕</button>
+              <button onClick={() => { setRebalanceModalOpen(false); setReassignments({}); }} style={{background: "none", border: "none", color: "#8898aa", cursor: "pointer", fontSize: 18}}>✕</button>
             </div>
             
             <div style={{padding: "24px", maxHeight: "60vh", overflowY: "auto"}}>
-              <div style={{...SANS, fontSize: 12, fontWeight: 700, color: T.textPrimary, marginBottom: 12}}>Critical Capacity Offload</div>
-              
-              {capacityData.filter(u => u.capacityPct > 70).map(u => (
-                <div key={u.id} style={{background: T.appBg, border: `1px solid ${T.border}`, borderRadius: 8, padding: 16, marginBottom: 16}}>
-                  <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12}}>
-                    <div style={{display: "flex", alignItems: "center", gap: 10}}>
-                      <Avatar user={u} size={28} />
-                      <span style={{...SANS, fontSize: 13, fontWeight: 700, color: T.textPrimary}}>{u.name}</span>
-                      <span style={{...MONO, fontSize: 12, fontWeight: 700, color: T.errorBase}}>{u.capacityPct}%</span>
-                    </div>
-                  </div>
-                  
-                  {/* Mock UI to show offloading assignments */}
-                  {u.assignedFunds.slice(0, 2).map(f => (
-                    <div key={f.id} style={{display: "flex", alignItems: "center", justifyContent: "space-between", background: T.cardBg, border: `1px solid ${T.border}`, padding: "8px 12px", borderRadius: 6, marginBottom: 8}}>
-                      <div style={{...SANS, fontSize: 12, color: T.textPrimary, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{f.name}</div>
-                      <div style={{display: "flex", alignItems: "center", gap: 8}}>
-                        <span style={{...SANS, fontSize: 11, color: T.textMuted}}>Reassign to:</span>
-                        <select style={{...SANS, fontSize: 11, padding: "4px 8px", borderRadius: 4, border: `1px solid ${T.border}`, background: "#fff"}}>
-                          <option value="">Select Team Member...</option>
-                          {capacityData.filter(member => member.id !== u.id && member.capacityPct < 60).map(member => (
-                            <option key={member.id} value={member.id}>{member.name} ({member.capacityPct}%)</option>
-                          ))}
-                        </select>
+              <div style={{...SANS, fontSize: 12, fontWeight: 700, color: T.textPrimary, marginBottom: 12}}>Reassign Fund Coverage</div>
+
+              {(() => {
+                const usersWithFunds = capacityData.filter(u => u.assignedFunds.length > 0);
+                if (usersWithFunds.length === 0) {
+                  return <div style={{...SANS, fontSize: 13, color: T.textMuted, textAlign: "center", padding: "24px 0"}}>No fund assignments found.</div>;
+                }
+                return usersWithFunds.map(u => (
+                  <div key={u.id} style={{background: T.appBg, border: `1px solid ${T.border}`, borderRadius: 8, padding: 16, marginBottom: 16}}>
+                    <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12}}>
+                      <div style={{display: "flex", alignItems: "center", gap: 10}}>
+                        <Avatar user={u} size={28} />
+                        <span style={{...SANS, fontSize: 13, fontWeight: 700, color: T.textPrimary}}>{u.name}</span>
+                        <span style={{...MONO, fontSize: 12, fontWeight: 700, color: u.capacityPct > 40 ? T.errorBase : T.textMuted}}>{u.capacityPct}% capacity</span>
+                        <span style={{...SANS, fontSize: 11, color: T.textMuted}}>· {u.assignedFunds.length} fund{u.assignedFunds.length !== 1 ? "s" : ""}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ))}
+                    {u.assignedFunds.map(f => {
+                      const targets = capacityData.filter(m => m.id !== u.id);
+                      return (
+                        <div key={f.fund_id} style={{display: "flex", alignItems: "center", justifyContent: "space-between", background: T.cardBg, border: `1px solid ${reassignments[f.fund_id] ? T.actionBase : T.border}`, padding: "8px 12px", borderRadius: 6, marginBottom: 8}}>
+                          <div style={{...SANS, fontSize: 12, color: T.textPrimary, flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginRight: 8}}>{f.name}</div>
+                          <div style={{display: "flex", alignItems: "center", gap: 8, flexShrink: 0}}>
+                            <span style={{...SANS, fontSize: 11, color: T.textMuted}}>→</span>
+                            <select
+                              value={reassignments[f.fund_id] || ""}
+                              onChange={e => setReassignments(prev => ({...prev, [f.fund_id]: e.target.value}))}
+                              style={{...SANS, fontSize: 11, padding: "4px 8px", borderRadius: 4, border: `1px solid ${reassignments[f.fund_id] ? T.actionBase : T.border}`, background: "#fff", cursor: "pointer"}}
+                            >
+                              <option value="">Keep current</option>
+                              {targets.map(m => (
+                                <option key={m.id} value={m.id}>{m.name} ({m.capacityPct}%)</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ));
+              })()}
 
-              <div style={{...SANS, fontSize: 12, color: T.textMuted, textAlign: "center", marginTop: 24}}>
-                Selecting a new team member will immediately update permissions and route future exceptions.
+              <div style={{...SANS, fontSize: 12, color: T.textMuted, textAlign: "center", marginTop: 16}}>
+                Reassignments will update fund coverage and route future exceptions to the new owner.
               </div>
             </div>
 
             <div style={{padding: "16px 24px", background: T.appBg, borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "flex-end", gap: 12}}>
-              <button onClick={() => setRebalanceModalOpen(false)} style={{...SANS, fontSize: 13, fontWeight: 600, padding: "8px 16px", borderRadius: 6, border: `1px solid ${T.border}`, background: T.cardBg, color: T.textPrimary, cursor: "pointer"}}>Cancel</button>
-              <button onClick={() => setRebalanceModalOpen(false)} style={{...SANS, fontSize: 13, fontWeight: 600, padding: "8px 16px", borderRadius: 6, border: "none", background: T.actionBase, color: "#fff", cursor: "pointer"}}>Apply Assignments</button>
+              <button onClick={() => { setRebalanceModalOpen(false); setReassignments({}); }} style={{...SANS, fontSize: 13, fontWeight: 600, padding: "8px 16px", borderRadius: 6, border: `1px solid ${T.border}`, background: T.cardBg, color: T.textPrimary, cursor: "pointer"}}>Cancel</button>
+              <button
+                disabled={!Object.values(reassignments).some(v => v)}
+                onClick={() => {
+                  Object.entries(reassignments).forEach(([fid, uid]) => { if (uid) onReassign(fid, uid); });
+                  setRebalanceModalOpen(false);
+                  setReassignments({});
+                }}
+                style={{...SANS, fontSize: 13, fontWeight: 600, padding: "8px 16px", borderRadius: 6, border: "none", background: Object.values(reassignments).some(v => v) ? T.actionBase : T.border, color: Object.values(reassignments).some(v => v) ? "#fff" : T.textMuted, cursor: Object.values(reassignments).some(v => v) ? "pointer" : "not-allowed"}}
+              >Apply Assignments</button>
             </div>
           </div>
         </div>
@@ -7725,7 +7746,7 @@ function Dashboard({onBulkSubmitForReview,dashSubView, fundState, fundSeeds, app
     )}
 
 {dashView==="inbox" ? <InboxView notifications={notifications} onSelectFund={onSelectFund} /> : 
-     dashView==="flow" ? <TouchlessFlowDashboard fundSeeds={fundSeeds} approvalState={approvalState} fundState={fundState}/> : 
+     dashView==="flow" ? <TouchlessFlowDashboard fundSeeds={fundSeeds} approvalState={approvalState} fundState={fundState} onReassign={onReassign}/> :
      dashView==="team" ? <TeamCapacityView fundState={fundState} fundSeeds={filteredAndSortedFunds} onSelectFund={onSelectFund} onReassign={onReassign}/> : 
       Object.keys(grouped).length === 0 ? (
         <div style={{textAlign:"center", padding:"60px 0", color:T.textMuted, ...SANS, fontSize:14}}>No funds match your current filters.</div>
@@ -8053,6 +8074,7 @@ function LoginScreen({ onLogin }) {
   const [mfaCode, setMfaCode] = useState("");
   const [error, setError] = useState("");
   const [valuePropIdx, setValuePropIdx] = useState(0);
+  const [ssoLoading, setSsoLoading] = useState(false);
 
   const valueProps = [
     "High-velocity financial reporting.",
@@ -8083,9 +8105,8 @@ function LoginScreen({ onLogin }) {
     }
   };
 
-  // FIX: Make the Enterprise SSO button actually do something
   const handleSsoClick = () => {
-    setEmail("sarah.chen@Pennywisecapital.com");
+    setSsoLoading(true);
     setTimeout(() => {
       onLogin("u1", "dashboard");
     }, 600);
@@ -8136,26 +8157,28 @@ function LoginScreen({ onLogin }) {
                 </div>
               )}
               
-              <button 
-  onClick={handleSsoClick} 
-  style={{ 
-    width: "100%", 
-    padding: "12px", 
-    borderRadius: 6, 
-    border: `1px solid ${T.actionBase}`, 
-    background: "transparent", 
-    color: T.actionBase, 
-    fontSize: 13, 
-    fontWeight: 600, 
-    cursor: "pointer", 
-    marginBottom: 24, 
-    transition: "all 0.15s" 
-  }} 
-  onMouseEnter={e => e.currentTarget.style.background = T.actionBg} 
-  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
->
-  Continue with Enterprise SSO
-</button>
+              <button
+                onClick={handleSsoClick}
+                disabled={ssoLoading}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: 6,
+                  border: `1px solid ${T.actionBase}`,
+                  background: "transparent",
+                  color: T.actionBase,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: ssoLoading ? "not-allowed" : "pointer",
+                  marginBottom: 24,
+                  transition: "all 0.15s",
+                  opacity: ssoLoading ? 0.6 : 1,
+                }}
+                onMouseEnter={e => { if (!ssoLoading) e.currentTarget.style.background = T.actionBg; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+              >
+                {ssoLoading ? "Redirecting to SSO..." : "Continue with Enterprise SSO"}
+              </button>
               
               <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:24 }}>
                 <div style={{ flex:1, height:1, background:"#eef1f5" }} />
