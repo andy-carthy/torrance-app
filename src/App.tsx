@@ -801,10 +801,10 @@ const pdfStyles = StyleSheet.create({
 
 const fmtPdfUSD = (n) => n == null ? "—" : n < 0 ? `($${Math.abs(n).toLocaleString("en-US",{minimumFractionDigits:2})})` : `$${n.toLocaleString("en-US",{minimumFractionDigits:2})}`;
 
-const FinancialStatementPDF = ({ fund, fsData }) => (
+const FinancialStatementPDF = ({ fund, fsData, resolvedExceptions = [] }: { fund?: any; fsData?: any; resolvedExceptions?: any[] }) => (
   <Document>
     {/* PAGE 1: Statement of Assets and Liabilities */}
-    <Page size="A4" style={pdfStyles.page}>
+    {fsData && <Page size="A4" style={pdfStyles.page}>
       <Text style={pdfStyles.header}>Statement of Assets and Liabilities</Text>
       <Text style={pdfStyles.subHeader}>{fund?.name || "Fund"} — As of December 31, 2024</Text>
 
@@ -829,10 +829,10 @@ const FinancialStatementPDF = ({ fund, fsData }) => (
       <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Net Assets — Institutional</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.net_assets_inst)}</Text></View>
       <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Net Assets — R6</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.net_assets_r6)}</Text></View>
       <View style={pdfStyles.rowDouble}><Text style={pdfStyles.label}>Total Net Assets</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.net_assets)}</Text></View>
-    </Page>
+    </Page>}
 
     {/* PAGE 2: Statement of Operations */}
-    <Page size="A4" style={pdfStyles.page}>
+    {fsData && <Page size="A4" style={pdfStyles.page}>
       <Text style={pdfStyles.header}>Statement of Operations</Text>
       <Text style={pdfStyles.subHeader}>{fund?.name || "Fund"} — For the Year Ended December 31, 2024</Text>
 
@@ -847,11 +847,46 @@ const FinancialStatementPDF = ({ fund, fsData }) => (
       <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Professional Fees</Text><Text style={pdfStyles.value}>{fmtPdfUSD(-fsData.professional_fees)}</Text></View>
       <View style={pdfStyles.rowBold}><Text style={pdfStyles.label}>Total Expenses</Text><Text style={pdfStyles.value}>{fmtPdfUSD(-fsData.total_expenses)}</Text></View>
       <View style={pdfStyles.rowBold}><Text style={pdfStyles.label}>Net Investment Income / (Loss)</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.net_investment_income)}</Text></View>
-      
+
       <Text style={pdfStyles.sectionTitle}>Realized & Unrealized Gain / (Loss)</Text>
       <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Net Realized Gain on Investments</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.realized_gain)}</Text></View>
       <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Net Change in Unrealized Appreciation</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.unrealized_change)}</Text></View>
       <View style={pdfStyles.rowDouble}><Text style={pdfStyles.label}>Net Increase in Net Assets from Operations</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.net_increase_ops)}</Text></View>
+    </Page>}
+
+    {/* PAGE 3: Exception Resolution Audit Trail */}
+    <Page size="A4" style={pdfStyles.page}>
+      <Text style={pdfStyles.header}>Exception Resolution Audit Trail</Text>
+      <Text style={pdfStyles.subHeader}>{fund?.name || "Fund"} — December 31, 2024 Close</Text>
+      <Text style={[pdfStyles.sectionTitle, {marginTop: 8}]}>Resolved Exceptions</Text>
+
+      {/* Table header */}
+      <View style={{flexDirection:'row', backgroundColor:'#0f172a', padding:'6px 4px', marginBottom:2}}>
+        <Text style={{color:'#fff', fontSize:8, fontWeight:'bold', width:60}}>Exc. ID</Text>
+        <Text style={{color:'#fff', fontSize:8, fontWeight:'bold', flex:1}}>Code</Text>
+        <Text style={{color:'#fff', fontSize:8, fontWeight:'bold', flex:2}}>Resolution</Text>
+        <Text style={{color:'#fff', fontSize:8, fontWeight:'bold', width:80}}>Override Value</Text>
+        <Text style={{color:'#fff', fontSize:8, fontWeight:'bold', width:70}}>Resolved By</Text>
+      </View>
+      {resolvedExceptions.length === 0 && (
+        <View style={{padding:'12px 4px'}}><Text style={{fontSize:10, color:'#64748b'}}>No exceptions resolved for this period.</Text></View>
+      )}
+      {resolvedExceptions.map((exc, i) => {
+        const resolver = TEAM.find(m => m.id === exc.resolvedBy);
+        return (
+          <View key={exc.id} style={{flexDirection:'row', backgroundColor: i % 2 === 0 ? '#f8fafc' : '#fff', padding:'5px 4px', borderBottom:'1px solid #e2e8f0'}}>
+            <Text style={{fontSize:8, width:60, fontFamily:'Courier'}}>{exc.id}</Text>
+            <Text style={{fontSize:8, flex:1, color:'#4f46e5'}}>{exc.code}</Text>
+            <Text style={{fontSize:8, flex:2}}>{exc.resolution || '—'}{exc.overrideValue ? `  Before: ${exc.currentValue}  →  After: ${exc.overrideValue}` : ''}</Text>
+            <Text style={{fontSize:8, width:80, fontFamily:'Courier'}}>{exc.overrideValue || '—'}</Text>
+            <Text style={{fontSize:8, width:70}}>{resolver?.name || exc.resolvedBy || '—'}</Text>
+          </View>
+        );
+      })}
+      <View style={{marginTop: 20, padding:'10px 12px', backgroundColor:'#f0fdf4', border:'1px solid #a7f3d0'}}>
+        <Text style={{fontSize:9, color:'#0f766e', fontWeight:'bold'}}>✓ Audit trail generated by Torrance AI — {new Date().toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'})}</Text>
+        <Text style={{fontSize:8, color:'#64748b', marginTop:4}}>This document represents the complete exception resolution log for the reporting period. All resolutions have been reviewed and approved per the fund's exception management policy.</Text>
+      </View>
     </Page>
   </Document>
 );
@@ -1018,9 +1053,11 @@ const GLOBAL_CSS = `
     @keyframes flashGreen { 0%{background:rgba(16,185,129,0.35);} 100%{background:transparent;} }
     @keyframes flashPurple { 0%{background:rgba(99,102,241,0.35);} 100%{background:transparent;} }
     @keyframes countDown { 0%{color:#f87171;} 100%{color:#34d399;} }
+    @keyframes flashYellow { 0%{background:rgba(251,191,36,0.45);} 100%{background:rgba(251,191,36,0.15);} }
     .flash-green { animation: flashGreen 0.8s ease forwards; }
     .flash-purple { animation: flashPurple 0.8s ease forwards; }
     .count-down { animation: countDown 0.6s ease forwards; }
+    .flash-yellow { animation: flashYellow 0.8s ease forwards; }
 }`;
 
 function StyleInjector() {
@@ -1387,6 +1424,37 @@ function ResolutionAuditRecord({exc,onReopen,onAddThread,currentUserId}) {
       {exc.overrideValue&&<div><div style={{...SANS,fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:5}}>Override Value</div><span style={{...MONO,fontSize:13,fontWeight:600,padding:"2px 7px",borderRadius:4,background:T.warnBg,color:T.warnBase,border:`1px solid ${T.warnBorder}`}}>{exc.overrideValue}</span></div>}
       {assignee&&<div><div style={{...SANS,fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:5}}>Assigned To</div><div style={{display:"flex",alignItems:"center",gap:7}}><Avatar user={assignee} size={24}/><span style={{...SANS,fontSize:13}}>{assignee.name}</span></div></div>}
     </div>
+
+    {/* ─── Instruction 10: Before/After Value Display ─── */}
+    {exc.resolution === "override_value" && exc.overrideValue && exc.currentValue && (() => {
+      const parseVal = (v: string) => parseFloat(v.replace(/[$,]/g, '')) || 0;
+      const before = parseVal(exc.currentValue);
+      const after = parseVal(exc.overrideValue);
+      const variance = after - before;
+      const variancePct = before ? ((variance / Math.abs(before)) * 100).toFixed(1) : null;
+      return (
+        <div style={{marginBottom: 16, padding: "14px 16px", background: "linear-gradient(135deg, #fff8f8 0%, #f0fdf4 100%)", border: `1px solid ${T.border}`, borderRadius: 8}}>
+          <div style={{...SANS, fontSize: 10, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 10}}>Value Correction</div>
+          <div style={{display: "flex", alignItems: "center", gap: 16}}>
+            <div style={{textAlign: "center"}}>
+              <div style={{...SANS, fontSize: 10, color: T.textMuted, marginBottom: 4}}>Before</div>
+              <div style={{...MONO, fontSize: 16, fontWeight: 700, color: T.errorBase, textDecoration: "line-through", opacity: 0.85}}>{exc.currentValue}</div>
+            </div>
+            <div style={{...MONO, fontSize: 14, color: T.textMuted, letterSpacing: "0.05em", flexShrink: 0}}>────────→</div>
+            <div style={{textAlign: "center"}}>
+              <div style={{...SANS, fontSize: 10, color: T.textMuted, marginBottom: 4}}>After</div>
+              <div style={{...MONO, fontSize: 16, fontWeight: 700, color: T.okBase}}>{exc.overrideValue}</div>
+            </div>
+            {variancePct !== null && (
+              <div style={{marginLeft: "auto", textAlign: "right"}}>
+                <div style={{...SANS, fontSize: 10, color: T.textMuted, marginBottom: 4}}>Variance</div>
+                <div style={{...MONO, fontSize: 13, fontWeight: 700, color: variance < 0 ? T.errorBase : T.okBase}}>{variance < 0 ? "" : "+"}{fmtUSD(variance)} ({variancePct}%)</div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    })()}
 
     {/* ─── C-10: AUTOMATED JE BANNER ─── */}
     {exc.resolution === "override_value" && (
@@ -3705,7 +3773,7 @@ function JournalEntriesTab({ fund, fundSeeds, masterFeeds, currentUser, onPostJE
 // FINANCIAL STATEMENT PREVIEW TAB (Cleaned up - Checks moved to CrossChecksTab)
 // ═══════════════════════════════════════════════════════════════════════════════
 // ─── Dynamic GAAP Financial Statements ───────────────────────────────────────
-function FinancialStatementsTab({ fund, fxOverrideActive }) {
+function FinancialStatementsTab({ fund, fxOverrideActive, exceptions = [] }: { fund?: any; fxOverrideActive?: boolean; exceptions?: any[] }) {
   const [activeStmt, setActiveStmt] = useState("soa");
   const [generating, setGenerating] = useState(false);
   const [generated,  setGenerated]  = useState(false);
@@ -4058,7 +4126,7 @@ function FinancialStatementsTab({ fund, fxOverrideActive }) {
           </>)}
         </div>
       </div>
-      {showPdf && <PdfModal onClose={() => setShowPdf(false)} fund={fund} fsData={FS_DYNAMIC} tbData={TB_ROWS} />}
+      {showPdf && <PdfModal onClose={() => setShowPdf(false)} fund={fund} fsData={FS_DYNAMIC} tbData={TB_ROWS} resolvedExceptions={exceptions.filter(e=>e.status==='resolved')} />}
       {provenanceTrace && <ProvenancePanel trace={provenanceTrace} onClose={() => setProvenanceTrace(null)} />}
     </div>
   );
@@ -4205,7 +4273,7 @@ function DrilldownModal({row,onClose}) {
 }
 
 // ─── UPGRADED: PdfModal (Now with Real Excel Working Papers) ─────────────────
-function PdfModal({ onClose, fund, fsData, tbData }) {
+function PdfModal({ onClose, fund, fsData, tbData, resolvedExceptions = [] }: { onClose: () => void; fund?: any; fsData?: any; tbData?: any; resolvedExceptions?: any[] }) {
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExcelExport = async () => {
@@ -4227,7 +4295,7 @@ function PdfModal({ onClose, fund, fsData, tbData }) {
           
           {/* REAL PDF GENERATOR BUTTON */}
           {fsData && (
-            <PDFDownloadLink document={<FinancialStatementPDF fund={fund} fsData={fsData} />} fileName={`${fund?.fund_id || 'fund'}_financials.pdf`} style={{textDecoration:'none'}}>
+            <PDFDownloadLink document={<FinancialStatementPDF fund={fund} fsData={fsData} resolvedExceptions={resolvedExceptions} />} fileName={`${fund?.fund_id || 'fund'}_financials.pdf`} style={{textDecoration:'none'}}>
               {({ loading }) => (
                 <button style={{...SANS,width:"100%",textAlign:"left",border:`1px solid ${T.actionBase}`,borderRadius:8,padding:"12px 15px",marginBottom:9,cursor:loading?"wait":"pointer",background:T.actionBg,display:"flex",alignItems:"center",gap:13}}>
                   <span style={{fontSize:22}}>📄</span>
@@ -4288,13 +4356,13 @@ function PdfModal({ onClose, fund, fsData, tbData }) {
 }
 
 // ─── ApprovalWaterfallBar (Updated for Muted Slate) ──────────────────────
-function ApprovalWaterfallBar({fund,approval,exceptions,currentUser,onSubmit,onApprove}) {
+function ApprovalWaterfallBar({fund,approval,exceptions,currentUser,onSubmit,onApprove,onOpenPdf}) {
   const [showEmailConfirm,setShowEmailConfirm]=useState(false);
   const openErrors=exceptions.filter(e=>e.severity==="error"&&e.status==="open");
   const canSubmit=openErrors.length===0&&approval.status==="open";
   const isPreparer=!currentUser.isController;
   const handleApprove=()=>{ onApprove(); setShowEmailConfirm(true); setTimeout(()=>setShowEmailConfirm(false),4000); };
-  
+
   return <div style={{display:"flex",alignItems:"center",gap:12}}>
     <div style={{display:"flex",alignItems:"center",gap:4, background:"rgba(0,0,0,0.2)", padding:"4px 8px", borderRadius:6, border:"1px solid rgba(255,255,255,0.1)"}}>
       {[{key:"open",label:"Prep",done:["submitted","review_pending","approved"].includes(approval.status)},{key:"review_pending",label:"Review",done:["approved"].includes(approval.status)},{key:"approved",label:"Approved",done:approval.status==="approved"}].map((step,i)=>(
@@ -4304,6 +4372,7 @@ function ApprovalWaterfallBar({fund,approval,exceptions,currentUser,onSubmit,onA
         </React.Fragment>
       ))}
     </div>
+    {onOpenPdf&&<button onClick={onOpenPdf} style={{...SANS,border:"1px solid rgba(255,255,255,0.15)",borderRadius:5,padding:"5px 10px",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:4,background:"rgba(255,255,255,0.08)",color:"rgba(255,255,255,0.85)"}}>📄 PDF</button>}
     {isPreparer&&approval.status==="open"&&<button disabled={!canSubmit} onClick={()=>canSubmit&&onSubmit()} style={{...SANS,border:canSubmit?"none":"1px solid rgba(255,255,255,0.1)",borderRadius:5,padding:"5px 12px",fontSize:11,fontWeight:700,cursor:canSubmit?"pointer":"not-allowed",display:"flex",alignItems:"center",gap:5,background:canSubmit?T.actionBase:"rgba(255,255,255,0.05)",color:canSubmit?"#fff":"rgba(255,255,255,0.4)"}}>{canSubmit?<><span>↑</span>Submit</>:<><span>🔒</span>{openErrors.length} Errors</>}</button>}
     {currentUser.isController&&approval.status==="review_pending"&&<button onClick={handleApprove} style={{...SANS,border:"none",borderRadius:5,padding:"5px 12px",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5,background:T.okBase,color:"#fff"}}><span>✓</span>Approve</button>}
     {showEmailConfirm&&<span className="fade-in" style={{...SANS,fontSize:11,color:"#34d399",fontWeight:600}}>✉️ Sent</span>}
@@ -5494,6 +5563,7 @@ function WorkpapersTab({ fund, masterFeeds }) {
 // ─── FundView — Main Fund Drill-Down Container ────────────────────────
 function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFeeds, blockedFunds, onUpdateFeedRecord, onSelectFund, onResolve, onReopen, onUpdate, onAddThread, onSubmit, onApprove, onBack, demoActiveExcId, demoTypingText, demoShouldSubmit, fxOverrideActive}) {
   const [tab,setTab]=useState("exceptions");
+  const [showFundPdf, setShowFundPdf] = useState(false);
   
   const handleNextFund = () => {
     const currentIndex = blockedFunds.findIndex(f => f.fund_id === fund.fund_id);
@@ -5531,7 +5601,7 @@ function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFee
           </button>
         )}
       </div>
-      <ApprovalWaterfallBar fund={fund} approval={approval} exceptions={exceptions} currentUser={currentUser} onSubmit={onSubmit} onApprove={onApprove}/>
+      <ApprovalWaterfallBar fund={fund} approval={approval} exceptions={exceptions} currentUser={currentUser} onSubmit={onSubmit} onApprove={onApprove} onOpenPdf={() => setShowFundPdf(true)}/>
     </div>
 
     <div style={{background:T.cardBg,borderBottom:`1px solid ${T.border}`,padding:"0 24px",display:"flex",gap:0,flexShrink:0,overflowX:"auto"}}>
@@ -5552,9 +5622,10 @@ function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFee
       {tab==="workpapers"  &&<WorkpapersTab fund={fund} masterFeeds={masterFeeds} />} {/* <-- ADD THIS LINE */}
       {tab==="cross_checks"&&<CrossChecksTab currentUser={currentUser}/>}
       {tab==="lpa_terms" && <LpaVerificationTab />}
-      {tab==="statements"  &&<FinancialStatementsTab fund={fund} fxOverrideActive={fxOverrideActive}/>}
+      {tab==="statements"  &&<FinancialStatementsTab fund={fund} fxOverrideActive={fxOverrideActive} exceptions={exceptions}/>}
       {tab==="footnotes"   &&<FootnoteEditorTab fund={fund} />}
     </div>
+    {showFundPdf && <PdfModal onClose={() => setShowFundPdf(false)} fund={fund} resolvedExceptions={exceptions.filter(e=>e.status==='resolved')} />}
   </div>;
 }
 
@@ -5718,6 +5789,17 @@ function TouchlessFlowDashboard({ fundSeeds, onReassign, fundState, onRunDemo, i
     prevResidualRef.current = liveResidualCount;
   }, [liveResidualCount]);
 
+  // ── Instruction 9: STP Rate ──────────────────────────────────────────────
+  const stpRate = useMemo(() => {
+    const excs = liveAllExcs as any[];
+    if (!excs.length) return 0;
+    const touchless = excs.filter(e => e.status === 'resolved' && (e.resolvedBy === 'u_ai' || e.resolution === 'acknowledge')).length;
+    return Math.round(touchless / excs.length * 100);
+  }, [liveAllExcs]);
+  const circumference = 251; // 2π × 40
+  const stpOffset = circumference - (stpRate / 100) * circumference;
+  const stpColor = stpRate >= 80 ? T.okBase : stpRate >= 60 ? T.warnBase : T.errorBase;
+
   // ── Static aggregates ────────────────────────────────────────────────────
   const totalFeeds = INGESTION_FEEDS.length;
   const autoResolvedCount = AI_DECISION_LOG.filter(l => l.type === 'autonomous').length;
@@ -5780,12 +5862,25 @@ function TouchlessFlowDashboard({ fundSeeds, onReassign, fundState, onRunDemo, i
             <h2 style={{...SANS, fontSize: 18, fontWeight: 700, color: "#fff", margin: 0}}>Autonomous Operations</h2>
             <p style={{...SANS, fontSize: 13, color: "rgba(255,255,255,0.6)", marginTop: 4}}>Live view of global STP flow and process bottlenecks.</p>
           </div>
-          {/* Demo button (Instruction 6 wired here) */}
-          {onRunDemo && (
-            <button onClick={onRunDemo} style={{...SANS, fontSize: 12, fontWeight: 700, padding: "8px 16px", borderRadius: 6, border: `1px solid ${isDemoRunning ? T.errorBorder : T.okBorder}`, background: isDemoRunning ? T.errorBg : T.okBg, color: isDemoRunning ? T.errorBase : T.okBase, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, transition: "all 0.2s"}}>
-              {isDemoRunning ? "⏹ Stop Demo" : "▶ Run Touchless Demo"}
-            </button>
-          )}
+          {/* Instruction 9: STP Rate Gauge + Demo button */}
+          <div style={{display:"flex",alignItems:"center",gap:16}}>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+              <svg width="96" height="96" viewBox="0 0 96 96">
+                <circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="8" />
+                <circle cx="48" cy="48" r="40" fill="none" stroke={stpColor} strokeWidth="8"
+                  strokeDasharray={circumference} strokeDashoffset={stpOffset}
+                  strokeLinecap="round" transform="rotate(-90 48 48)"
+                  style={{transition:"stroke-dashoffset 0.8s ease, stroke 0.5s ease"}} />
+                <text x="48" y="44" textAnchor="middle" fill="#fff" fontSize="16" fontWeight="bold" fontFamily="monospace">{stpRate}%</text>
+                <text x="48" y="58" textAnchor="middle" fill="rgba(255,255,255,0.55)" fontSize="8" fontFamily="sans-serif">STP Rate</text>
+              </svg>
+            </div>
+            {onRunDemo && (
+              <button onClick={onRunDemo} style={{...SANS, fontSize: 12, fontWeight: 700, padding: "8px 16px", borderRadius: 6, border: `1px solid ${isDemoRunning ? T.errorBorder : T.okBorder}`, background: isDemoRunning ? T.errorBg : T.okBg, color: isDemoRunning ? T.errorBase : T.okBase, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, transition: "all 0.2s"}}>
+                {isDemoRunning ? "⏹ Stop Demo" : "▶ Run Touchless Demo"}
+              </button>
+            )}
+          </div>
         </div>
 
         <div style={{display: "flex", alignItems: "flex-start", position: "relative"}}>
@@ -8408,9 +8503,34 @@ function LoginScreen({ onLogin }) {
 
 {/** TODO: M  */}
 // ─── GlobalHeader (Upgraded with Fixed Radial Data Hub Menu) ─────────────────
-function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIngestion, onGoToFilings, onGoToEntities, onOpenAiSettings, onGoToDashboard, streak, notificationCount}) {
+function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIngestion, onGoToFilings, onGoToEntities, onOpenAiSettings, onGoToDashboard, streak, notificationCount, fundState, fundSeeds}) {
   const [hubOpen, setHubOpen] = useState(false);
+  const [excFlash, setExcFlash] = useState(false);
   const showDataFeedsBtn = view !== "login" && view !== "auditor_portal";
+
+  const allExcs = useMemo(() => Object.values(fundState || {}).flat(), [fundState]);
+  const fundsOpen = useMemo(() => (fundSeeds || []).filter(f => (fundState?.[f.fund_id] || []).some((e:any) => e.severity === 'error' && e.status === 'open')).length, [fundState, fundSeeds]);
+  const exceptionsOpen = useMemo(() => (allExcs as any[]).filter(e => e.severity === 'error' && e.status === 'open').length, [allExcs]);
+  const touchlessPct = useMemo(() => {
+    const excs = allExcs as any[];
+    if (!excs.length) return 0;
+    const touchless = excs.filter(e => e.status === 'resolved' && (e.resolvedBy === 'u_ai' || e.resolution === 'acknowledge')).length;
+    return Math.round(touchless / excs.length * 100);
+  }, [allExcs]);
+
+  const prevExcOpen = useRef(exceptionsOpen);
+  useEffect(() => {
+    if (prevExcOpen.current !== exceptionsOpen) {
+      setExcFlash(true);
+      const t = setTimeout(() => setExcFlash(false), 800);
+      prevExcOpen.current = exceptionsOpen;
+      return () => clearTimeout(t);
+    }
+  }, [exceptionsOpen]);
+
+  const touchColor = touchlessPct >= 80 ? T.okBase : touchlessPct >= 60 ? T.warnBase : T.errorBase;
+  const touchBg = touchlessPct >= 80 ? T.okBg : touchlessPct >= 60 ? T.warnBg : T.errorBg;
+  const touchBd = touchlessPct >= 80 ? T.okBorder : touchlessPct >= 60 ? T.warnBorder : T.errorBorder;
 
   return (
     <header style={{background:T.navyHeader,color:"#fff",padding:"0 24px",height:52,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:200,boxShadow:"0 1px 4px rgba(0,0,0,0.1)"}}>
@@ -8433,11 +8553,24 @@ function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIn
         </span>
       </div>
       </div>
-      
 
+      {/* KPI ticker chips */}
+      {fundState && (
+        <div style={{display:"flex",alignItems:"center",gap:6}}>
+          <div style={{...SANS,fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:5,background:"rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.85)",border:"1px solid rgba(255,255,255,0.12)",whiteSpace:"nowrap"}}>
+            {fundsOpen} Fund{fundsOpen!==1?"s":""} Open
+          </div>
+          <div className={excFlash ? "flash-yellow" : ""} style={{...SANS,fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:5,background:exceptionsOpen>0?"rgba(251,191,36,0.15)":"rgba(255,255,255,0.08)",color:exceptionsOpen>0?T.warnBase:"rgba(255,255,255,0.6)",border:`1px solid ${exceptionsOpen>0?T.warnBorder:"rgba(255,255,255,0.1)"}`,whiteSpace:"nowrap",transition:"background 0.3s,color 0.3s"}}>
+            {exceptionsOpen} Exception{exceptionsOpen!==1?"s":""}
+          </div>
+          <div style={{...SANS,fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:5,background:touchBg,color:touchColor,border:`1px solid ${touchBd}`,whiteSpace:"nowrap"}}>
+            {touchlessPct}% Touchless
+          </div>
+        </div>
+      )}
 
       <div style={{display:"flex",alignItems:"center",gap:10}}>
-        
+
       <button onClick={() => onGoToDashboard("dashboard")} style={{...SANS,fontSize:12,fontWeight:600,padding:"0 12px",height:26,borderRadius:6,cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",gap:6,marginRight:4,transition:"all 0.2s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.2)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
               <span>📊</span> Dashboard
             </button>
@@ -8934,7 +9067,9 @@ export default function App() {
         onOpenAiSettings={()=>setShowAiSettings(true)}
         onGoToDashboard={handleGoToDashboard} 
         streak={streak}
-        notificationCount={notifications.length} 
+        notificationCount={notifications.length}
+        fundState={fundState}
+        fundSeeds={FUNDS_SEED}
       />
       {view==="ingestion"&&!selectedFund&&<IngestionStatusWidget feeds={feeds} setFeeds={setFeeds} currentUser={currentUser} onGoToDashboard={()=>{setView("dashboard");}} onOpenMapping={session=>setMappingSession(session)} onGoToExceptions={handleGoToExceptions} setView={setView}/>}
       {view === "schemas" && <SchemaRegistryView onBack={() => setView("ingestion")} onOpenStudio={(id) => { setActiveSchema(id); setView("schema_studio"); }} />}
