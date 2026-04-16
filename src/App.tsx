@@ -1013,8 +1013,14 @@ const GLOBAL_CSS = `
     .glow-btn { transition: all 0.2s ease-in-out; }
     .glow-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(5,150,105,0.4); }
     .pulse-border { animation: pulseBorder 2s infinite; }
-    @keyframes pulseBorder { 0% { box-shadow: 0 0 0 0 rgba(220,53,69,0.4); } 70% { box-shadow: 0 0 0 6px rgba(220,53,69,0); } 100% { box-shadow: 0 0 0 0 rgba(220,53,69,0); } }}
-`;
+    @keyframes pulseBorder { 0% { box-shadow: 0 0 0 0 rgba(220,53,69,0.4); } 70% { box-shadow: 0 0 0 6px rgba(220,53,69,0); } 100% { box-shadow: 0 0 0 0 rgba(220,53,69,0); } }
+    @keyframes flashGreen { 0%{background:rgba(16,185,129,0.35);} 100%{background:transparent;} }
+    @keyframes flashPurple { 0%{background:rgba(99,102,241,0.35);} 100%{background:transparent;} }
+    @keyframes countDown { 0%{color:#f87171;} 100%{color:#34d399;} }
+    .flash-green { animation: flashGreen 0.8s ease forwards; }
+    .flash-purple { animation: flashPurple 0.8s ease forwards; }
+    .count-down { animation: countDown 0.6s ease forwards; }
+}`;
 
 function StyleInjector() {
   useEffect(()=>{ 
@@ -5585,37 +5591,106 @@ function AuditorPortal({onClose}) {
 // IT6: THE BOILERROOM COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 // ─── COMBINED: Autonomous Flow & Team Capacity Dashboard (With Rebalancing) ──
-function TouchlessFlowDashboard({ fundSeeds, onReassign }) {
+function TouchlessFlowDashboard({ fundSeeds, onReassign, fundState, onRunDemo, isDemoRunning, demoKey }) {
   const [rebalanceModalOpen, setRebalanceModalOpen] = useState(false);
   const [reassignments, setReassignments] = useState({});
 
-  // 1. Aggregate Data for Pipeline
-  const allExceptions = Object.values(FUND_EXCEPTIONS).flat();
-  const openExcs = allExceptions.filter(e => e.status === "open");
-  const resolvedExcs = allExceptions.filter(e => e.status === "resolved");
+  // ── Instructions 1-2: Live animation state ───────────────────────────────
+  const [liveIngestedCount, setLiveIngestedCount] = useState(0);
+  const [feedLog, setFeedLog] = useState([]);
+  const [liveAiCount, setLiveAiCount] = useState(0);
+  const [aiLog, setAiLog] = useState([]);
+  const [ingestFlash, setIngestFlash] = useState(false);
+  const [aiFlash, setAiFlash] = useState(false);
+  const feedLogRef = useRef(null);
+  const aiLogRef = useRef(null);
+  const animRef = useRef({ ingestTimer: null, aiTimer: null, aiTimeout: null });
 
-  const ingestedCount = INGESTION_FEEDS.filter(f => f.status === "success").length;
+  const startAnimation = useCallback(() => {
+    clearInterval(animRef.current.ingestTimer);
+    clearInterval(animRef.current.aiTimer);
+    clearTimeout(animRef.current.aiTimeout);
+    setLiveIngestedCount(0); setFeedLog([]); setLiveAiCount(0); setAiLog([]);
+    setIngestFlash(false); setAiFlash(false);
+
+    let ingestIdx = 0;
+    const autoLogs = AI_DECISION_LOG.filter(l => l.type === 'autonomous');
+
+    animRef.current.ingestTimer = setInterval(() => {
+      if (ingestIdx >= INGESTION_FEEDS.length) {
+        clearInterval(animRef.current.ingestTimer);
+        animRef.current.aiTimeout = setTimeout(() => {
+          let aiIdx = 0;
+          animRef.current.aiTimer = setInterval(() => {
+            if (aiIdx >= autoLogs.length) { clearInterval(animRef.current.aiTimer); return; }
+            const log = autoLogs[aiIdx];
+            setLiveAiCount(aiIdx + 1);
+            setAiFlash(true); setTimeout(() => setAiFlash(false), 700);
+            setAiLog(prev => [...prev, `[${log.timestamp}] ✦ ${log.exceptionId} — ${log.rule} — Auto-Resolved (${log.confidence}%)`]);
+            aiIdx++;
+          }, 600);
+        }, 1000);
+        return;
+      }
+      const feed = INGESTION_FEEDS[ingestIdx];
+      const ts = new Date().toLocaleTimeString('en-US', { hour12: false });
+      setLiveIngestedCount(ingestIdx + 1);
+      setIngestFlash(true); setTimeout(() => setIngestFlash(false), 700);
+      setFeedLog(prev => [...prev, `[${ts}] ✓ ${feed.payload} — ${feed.rows.toLocaleString()} rows ingested`]);
+      ingestIdx++;
+    }, 800);
+  }, []);
+
+  useEffect(() => {
+    startAnimation();
+    return () => {
+      clearInterval(animRef.current.ingestTimer);
+      clearInterval(animRef.current.aiTimer);
+      clearTimeout(animRef.current.aiTimeout);
+    };
+  }, [demoKey]); // restarts when demo key changes
+
+  useEffect(() => { feedLogRef.current?.scrollTo(0, feedLogRef.current.scrollHeight); }, [feedLog.length]);
+  useEffect(() => { aiLogRef.current?.scrollTo(0, aiLogRef.current.scrollHeight); }, [aiLog.length]);
+
+  // ── Instruction 3: Live data from fundState ──────────────────────────────
+  const liveAllExcs = useMemo(() => Object.values(fundState || {}).flat(), [fundState]);
+  const liveOpenErrors = useMemo(() => liveAllExcs.filter(e => e.severity === 'error' && e.status === 'open'), [liveAllExcs]);
+  const liveResidualCount = liveOpenErrors.length;
+  const liveResolved = useMemo(() => liveAllExcs.filter(e => e.status === 'resolved'), [liveAllExcs]);
+
+  const prevResidualRef = useRef(liveResidualCount);
+  const [residualFlash, setResidualFlash] = useState(false);
+  useEffect(() => {
+    if (prevResidualRef.current !== null && liveResidualCount < prevResidualRef.current) {
+      setResidualFlash(true);
+      setTimeout(() => setResidualFlash(false), 600);
+    }
+    prevResidualRef.current = liveResidualCount;
+  }, [liveResidualCount]);
+
+  // ── Static aggregates ────────────────────────────────────────────────────
   const totalFeeds = INGESTION_FEEDS.length;
-
-  const totalCaught = allExceptions.length;
-  const totalResolved = resolvedExcs.length;
-
-  const reviewPending = openExcs.length;
-  
+  const autoResolvedCount = AI_DECISION_LOG.filter(l => l.type === 'autonomous').length;
   const approvedFunds = Object.values(INITIAL_APPROVAL_STATE).filter(a => a.status === "approved").length;
   const filingsDue = BEVERLEY_FILINGS.filter(f => f.status !== "filed").length;
 
+  const ingestionDone = liveIngestedCount === totalFeeds && totalFeeds > 0;
+  const aiDone = liveAiCount === autoResolvedCount && autoResolvedCount > 0;
+  const queueClear = liveResidualCount === 0;
+
   const stages = [
-    { id: "ingest", title: "Data Ingestion", metric: `${ingestedCount} / ${totalFeeds}`, desc: "Feeds received & parsed", icon: "⛁", color: T.actionBase, bg: T.actionBg },
-    { id: "auto", title: "Touchless AI", metric: `${totalResolved} / ${totalCaught}`, desc: "Exceptions auto-resolved", icon: "✦", color: T.aiBase, bg: T.aiBg },
-    { id: "review", title: "Judgment Queue", metric: reviewPending, desc: "Pending preparer review", icon: "👤", color: T.warnBase, bg: T.warnBg },
+    { id: "ingest", title: "Data Ingestion", metric: `${liveIngestedCount} / ${totalFeeds}`, desc: "Feeds received & parsed", icon: "⛁", color: ingestionDone ? T.okBase : T.actionBase, bg: ingestionDone ? T.okBg : T.actionBg },
+    { id: "auto",   title: "Touchless AI",   metric: `${liveAiCount} / ${autoResolvedCount}`, desc: "Exceptions auto-resolved", icon: "✦", color: aiDone ? T.okBase : T.aiBase, bg: aiDone ? T.okBg : T.aiBg },
+    { id: "review", title: "Judgment Queue", metric: liveResidualCount, desc: "Pending preparer review", icon: queueClear ? "🎉" : "👤", color: queueClear ? T.okBase : T.warnBase, bg: queueClear ? T.okBg : T.warnBg },
     { id: "approve", title: "Controller Sign-Off", metric: approvedFunds, desc: "Funds certified", icon: "✓", color: T.okBase, bg: T.okBg },
-    { id: "file", title: "Regulatory Filings", metric: filingsDue, desc: "Filings due in 30 days", icon: "🏛", color: "#64748b", bg: "#f1f5f9" }
+    { id: "file",   title: "Regulatory Filings", metric: filingsDue, desc: "Filings due in 30 days", icon: "🏛", color: "#64748b", bg: "#f1f5f9" }
   ];
 
   // 2. Map Capacity Data (Supporting multiple users per fund)
+  const liveOpenExcs = liveAllExcs.filter(e => e.status === 'open');
   const capacityData = TEAM.map(user => {
-    const userExcs = openExcs.filter(e => e.assignee === user.id);
+    const userExcs = liveOpenExcs.filter(e => e.assignee === user.id);
     
     // Safely handle if assignedTo is an array (multiple users) or a string (single user)
     const userFunds = fundSeeds.filter(f => {
@@ -5648,7 +5723,7 @@ function TouchlessFlowDashboard({ fundSeeds, onReassign }) {
 
   return (
     <div className="fade-in" style={{background: T.navyHeader, borderRadius: 12, marginBottom: 24, boxShadow: "0 10px 30px rgba(0,0,0,0.2)", overflow: "hidden", display: "flex", flexDirection: "column"}}>
-      
+
       {/* ─── TOP PANE: Global Pipeline Flow ─── */}
       <div style={{padding: "24px 32px", position: "relative"}}>
         <div style={{display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 36}}>
@@ -5656,24 +5731,63 @@ function TouchlessFlowDashboard({ fundSeeds, onReassign }) {
             <h2 style={{...SANS, fontSize: 18, fontWeight: 700, color: "#fff", margin: 0}}>Autonomous Operations</h2>
             <p style={{...SANS, fontSize: 13, color: "rgba(255,255,255,0.6)", marginTop: 4}}>Live view of global STP flow and process bottlenecks.</p>
           </div>
+          {/* Demo button (Instruction 6 wired here) */}
+          {onRunDemo && (
+            <button onClick={onRunDemo} style={{...SANS, fontSize: 12, fontWeight: 700, padding: "8px 16px", borderRadius: 6, border: `1px solid ${isDemoRunning ? T.errorBorder : T.okBorder}`, background: isDemoRunning ? T.errorBg : T.okBg, color: isDemoRunning ? T.errorBase : T.okBase, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, transition: "all 0.2s"}}>
+              {isDemoRunning ? "⏹ Stop Demo" : "▶ Run Touchless Demo"}
+            </button>
+          )}
         </div>
 
-        <div style={{display: "flex", alignItems: "center", position: "relative"}}>
+        <div style={{display: "flex", alignItems: "flex-start", position: "relative"}}>
           <div style={{position: "absolute", top: 26, left: "10%", right: "10%", height: 2, background: "rgba(255,255,255,0.15)", zIndex: 0}} />
-          
-          {stages.map((stage) => (
-            <div key={stage.id} style={{flex: 1, display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 1}}>
-              <div style={{width: 52, height: 52, borderRadius: "50%", background: stage.bg, border: `2px solid ${stage.color}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: stage.color, marginBottom: 12, boxShadow: `0 0 0 6px ${T.navyHeader}`}}>
-                {stage.icon}
+
+          {stages.map((stage) => {
+            const flashCls = stage.id === "ingest" && ingestFlash ? "flash-green"
+              : stage.id === "auto" && aiFlash ? "flash-purple"
+              : stage.id === "review" && residualFlash ? "count-down"
+              : "";
+            const badge = stage.id === "ingest" && ingestionDone ? "✓ Ingestion Complete"
+              : stage.id === "auto" && aiDone ? "100% Autonomous"
+              : stage.id === "review" && queueClear ? "🎉 Queue Clear"
+              : null;
+            return (
+              <div key={stage.id} style={{flex: 1, display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 1}}>
+                <div style={{width: 52, height: 52, borderRadius: "50%", background: stage.bg, border: `2px solid ${stage.color}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: stage.color, marginBottom: 12, boxShadow: `0 0 0 6px ${T.navyHeader}`, transition: "border-color 0.4s, background 0.4s"}}>
+                  {stage.icon}
+                </div>
+                <div style={{textAlign: "center"}}>
+                  <div className={flashCls} style={{...SANS, fontSize: 22, fontWeight: 700, color: "#fff", lineHeight: 1.1, borderRadius: 6, padding: "2px 6px"}}>{stage.metric}</div>
+                  <div style={{...SANS, fontSize: 12, fontWeight: 700, color: stage.color, marginTop: 4, transition: "color 0.4s"}}>{stage.title}</div>
+                  <div style={{...SANS, fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 4, maxWidth: 130, margin: "4px auto 0", lineHeight: 1.4}}>{stage.desc}</div>
+                  {badge && <div style={{...MONO, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 10, background: T.okBg, color: T.okBase, border: `1px solid ${T.okBorder}`, marginTop: 6, display: "inline-flex", alignItems: "center", gap: 3}}>{badge}</div>}
+                </div>
               </div>
-              <div style={{textAlign: "center"}}>
-                <div style={{...SANS, fontSize: 22, fontWeight: 700, color: "#fff", lineHeight: 1.1}}>{stage.metric}</div>
-                <div style={{...SANS, fontSize: 12, fontWeight: 700, color: stage.color, marginTop: 4}}>{stage.title}</div>
-                <div style={{...SANS, fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 4, maxWidth: 130, margin: "4px auto 0", lineHeight: 1.4}}>{stage.desc}</div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
+
+        {/* Feed log + AI log rows */}
+        {(feedLog.length > 0 || aiLog.length > 0) && (
+          <div style={{display: "flex", gap: 12, marginTop: 20}}>
+            {feedLog.length > 0 && (
+              <div style={{flex: 1, minWidth: 0}}>
+                <div style={{...MONO, fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4}}>Ingestion Log</div>
+                <div ref={feedLogRef} style={{height: 80, overflowY: "auto", ...MONO, fontSize: 10, background: "#0d1117", color: "#34d399", padding: 8, borderRadius: 6}}>
+                  {feedLog.map((line, i) => <div key={i}>{line}</div>)}
+                </div>
+              </div>
+            )}
+            {aiLog.length > 0 && (
+              <div style={{flex: 1, minWidth: 0}}>
+                <div style={{...MONO, fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4}}>AI Resolution Log</div>
+                <div ref={aiLogRef} style={{height: 80, overflowY: "auto", ...MONO, fontSize: 10, background: "#0d1117", color: "#a78bfa", padding: 8, borderRadius: 6}}>
+                  {aiLog.map((line, i) => <div key={i}>{line}</div>)}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ─── BOTTOM PANE: Human-in-the-Loop Capacity Grid ─── */}
@@ -7563,7 +7677,7 @@ function NaturalLanguageQuery() {
     </div>
   );
 }
-function Dashboard({onBulkSubmitForReview,dashSubView, fundState, fundSeeds, approvalState, currentUser, notifications, onSelectFund, onReassign, onViewClientExceptions, onBulkApprove, onGlobalResolve, onGoToAudit}) {
+function Dashboard({onBulkSubmitForReview,dashSubView, fundState, fundSeeds, approvalState, currentUser, notifications, onSelectFund, onReassign, onViewClientExceptions, onBulkApprove, onGlobalResolve, onGoToAudit, onRunDemo, isDemoRunning, demoKey}) {
   const [dashView,setDashView]=useState(currentUser?.isController ? "flow":"client");
   const [layoutStyle,setLayoutStyle]=useState("list");
   const [collapsed,setCollapsed]=useState({});
@@ -7746,7 +7860,7 @@ function Dashboard({onBulkSubmitForReview,dashSubView, fundState, fundSeeds, app
     )}
 
 {dashView==="inbox" ? <InboxView notifications={notifications} onSelectFund={onSelectFund} /> : 
-     dashView==="flow" ? <TouchlessFlowDashboard fundSeeds={fundSeeds} approvalState={approvalState} fundState={fundState} onReassign={onReassign}/> :
+     dashView==="flow" ? <TouchlessFlowDashboard fundSeeds={fundSeeds} approvalState={approvalState} fundState={fundState} onReassign={onReassign} onRunDemo={onRunDemo} isDemoRunning={isDemoRunning} demoKey={demoKey}/> :
      dashView==="team" ? <TeamCapacityView fundState={fundState} fundSeeds={filteredAndSortedFunds} onSelectFund={onSelectFund} onReassign={onReassign}/> : 
       Object.keys(grouped).length === 0 ? (
         <div style={{textAlign:"center", padding:"60px 0", color:T.textMuted, ...SANS, fontSize:14}}>No funds match your current filters.</div>
@@ -8478,6 +8592,15 @@ export default function App() {
 
   const currentUser = TEAM.find(m=>m.id===currentUserId) || TEAM[0];
   const [dashSubView, setDashSubView] = useState(null);
+
+  // ── Demo orchestration state (Instructions 1-6) ───────────────────────────
+  const [demoKey, setDemoKey] = useState(0);
+  const [isDemoRunning, setIsDemoRunning] = useState(false);
+  const [demoActiveExcId, setDemoActiveExcId] = useState(null);
+  const [demoTypingText, setDemoTypingText] = useState("");
+  const [demoShouldSubmit, setDemoShouldSubmit] = useState(false);
+  const [demoToast, setDemoToast] = useState(null);
+  const demoRunningRef = useRef(false);
   const handleGoToDashboard = (target = "dashboard") => { 
     setSelectedFund(null); 
     if (target === "inbox") {
@@ -8656,7 +8779,75 @@ export default function App() {
   }),[currentUserId]);
 
   const handleReassign=useCallback((fid,newUid)=>setFundSeeds(prev=>prev.map(f=>f.fund_id===fid?{...f,assignedTo:newUid}:f)),[]);
-  
+
+  // ── Demo orchestrator (Instruction 6) ────────────────────────────────────
+  const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+  const handleRunDemo = useCallback(() => {
+    if (demoRunningRef.current) {
+      demoRunningRef.current = false;
+      setIsDemoRunning(false);
+      setDemoToast(null);
+      return;
+    }
+    demoRunningRef.current = true;
+    setIsDemoRunning(true);
+    setDemoKey(k => k + 1); // restarts TouchlessFlowDashboard animation
+
+    const run = async () => {
+      // Animation plays in TouchlessFlowDashboard for ~9.5s (7×800ms + 1000ms + 4×600ms)
+      await sleep(9600);
+      if (!demoRunningRef.current) return;
+
+      // Step 4: Navigate to Pennywise Global Diversified Fund
+      const fund = FUNDS_SEED.find(f => f.fund_id === "FND-2024-001");
+      setSelectedFund(fund); setView("fund");
+      await sleep(500);
+      if (!demoRunningRef.current) return;
+
+      // Step 5: Open EXC-H01
+      setDemoActiveExcId("EXC-H01");
+      await sleep(1000);
+      if (!demoRunningRef.current) return;
+
+      // Step 6: Type comment char-by-char
+      const comment = "Reviewing T+1 settlement lag on AAPL position.";
+      for (let i = 0; i <= comment.length; i++) {
+        if (!demoRunningRef.current) return;
+        setDemoTypingText(comment.slice(0, i));
+        await sleep(45);
+      }
+      await sleep(500);
+      if (!demoRunningRef.current) return;
+
+      // Step 7: Submit comment (AI reply auto-fires via Instruction 4)
+      setDemoShouldSubmit(true);
+      await sleep(200);
+      setDemoShouldSubmit(false);
+      setDemoTypingText("");
+
+      // Step 8: Wait for AI reply, then resolve exception
+      await sleep(2200);
+      if (!demoRunningRef.current) return;
+      handleResolve("FND-2024-001", "EXC-H01", "accept_as_is", "");
+
+      // Step 9: Navigate back to dashboard
+      await sleep(600);
+      if (!demoRunningRef.current) return;
+      setSelectedFund(null); setView("dashboard");
+      setDemoActiveExcId(null);
+
+      // Step 10: Show toast
+      await sleep(600);
+      if (!demoRunningRef.current) return;
+      setDemoToast("✓ Touchless Demo Complete — 4 auto-resolved, 1 human-assisted");
+      setTimeout(() => setDemoToast(null), 6000);
+
+      demoRunningRef.current = false;
+      setIsDemoRunning(false);
+    };
+    run();
+  }, [handleResolve]);
+
   if (view === "login") return <><StyleInjector/><LoginScreen onLogin={handleLogin} /></>;
   if (view === "auditor_portal") return <><StyleInjector/><AuditorPortal onClose={handleLogout} isModal={false} /></>; 
 
@@ -8704,7 +8895,8 @@ export default function App() {
       {view==="data_architecture"&&!selectedFund&&<IntegrationsAndArchitectureHub fundSeeds={fundSeeds} masterFeeds={masterFeeds} onBack={()=>setView("dashboard")} />}
       {view==="data_exchange"&&!selectedFund&&<DataExchangeView onBack={()=>setView("dashboard")} />}
       {/* Update Dashboard to receive notifications */}
-      {view==="dashboard"&&!selectedFund&&<Dashboard onBulkSubmitForReview={handleBulkSubmitForReview} dashSubView={dashSubView} fundState={fundState} fundSeeds={fundSeeds} approvalState={approvalState} currentUser={currentUser} notifications={notifications} onSelectFund={f=>{setSelectedFund(f); setView("fund");}} onReassign={handleReassign} onViewClientExceptions={handleViewClientExceptions} onBulkApprove={handleBulkApprove} onGlobalResolve={handleGlobalResolve} onGoToAudit={()=>setView("audit_logs")} />} {selectedFund&&<FundView fund={selectedFund} fundSeeds={fundSeeds} onSelectFund={f=>{setSelectedFund(f); setView("fund");}} exceptions={getExceptions(selectedFund.fund_id)} approval={approvalState[selectedFund.fund_id] || {status:"open"}} currentUser={currentUser} masterFeeds={masterFeeds} blockedFunds={blockedFundsList}
+      {demoToast && <div className="slide-in" style={{position:"fixed",top:70,right:24,background:T.navyHeader,border:`1px solid ${T.okBase}`,color:"#fff",padding:"14px 20px",borderRadius:8,boxShadow:"0 10px 25px rgba(0,0,0,0.2)",zIndex:9999,display:"flex",gap:12,alignItems:"center",...SANS,fontSize:13,fontWeight:600}}><span style={{fontSize:18}}>✓</span>{demoToast}<button onClick={()=>setDemoToast(null)} style={{background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:16,marginLeft:8}}>✕</button></div>}
+      {view==="dashboard"&&!selectedFund&&<Dashboard onBulkSubmitForReview={handleBulkSubmitForReview} dashSubView={dashSubView} fundState={fundState} fundSeeds={fundSeeds} approvalState={approvalState} currentUser={currentUser} notifications={notifications} onSelectFund={f=>{setSelectedFund(f); setView("fund");}} onReassign={handleReassign} onViewClientExceptions={handleViewClientExceptions} onBulkApprove={handleBulkApprove} onGlobalResolve={handleGlobalResolve} onGoToAudit={()=>setView("audit_logs")} onRunDemo={handleRunDemo} isDemoRunning={isDemoRunning} demoKey={demoKey}/>} {selectedFund&&<FundView fund={selectedFund} fundSeeds={fundSeeds} onSelectFund={f=>{setSelectedFund(f); setView("fund");}} exceptions={getExceptions(selectedFund.fund_id)} approval={approvalState[selectedFund.fund_id] || {status:"open"}} currentUser={currentUser} masterFeeds={masterFeeds} blockedFunds={blockedFundsList}
     onUpdateFeedRecord={handleUpdateFeedRecord} 
     onResolve={(id,res,ov)=>handleResolve(selectedFund.fund_id,id,res,ov)} onReopen={id=>handleReopen(selectedFund.fund_id,id)} onUpdate={(id,patch)=>handleUpdate(selectedFund.fund_id,id,patch)} onAddThread={(excId,txt)=>handleAddThread(selectedFund.fund_id,excId,txt)} onSubmit={()=>handleSubmit(selectedFund.fund_id)} onApprove={()=>handleApprove(selectedFund.fund_id)} onBack={()=>{ setSelectedFund(null); setView("dashboard"); }}/>}
     </div>
