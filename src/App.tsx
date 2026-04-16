@@ -7094,8 +7094,8 @@ function IngestionStatusWidget({feeds, setFeeds, onGoToDashboard, onOpenMapping,
                   {autoResolved>0 ? autoResolved : "—"}
                 </td>
 
-                {/* Requires Review Column (Old Exceptions Column) */}
-                <td style={{...tdStyle,...MONO,textAlign:"right",fontSize:11,color:feed.exceptions>0?T.warnBase:T.textMuted,fontWeight:feed.exceptions>0?700:400}}>
+                {/* Requires Review Column */}
+                <td style={{...tdStyle,...MONO,textAlign:"right",fontSize:11,color:feed.exceptions>0?T.errorBase:T.textMuted,fontWeight:feed.exceptions>0?700:400}}>
                   {feed.exceptions>0 ? feed.exceptions : "—"}
                 </td>
                 
@@ -7823,9 +7823,9 @@ function Dashboard({onBulkSubmitForReview,dashSubView, fundState, fundSeeds, app
                     <th style={{padding:"8px 12px", width:"20%", ...SANS, fontWeight:600, color:T.textMuted}}>Fund Name / ID</th>
                     <th style={{padding:"8px 12px", width:"9%", ...SANS, fontWeight:600, color:T.textMuted}}>Status</th>
                     <th style={{padding:"8px 12px", width:"12%", ...SANS, fontWeight:600, color:T.textMuted}}>Workflow Progress</th>
-                    <th style={{padding:"8px 12px", width:"10%", ...SANS, fontWeight:600, color:T.textMuted, textAlign:"right"}}>Auto-Resolved</th>
-                    <th style={{padding:"8px 12px", width:"10%", ...SANS, fontWeight:600, color:T.textMuted, textAlign:"right"}}>Requires Review</th>
-                    <th style={{padding:"8px 12px", width:"9%", ...SANS, fontWeight:600, color:T.textMuted}}>PoP Δ</th>
+                    <th style={{padding:"8px 12px", width:"10%", ...SANS, fontWeight:600, color:T.aiBase, textAlign:"right"}}>Auto-Resolved</th>
+                    <th style={{padding:"8px 12px", width:"10%", ...SANS, fontWeight:600, color:T.errorBase, textAlign:"right"}}>Requires Review</th>
+                    <th style={{padding:"8px 16px 8px 20px", width:"9%", ...SANS, fontWeight:600, color:T.textMuted}}>PoP Δ</th>
                     <th style={{padding:"8px 12px", width:"9%", ...SANS, fontWeight:600, color:T.textMuted}}>Last Draft</th>
                     <th style={{padding:"8px 12px", width:"9%", ...SANS, fontWeight:600, color:T.textMuted}}>SLA</th>
                     <th style={{padding:"8px 12px", width:"8%", ...SANS, fontWeight:600, color:T.textMuted}}>Stage</th>
@@ -7861,12 +7861,16 @@ function Dashboard({onBulkSubmitForReview,dashSubView, fundState, fundSeeds, app
           <WorkflowProgress stats={stats} approval={approv || {status:"open"}} />
         </td>
         {/* AUTO-RESOLVED CELL */}
-        <td style={{padding:"10px 12px", textAlign:"right"}}>{(f.fund_id.charCodeAt(f.fund_id.length-1) % 5) + 3}</td>
+        <td style={{padding:"10px 12px", textAlign:"right"}}>
+          <span style={{...MONO, fontSize:12, fontWeight:700, color:T.aiBase}}>
+            {(f.fund_id.charCodeAt(f.fund_id.length-1) % 5) + 3}
+          </span>
+        </td>
 
         {/* REQUIRES REVIEW CELL */}
         <td style={{padding:"10px 12px", textAlign:"right"}}>
           {stats.errors > 0 || stats.warnings > 0 ? (
-            <span style={{...SANS, fontSize:11, fontWeight:700, color:T.warnBase, background:T.warnBg, padding:"2px 8px", borderRadius:4, border:`1px solid ${T.warnBorder}`, display:"inline-flex", alignItems:"center", gap:4}}>
+            <span style={{...MONO, fontSize:12, fontWeight:700, color:T.errorBase}}>
               {stats.errors + stats.warnings}
             </span>
           ) : (
