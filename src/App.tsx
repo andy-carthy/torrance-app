@@ -5758,42 +5758,50 @@ function TouchlessFlowDashboard({ fundSeeds, onReassign }) {
             </div>
             
             <div style={{padding: "24px", maxHeight: "60vh", overflowY: "auto"}}>
-              <div style={{...SANS, fontSize: 12, fontWeight: 700, color: T.textPrimary, marginBottom: 12}}>Critical Capacity Offload</div>
-              
-              {capacityData.filter(u => u.capacityPct > 25).map(u => (
-                <div key={u.id} style={{background: T.appBg, border: `1px solid ${T.border}`, borderRadius: 8, padding: 16, marginBottom: 16}}>
-                  <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12}}>
-                    <div style={{display: "flex", alignItems: "center", gap: 10}}>
-                      <Avatar user={u} size={28} />
-                      <span style={{...SANS, fontSize: 13, fontWeight: 700, color: T.textPrimary}}>{u.name}</span>
-                      <span style={{...MONO, fontSize: 12, fontWeight: 700, color: T.errorBase}}>{u.capacityPct}%</span>
-                    </div>
-                  </div>
-                  
-                  {/* Mock UI to show offloading assignments */}
-                  {u.assignedFunds.slice(0, 2).map(f => (
-                    <div key={f.fund_id} style={{display: "flex", alignItems: "center", justifyContent: "space-between", background: T.cardBg, border: `1px solid ${T.border}`, padding: "8px 12px", borderRadius: 6, marginBottom: 8}}>
-                      <div style={{...SANS, fontSize: 12, color: T.textPrimary, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{f.name}</div>
-                      <div style={{display: "flex", alignItems: "center", gap: 8}}>
-                        <span style={{...SANS, fontSize: 11, color: T.textMuted}}>Reassign to:</span>
-                        <select
-                          value={reassignments[f.fund_id] || ""}
-                          onChange={e => setReassignments(prev => ({...prev, [f.fund_id]: e.target.value}))}
-                          style={{...SANS, fontSize: 11, padding: "4px 8px", borderRadius: 4, border: `1px solid ${T.border}`, background: "#fff"}}
-                        >
-                          <option value="">Select Team Member...</option>
-                          {capacityData.filter(member => member.id !== u.id && member.capacityPct < 60).map(member => (
-                            <option key={member.id} value={member.id}>{member.name} ({member.capacityPct}%)</option>
-                          ))}
-                        </select>
+              <div style={{...SANS, fontSize: 12, fontWeight: 700, color: T.textPrimary, marginBottom: 12}}>Reassign Fund Coverage</div>
+
+              {(() => {
+                const usersWithFunds = capacityData.filter(u => u.assignedFunds.length > 0);
+                if (usersWithFunds.length === 0) {
+                  return <div style={{...SANS, fontSize: 13, color: T.textMuted, textAlign: "center", padding: "24px 0"}}>No fund assignments found.</div>;
+                }
+                return usersWithFunds.map(u => (
+                  <div key={u.id} style={{background: T.appBg, border: `1px solid ${T.border}`, borderRadius: 8, padding: 16, marginBottom: 16}}>
+                    <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12}}>
+                      <div style={{display: "flex", alignItems: "center", gap: 10}}>
+                        <Avatar user={u} size={28} />
+                        <span style={{...SANS, fontSize: 13, fontWeight: 700, color: T.textPrimary}}>{u.name}</span>
+                        <span style={{...MONO, fontSize: 12, fontWeight: 700, color: u.capacityPct > 40 ? T.errorBase : T.textMuted}}>{u.capacityPct}% capacity</span>
+                        <span style={{...SANS, fontSize: 11, color: T.textMuted}}>· {u.assignedFunds.length} fund{u.assignedFunds.length !== 1 ? "s" : ""}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ))}
+                    {u.assignedFunds.map(f => {
+                      const targets = capacityData.filter(m => m.id !== u.id);
+                      return (
+                        <div key={f.fund_id} style={{display: "flex", alignItems: "center", justifyContent: "space-between", background: T.cardBg, border: `1px solid ${reassignments[f.fund_id] ? T.actionBase : T.border}`, padding: "8px 12px", borderRadius: 6, marginBottom: 8}}>
+                          <div style={{...SANS, fontSize: 12, color: T.textPrimary, flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginRight: 8}}>{f.name}</div>
+                          <div style={{display: "flex", alignItems: "center", gap: 8, flexShrink: 0}}>
+                            <span style={{...SANS, fontSize: 11, color: T.textMuted}}>→</span>
+                            <select
+                              value={reassignments[f.fund_id] || ""}
+                              onChange={e => setReassignments(prev => ({...prev, [f.fund_id]: e.target.value}))}
+                              style={{...SANS, fontSize: 11, padding: "4px 8px", borderRadius: 4, border: `1px solid ${reassignments[f.fund_id] ? T.actionBase : T.border}`, background: "#fff", cursor: "pointer"}}
+                            >
+                              <option value="">Keep current</option>
+                              {targets.map(m => (
+                                <option key={m.id} value={m.id}>{m.name} ({m.capacityPct}%)</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ));
+              })()}
 
-              <div style={{...SANS, fontSize: 12, color: T.textMuted, textAlign: "center", marginTop: 24}}>
-                Selecting a new team member will immediately update permissions and route future exceptions.
+              <div style={{...SANS, fontSize: 12, color: T.textMuted, textAlign: "center", marginTop: 16}}>
+                Reassignments will update fund coverage and route future exceptions to the new owner.
               </div>
             </div>
 
