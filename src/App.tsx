@@ -65,6 +65,7 @@ const TEAM = [
   {id:"u3",name:"Priya Nair",  role:"Accountant",       initials:"PN",color:"#d97706",isController:false},
   {id:"u4",name:"James Okafor",role:"Controller",       initials:"JO",color:"#059669",isController:true },
   {id:"u5",name:"Jennifer Liu",role:"Senior Accountant",initials:"JL",color:"#e11d48",isController:false},
+  {id:"u_ai",name:"Torrance AI",role:"AI Agent",        initials:"AI",color:"#6366f1",isController:false},
 ];
 const CURRENT_USER_ID = "u1";
 const SLA_CONFIGS = [
@@ -1139,19 +1140,56 @@ function AiSuggestionBanner({excId,onAccept}) {
 
 
 // ─── ThreadedComments ─────────────────────────────────────────────────────────
-function ThreadedComments({thread,onAddMessage,currentUserId}) {
+function getAiReply(code: string): string {
+  switch (code) {
+    case 'CATEGORY_MISMATCH':
+      return "✦ Prior-period analysis: This account was correctly classified as 'Asset' in all 6 prior closes. Custodian ETL batch ETL-20241229-0341 introduced the misclassification. Recommend: Corrected in Source.";
+    case 'FX_MISMATCH':
+      return "✦ Bloomberg WM/Reuters 4PM fix confirms EUR/USD 1.0842. Override value $108,420.00 matches Nov 30 resolution. Confidence: 97%.";
+    case 'HOLDINGS_CROSS_CHECK':
+      return "✦ T+1 settlement lag confirmed. AAPL trade Dec 30 settles Jan 2. This variance will self-clear. Recommend: Acknowledge.";
+    default:
+      return "✦ Pattern analysis complete. No prior-period precedent found. Escalate to Controller if dollar variance exceeds SLA threshold.";
+  }
+}
+
+function ThreadedComments({thread, onAddMessage, onAddAiMessage, currentUserId, excCode, externalDraft, demoShouldSubmit}:
+  {thread:any[], onAddMessage:(t:string)=>void, onAddAiMessage?:(t:string)=>void, currentUserId:string, excCode?:string, externalDraft?:string, demoShouldSubmit?:boolean}) {
   const [draft,setDraft]=useState("");
-  const bottomRef=useRef();
+  const bottomRef=useRef(null);
   useEffect(()=>{ bottomRef.current?.scrollIntoView({behavior:"smooth"}); },[thread.length]);
-  const submit=()=>{ const txt=draft.trim();if(!txt)return;onAddMessage(txt);setDraft(""); };
+
+  // Sync external draft for demo typing simulation
+  useEffect(()=>{ if(externalDraft!==undefined) setDraft(externalDraft); },[externalDraft]);
+
+  // Auto-submit for demo sequence
+  useEffect(()=>{
+    if(demoShouldSubmit && draft.trim()) submit();
+  },[demoShouldSubmit]);
+
+  const submit=()=>{
+    const txt=draft.trim();
+    if(!txt) return;
+    onAddMessage(txt);
+    setDraft("");
+    // AI auto-reply after 1500ms
+    if(excCode && onAddAiMessage) {
+      setTimeout(()=>{ onAddAiMessage(getAiReply(excCode)); }, 1500);
+    }
+  };
+
   return <div>
     {thread.length>0?<div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:12,maxHeight:220,overflowY:"auto",padding:"2px 0"}}>
-      {thread.map(msg=>{ const user=TEAM.find(m=>m.id===msg.userId);const isMe=msg.userId===currentUserId; return(
+      {thread.map(msg=>{ const user=TEAM.find(m=>m.id===msg.userId); const isMe=msg.userId===currentUserId; const isAi=msg.userId==='u_ai'; return(
         <div key={msg.id} style={{display:"flex",gap:9,alignItems:"flex-start",flexDirection:isMe?"row-reverse":"row"}}>
           <Avatar user={user} size={26}/>
           <div style={{maxWidth:"78%"}}>
-            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3,flexDirection:isMe?"row-reverse":"row"}}><span style={{...SANS,fontSize:11,fontWeight:700}}>{user?.name}</span><span style={{...SANS,fontSize:10,color:T.textMuted}}>{msg.ts}</span></div>
-            <div style={{...SANS,fontSize:12,lineHeight:1.55,padding:"8px 11px",borderRadius:8,background:isMe?T.actionBg:T.appBg,color:T.textPrimary,border:`1px solid ${isMe?"#bfdbfe":T.border}`,borderBottomRightRadius:isMe?2:8,borderBottomLeftRadius:isMe?8:2}}>{msg.text}</div>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3,flexDirection:isMe?"row-reverse":"row"}}><span style={{...SANS,fontSize:11,fontWeight:700,color:isAi?T.aiBase:T.textPrimary}}>{user?.name}</span><span style={{...SANS,fontSize:10,color:T.textMuted}}>{msg.ts}</span></div>
+            <div style={{...SANS,fontSize:12,lineHeight:1.55,padding:"8px 11px",borderRadius:8,
+              background:isAi?T.aiBg:isMe?T.actionBg:T.appBg,
+              color:isAi?T.aiDark:T.textPrimary,
+              border:`1px solid ${isAi?T.aiBorder:isMe?"#bfdbfe":T.border}`,
+              borderBottomRightRadius:isMe?2:8,borderBottomLeftRadius:isMe?8:2}}>{msg.text}</div>
           </div>
         </div>
       );})}
@@ -1277,7 +1315,7 @@ function AiRootCauseBlock({excId}) {
 }
 
 // ─── Resolution Form (Horizontal Grid Wrap) ──────────────────────────────────
-function ResolutionForm({exc,onResolve,onUpdate,onAddThread,currentUserId}) {
+function ResolutionForm({exc,onResolve,onUpdate,onAddThread,currentUserId,demoTypingText,demoShouldSubmit}) {
   const options=RESOLUTIONS[exc.severity];
   const [resolution,setResolution]=useState("");
   const [overrideValue,setOverrideValue]=useState("");
@@ -1326,10 +1364,10 @@ function ResolutionForm({exc,onResolve,onUpdate,onAddThread,currentUserId}) {
       
       <Card title="Audit Thread" accessory={<span style={{...SANS,fontSize:11,color:T.textMuted}}>{exc.thread.length} messages</span>}>
         {isErrorAccept&&needsComment&&<div className="slide-in" style={{...SANS,fontSize:11,color:T.errorBase,background:T.errorBg,border:`1px solid ${T.errorBorder}`,borderRadius:5,padding:"7px 10px",marginBottom:10,display:"flex",alignItems:"center",gap:6}}><span>✕</span>Add a thread comment before accepting this error.</div>}
-        <ThreadedComments thread={exc.thread} onAddMessage={onAddThread} currentUserId={currentUserId}/>
+        <ThreadedComments thread={exc.thread} onAddMessage={(txt)=>onAddThread(exc.id,txt)} onAddAiMessage={(txt)=>onAddThread(exc.id,txt,'u_ai')} excCode={exc.code} currentUserId={currentUserId} externalDraft={demoTypingText} demoShouldSubmit={demoShouldSubmit}/>
       </Card>
     </div>
-    
+
     <button className="resolve-btn" disabled={isDisabled} onClick={()=>!isDisabled&&onResolve(exc.id,resolution,overrideValue,"")}
       style={{width:"100%",border:"none",borderRadius:7,padding:"14px 20px",fontSize:14,fontWeight:700,cursor:isDisabled?"not-allowed":"pointer",background:isDisabled?T.border:T.okBase,color:isDisabled?T.textMuted:"#fff",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
       {resolution===""?<><span style={{opacity:0.5}}>○</span>Select a Resolution Action</>:needsComment?<><span>!</span>Add Thread Comment First</>:<><span>✓</span>Resolve Exception</>}
@@ -1367,7 +1405,7 @@ function ResolutionAuditRecord({exc,onReopen,onAddThread,currentUserId}) {
       </div>
     )}
 
-    <Card title="Audit Thread" accessory={<span style={{...SANS,fontSize:11,color:T.textMuted}}>{exc.thread.length} messages</span>}><ThreadedComments thread={exc.thread} onAddMessage={onAddThread} currentUserId={currentUserId}/></Card>
+    <Card title="Audit Thread" accessory={<span style={{...SANS,fontSize:11,color:T.textMuted}}>{exc.thread.length} messages</span>}><ThreadedComments thread={exc.thread} onAddMessage={(txt)=>onAddThread(exc.id,txt)} onAddAiMessage={(txt)=>onAddThread(exc.id,txt,'u_ai')} excCode={exc.code} currentUserId={currentUserId}/></Card>
     <button className="reopen-btn" onClick={()=>onReopen(exc.id)} style={{...SANS,background:T.cardBg,color:T.textMuted,border:`1px solid ${T.border}`,borderRadius:6,padding:"8px 16px",fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:7}}><span>↺</span>Reopen Exception</button>
   </Card>;
 }
@@ -1421,7 +1459,7 @@ function BulkActionBar({selected,exceptions,onBulkResolve,onBulkAssign,onClear})
 }
 
 // ─── Detail Pane (Full Width) ────────────────────────────────────────────────
-function DetailPane({exc,onResolve,onReopen,onUpdate,onAddThread,currentUserId}) {
+function DetailPane({exc,onResolve,onReopen,onUpdate,onAddThread,currentUserId,demoTypingText,demoShouldSubmit}) {
   const [showPdf,setShowPdf]=useState(false);
   const isResolved=exc.status==="resolved";
   
@@ -1454,7 +1492,7 @@ function DetailPane({exc,onResolve,onReopen,onUpdate,onAddThread,currentUserId})
       </div>
     </Card>
     
-    {isResolved?<ResolutionAuditRecord exc={exc} onReopen={onReopen} onAddThread={onAddThread} currentUserId={currentUserId}/>:<ResolutionForm exc={exc} onResolve={onResolve} onUpdate={onUpdate} onAddThread={onAddThread} currentUserId={currentUserId}/>}
+    {isResolved?<ResolutionAuditRecord exc={exc} onReopen={onReopen} onAddThread={onAddThread} currentUserId={currentUserId}/>:<ResolutionForm exc={exc} onResolve={onResolve} onUpdate={onUpdate} onAddThread={onAddThread} currentUserId={currentUserId} demoTypingText={demoTypingText} demoShouldSubmit={demoShouldSubmit}/>}
     
     <div style={{marginTop:6}}><button onClick={()=>setShowPdf(true)} style={{...SANS,background:T.cardBg,color:T.textPrimary,border:`1px solid ${T.border}`,borderRadius:6,padding:"8px 16px",fontSize:12,fontWeight:600,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:7}}><span>↓</span>Export Reports</button></div>
     {showPdf&&<PdfModal onClose={()=>setShowPdf(false)}/>}
@@ -1659,8 +1697,9 @@ function ProvenancePanel({ trace, onClose }) {
 }
 // ─── Exceptions Tab (Updated with Inbox Zero Reward) ─────────────────────────
 // ─── SPRINT 1: Exception Queue Reframe (C-02 & C-04) ─────────────────────────
-function ExceptionsTab({exceptions,approval,onResolve,onReopen,onUpdate,onAddThread,currentUserId,onSubmit}) {
+function ExceptionsTab({exceptions,approval,onResolve,onReopen,onUpdate,onAddThread,currentUserId,onSubmit,demoActiveExcId,demoTypingText,demoShouldSubmit}) {
   const [activeId,setActiveId]=useState(exceptions[0]?.id||null);
+  useEffect(()=>{ if(demoActiveExcId) setActiveId(demoActiveExcId); },[demoActiveExcId]);
   const [selected,setSelected]=useState(new Set());
   const [forceShowResolved, setForceShowResolved]=useState(false); 
   const [showAutoResolved, setShowAutoResolved] = useState(false); // C-02 State
@@ -1752,8 +1791,8 @@ function ExceptionsTab({exceptions,approval,onResolve,onReopen,onUpdate,onAddThr
           const activeAiLog = AI_DECISION_LOG.find(l => l.id === activeId);
 
           if (activeExc) {
-            return <DetailPane exc={activeExc} onResolve={onResolve} onReopen={onReopen} onUpdate={onUpdate} onAddThread={onAddThread} currentUserId={currentUserId}/>;
-          } 
+            return <DetailPane exc={activeExc} onResolve={onResolve} onReopen={onReopen} onUpdate={onUpdate} onAddThread={onAddThread} currentUserId={currentUserId} demoTypingText={demoTypingText} demoShouldSubmit={demoShouldSubmit}/>;
+          }
           if (activeAiLog) {
             return <AiDecisionDetailPane log={activeAiLog} />;
           }
@@ -5443,7 +5482,7 @@ function WorkpapersTab({ fund, masterFeeds }) {
 
 // ─── FundView — Main Fund Drill-Down Container ────────────────────────
 // ─── FundView — Main Fund Drill-Down Container ────────────────────────
-function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFeeds, blockedFunds, onUpdateFeedRecord, onSelectFund, onResolve, onReopen, onUpdate, onAddThread, onSubmit, onApprove, onBack}) {
+function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFeeds, blockedFunds, onUpdateFeedRecord, onSelectFund, onResolve, onReopen, onUpdate, onAddThread, onSubmit, onApprove, onBack, demoActiveExcId, demoTypingText, demoShouldSubmit, fxOverrideActive}) {
   const [tab,setTab]=useState("exceptions");
   
   const handleNextFund = () => {
@@ -5496,7 +5535,7 @@ function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFee
     </div>
 
     <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>
-      {tab==="exceptions"  &&<ExceptionsTab exceptions={exceptions} approval={approval} onResolve={onResolve} onReopen={onReopen} onUpdate={onUpdate} onAddThread={onAddThread} currentUserId={currentUser.id} onSubmit={onSubmit}/>}
+      {tab==="exceptions"  &&<ExceptionsTab exceptions={exceptions} approval={approval} onResolve={onResolve} onReopen={onReopen} onUpdate={onUpdate} onAddThread={onAddThread} currentUserId={currentUser.id} onSubmit={onSubmit} demoActiveExcId={demoActiveExcId} demoTypingText={demoTypingText} demoShouldSubmit={demoShouldSubmit}/>}
       {tab==="ai_log" && <AIDecisionLogTab />}
       {tab==="explorer"    &&<DataExplorerTab masterFeeds={masterFeeds} onUpdateFeedRecord={onUpdateFeedRecord}/>}
       {tab==="journals" && <JournalEntriesTab fund={fund} fundSeeds={fundSeeds} masterFeeds={masterFeeds} currentUser={currentUser} onPostJE={() => {}} />}
@@ -8593,6 +8632,9 @@ export default function App() {
   const currentUser = TEAM.find(m=>m.id===currentUserId) || TEAM[0];
   const [dashSubView, setDashSubView] = useState(null);
 
+  // ── FX override state (Instruction 5) ────────────────────────────────────
+  const [fxOverrideActive, setFxOverrideActive] = useState(false);
+
   // ── Demo orchestration state (Instructions 1-6) ───────────────────────────
   const [demoKey, setDemoKey] = useState(0);
   const [isDemoRunning, setIsDemoRunning] = useState(false);
@@ -8746,13 +8788,14 @@ export default function App() {
     });
   },[currentUserId]);
 
-  const handleAddThread=useCallback((fid,excId,text)=>{ 
+  const handleAddThread=useCallback((fid,excId,text,userId?)=>{
     const ts=new Date().toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
+    const uid=userId||currentUserId;
     setFundState(prev=>{
       const realFid = getRealFid(prev, fid, excId);
       if(!prev[realFid]) return prev;
-      return {...prev,[realFid]:prev[realFid].map(e=>e.id===excId?{...e,thread:[...e.thread,{id:`t${Date.now()}`,userId:currentUserId,text,ts}]}:e)}
-    }); 
+      return {...prev,[realFid]:prev[realFid].map(e=>e.id===excId?{...e,thread:[...e.thread,{id:`t${Date.now()}`,userId:uid,text,ts}]}:e)}
+    });
   },[currentUserId]);
 
   const handleSubmit=useCallback(fid=>setApprovalState(prev=>({...prev,[fid]:{status:"review_pending",submittedBy:currentUserId,submittedAt:new Date().toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}),approvedBy:null,approvedAt:null}})),[currentUserId]);
@@ -8898,7 +8941,7 @@ export default function App() {
       {demoToast && <div className="slide-in" style={{position:"fixed",top:70,right:24,background:T.navyHeader,border:`1px solid ${T.okBase}`,color:"#fff",padding:"14px 20px",borderRadius:8,boxShadow:"0 10px 25px rgba(0,0,0,0.2)",zIndex:9999,display:"flex",gap:12,alignItems:"center",...SANS,fontSize:13,fontWeight:600}}><span style={{fontSize:18}}>✓</span>{demoToast}<button onClick={()=>setDemoToast(null)} style={{background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:16,marginLeft:8}}>✕</button></div>}
       {view==="dashboard"&&!selectedFund&&<Dashboard onBulkSubmitForReview={handleBulkSubmitForReview} dashSubView={dashSubView} fundState={fundState} fundSeeds={fundSeeds} approvalState={approvalState} currentUser={currentUser} notifications={notifications} onSelectFund={f=>{setSelectedFund(f); setView("fund");}} onReassign={handleReassign} onViewClientExceptions={handleViewClientExceptions} onBulkApprove={handleBulkApprove} onGlobalResolve={handleGlobalResolve} onGoToAudit={()=>setView("audit_logs")} onRunDemo={handleRunDemo} isDemoRunning={isDemoRunning} demoKey={demoKey}/>} {selectedFund&&<FundView fund={selectedFund} fundSeeds={fundSeeds} onSelectFund={f=>{setSelectedFund(f); setView("fund");}} exceptions={getExceptions(selectedFund.fund_id)} approval={approvalState[selectedFund.fund_id] || {status:"open"}} currentUser={currentUser} masterFeeds={masterFeeds} blockedFunds={blockedFundsList}
     onUpdateFeedRecord={handleUpdateFeedRecord} 
-    onResolve={(id,res,ov)=>handleResolve(selectedFund.fund_id,id,res,ov)} onReopen={id=>handleReopen(selectedFund.fund_id,id)} onUpdate={(id,patch)=>handleUpdate(selectedFund.fund_id,id,patch)} onAddThread={(excId,txt)=>handleAddThread(selectedFund.fund_id,excId,txt)} onSubmit={()=>handleSubmit(selectedFund.fund_id)} onApprove={()=>handleApprove(selectedFund.fund_id)} onBack={()=>{ setSelectedFund(null); setView("dashboard"); }}/>}
+    onResolve={(id,res,ov)=>handleResolve(selectedFund.fund_id,id,res,ov)} onReopen={id=>handleReopen(selectedFund.fund_id,id)} onUpdate={(id,patch)=>handleUpdate(selectedFund.fund_id,id,patch)} onAddThread={(excId,txt,uid?)=>handleAddThread(selectedFund.fund_id,excId,txt,uid)} onSubmit={()=>handleSubmit(selectedFund.fund_id)} onApprove={()=>handleApprove(selectedFund.fund_id)} onBack={()=>{ setSelectedFund(null); setView("dashboard"); }} demoActiveExcId={demoActiveExcId} demoTypingText={demoTypingText} demoShouldSubmit={demoShouldSubmit} fxOverrideActive={fxOverrideActive}/>}
     </div>
   );
 }
