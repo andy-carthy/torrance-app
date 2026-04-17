@@ -1,3 +1,7 @@
+## Git Branching
+- Be specific — reference what changed
+- Only use "-" to break the words e.g., cluaude-footnotes-workpapers
+
 ## Git Commits
 - Use conventional commit format: `type(scope): description`
 - Types: feat, fix, docs, refactor, chore, test
