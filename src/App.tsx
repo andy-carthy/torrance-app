@@ -640,35 +640,6 @@ const FV_TABLE = [
   {assetClass:"Derivatives (Swaps/Fwds)", l1:0,         l2:1020000,  l3:0, note:"IRS and FX forwards — discounted cash flow"},
   {assetClass:"Options Purchased",        l1:0,         l2:520000,   l3:0, note:"SPX call options — broker-dealer quotes"},
 ];
-// ═══════════════════════════════════════════════════════════════════════════════
-// NEW: CROSS CHECKS DATA (Expanded from Requirements Document)
-// ═══════════════════════════════════════════════════════════════════════════════
-const CROSS_CHECKS_DATA = [
-  { id: "BS-01", category: "Balance Sheet", target: "Both", description: "Net assets tie between balance sheet and statement of changes", status: "Pass", value: "$0 variance", aiFlag: null },
-  { id: "BS-02", category: "Balance Sheet", target: "Retail", description: "Net asset components foot to total net assets", status: "Fail", value: "$150,000 variance", aiFlag: "pop_fail", aiNote: "Chronically failing: Has failed in 4 consecutive periods due to unmapped suspense accounts." },
-  { id: "BS-03", category: "Balance Sheet", target: "Alt / Private", description: "Partners' / members' capital ties across all statements and by class/series", status: "Pass", value: "Ties exactly", aiFlag: null },
-  { id: "SOI-01a", category: "Footing & Precision", target: "Both", description: "SOI total raw precision = SOA investments raw precision", status: "Pass", value: "Verified at DECIMAL(18,4)", aiFlag: null },
-  { id: "SOI-01b", category: "Footing & Precision", target: "Both", description: "SOI total after LR = SOA investments line after LR", status: "Pass", value: "Matched ($462,698,500)", aiFlag: null },
-  { id: "SOI-01c", category: "Footing & Precision", target: "Both", description: "LR adjustment applied to both paths used consistent target", status: "Info", value: "Target: $462,698,500", aiFlag: null },
-  { id: "FOOT-01", category: "Footing & Precision", target: "Both", description: "TB debit column foots (sum of displayed = rounded sum of raw)", status: "LR Adjusted", value: "◈ +$1 applied", aiFlag: null },
-  { id: "FOOT-02", category: "Footing & Precision", target: "Both", description: "TB credit column foots", status: "Pass", value: "No residual", aiFlag: null },
-  { id: "FOOT-03", category: "Footing & Precision", target: "Both", description: "TB net column = TB debit − TB credit", status: "LR Adjusted", value: "Computed from adjusted", aiFlag: null },
-  { id: "FE-01", category: "Fees & Accruals", target: "Both", description: "Independent AI recalculation of advisory fee vs. GL reported amount", status: "Fail", value: "$1,800 variance", aiFlag: "pop_fail", aiNote: "Pattern suggests a timing difference in fee accrual calculation (calendar month vs. business days)." },
-  { id: "FE-02", category: "Fees & Accruals", target: "Alt / Private", description: "Performance fee consistency against high-water mark", status: "Pass", value: "Verified", aiFlag: null },
-  { id: "FE-03", category: "Fees & Accruals", target: "Retail", description: "Expense ratio vs. prospectus cap limits", status: "Pass", value: "Within 1.50% cap", aiFlag: null },
-  { id: "IS-01", category: "Income Statement", target: "Both", description: "Total investment income agrees to note detail", status: "Pass", value: "$0 variance", aiFlag: null },
-  { id: "IS-04", category: "Income Statement", target: "Both", description: "Expense ratios are within prospectus/PPM caps and consistent with prior year", status: "Fail", value: "Exceeds cap by 2 bps", aiFlag: "pop_fail", aiNote: "Chronically failing: Expense ratio cap exceeded for 2 consecutive periods due to unmapped legal fees." },
-  { id: "SC-01", category: "Statement of Changes", target: "Both", description: "Statement of changes arithmetic: beginning + activity = ending", status: "Pass", value: "Math verified", aiFlag: null },
-  { id: "CF-01", category: "Cash Flow", target: "Both", description: "Net increase in cash ties to balance sheet opening and closing cash", status: "Pass", value: "$0 variance", aiFlag: null },
-  { id: "SOI-01", category: "Schedule of Investments", target: "Both", description: "SOI total fair value agrees to balance sheet investment line", status: "Fail", value: "$120,000 variance", aiFlag: "multi_fund", aiNote: "Systemic issue: MTM price missing for asset ID 88732J202 across 3 other funds." },
-  { id: "SOI-04", category: "Schedule of Investments", target: "Both", description: "Foreign currency positions use consistent FX rates throughout", status: "Accepted", value: "Stale ECB rate override", aiFlag: null },
-  { id: "FV-01", category: "Fair Value", target: "Both", description: "Fair value hierarchy table sums and ties to SOI and balance sheet", status: "Pass", value: "Ties exactly", aiFlag: null },
-  { id: "FH-01", category: "Financial Highlights", target: "Retail", description: "Per-share NAV change reconciles: beginning NAV + ops - distributions = ending NAV", status: "Accepted", value: "$0.005 rounding variance", aiFlag: null },
-  { id: "NT-01", category: "Notes", target: "Both", description: "Related party transactions are complete and dollar amounts agree", status: "Pass", value: "Agrees to IS", aiFlag: null },
-  { id: "TX-03", category: "Tax", target: "Both", description: "Section 988 FX gain/loss character is properly classified", status: "Fail", value: "Character Mismatch", aiFlag: "multi_fund", aiNote: "Systemic issue: Currently failing across 3 other funds for this client." },
-  { id: "TX-04", category: "Tax", target: "Alt / Private", description: "K-1 items tie to partnership tax return and financial statements", status: "Pass", value: "Verified", aiFlag: null }
-
-];
 
 // Current FV total = 608748500+73450000+39000000+34450000+1250000+1020000+520000 = 758,438,500
 // Must equal 462,698,500 → scale l1 stocks: 608748500-(758438500-462698500) = 608748500-295740000 = 313,008,500
@@ -3088,10 +3059,15 @@ const CROSS_CHECKS_DATA_EXPANDED = [
   { id: "BS-04", category: "Balance Sheet", description: "Cash balance matches bank reconciliation", status: "Fail", value: "-$42,105 variance", formula: "GL.1100 + GL.1110 - BankRec.EndingBalance = 0", source1: 20088465, source2: 20130570, aiFlag: "multi_fund", aiNote: "Timing difference on sweeping account across 3 funds.", resolvedBy: null },
   
   // ─── Schedule of Investments ───
-  { id: "SOI-01", category: "Schedule of Investments", description: "SOI total fair value agrees to balance sheet investment line", status: "Fail", value: "$120,000 variance", formula: "SUM(SOI.FairValue) - SOA.InvestmentsAtValue = 0", source1: 462578500, source2: 462698500, aiFlag: "multi_fund", aiNote: "MTM price missing for asset ID 88732J202.", resolvedBy: null },
+  { id: "SOI-X01", category: "Schedule of Investments", description: "SOI total fair value agrees to balance sheet investment line", status: "Fail", value: "$120,000 variance", formula: "SUM(SOI.FairValue) - SOA.InvestmentsAtValue = 0", source1: 462578500, source2: 462698500, aiFlag: "multi_fund", aiNote: "MTM price missing for asset ID 88732J202.", resolvedBy: null },
   { id: "SOI-02", category: "Schedule of Investments", description: "Level 3 investments match Rollforward ending balance", status: "Pass", value: "$0.00 variance", formula: "SUM(SOI.Level3) - L3_Rollforward.EndingBalance = 0", source1: 45000000, source2: 45000000, aiFlag: null, resolvedBy: null },
   { id: "SOI-03", category: "Schedule of Investments", description: "Unrealized G/L on SOI matches Trial Balance", status: "Pass", value: "$0.00 variance", formula: "SUM(SOI.UnrealizedGL) - TB.4200 = 0", source1: 9250000, source2: 9250000, aiFlag: null, resolvedBy: null },
   { id: "SOI-04", category: "Schedule of Investments", description: "Foreign currency positions use consistent FX rates", status: "Accepted", value: "$8,420 variance", formula: "SOI.FXRate - Master.FXRate = 0", source1: 1.0798, source2: 1.0842, aiFlag: null, resolvedBy: "u4", resolvedAt: "Dec 31, 2024 10:15 AM", overrideNote: "Client approved stale ECB rate for this specific legacy sleeve." },
+
+  // ─── Fees & Accruals ───
+  { id: "FE-01", category: "Fees & Accruals", description: "Independent AI recalculation of advisory fee vs. GL reported amount", status: "Fail", value: "$1,800 variance", formula: "AI.AdvisoryFee - GL.AdvisoryFee = 0", source1: 6401800, source2: 6400000, aiFlag: "pop_fail", aiNote: "Pattern suggests a timing difference in fee accrual calculation (calendar month vs. business days).", resolvedBy: null },
+  { id: "FE-02", category: "Fees & Accruals", description: "Performance fee consistency against high-water mark", status: "Pass", value: "Verified", formula: "GL.PerfFee - HWM.PerfFee = 0", source1: 0, source2: 0, aiFlag: null, resolvedBy: null },
+  { id: "FE-03", category: "Fees & Accruals", description: "Expense ratio vs. prospectus cap limits", status: "Pass", value: "Within 1.50% cap", formula: "SOO.ExpenseRatio <= Prospectus.Cap", source1: 0.0148, source2: 0.015, aiFlag: null, resolvedBy: null },
 
   // ─── Income Statement ───
   { id: "IS-01", category: "Income Statement", description: "Total investment income agrees to note detail", status: "Pass", value: "$0.00 variance", formula: "SOO.TotalIncome - Notes.IncomeDetail = 0", source1: 6458420, source2: 6458420, aiFlag: null, resolvedBy: null },
@@ -3279,7 +3255,7 @@ function CrossChecksTab({ currentUser }) {
                             const statBd = c.status === "Pass" ? T.okBorder : c.status === "Fail" ? T.errorBorder : T.warnBorder;
 
                             return (
-                              <tr key={c.id} onClick={()=>setActiveCheckId(c.id)} className="row-hover" style={{borderBottom:`1px solid ${T.border}`, background: isActive ? "#eff6ff" : isSel ? "#f8fafc" : "transparent", cursor:"pointer"}}>
+                              <tr key={`${c.id}-${c.category}`} onClick={()=>setActiveCheckId(c.id)} className="row-hover" style={{borderBottom:`1px solid ${T.border}`, background: isActive ? "#eff6ff" : isSel ? "#f8fafc" : "transparent", cursor:"pointer"}}>
                                 <td style={{padding:"10px 12px"}} onClick={(e)=>toggleSel(e, c.id)}>
                                   <input type="checkbox" checked={isSel} onChange={()=>{}} style={{cursor:"pointer", width:15, height:15, accentColor:T.actionBase}} />
                                 </td>
