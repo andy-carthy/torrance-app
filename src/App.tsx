@@ -1589,17 +1589,7 @@ function ExcCard({exc,active,selected,onClick,onToggleSelect}) {
   const hasAI=!!AI_SUGGESTIONS[exc.id];
   const hasRCA=!!AI_ROOT_CAUSE[exc.id];
 
-  // Fade-out animation when exception transitions to resolved (Instruction 5)
-  const [fading, setFading] = useState(false);
-  const prevStatus = useRef(exc.status);
-  useEffect(()=>{
-    if(prevStatus.current !== 'resolved' && exc.status === 'resolved') {
-      setFading(true);
-    }
-    prevStatus.current = exc.status;
-  },[exc.status]);
-
-  return <div role="button" tabIndex={0} className="exc-card" onClick={onClick} onKeyDown={e=>e.key==="Enter"&&onClick()} style={{padding:"8px 12px 8px 0",borderBottom:`1px solid ${T.border}`,borderLeft:`3px solid ${selected||active?T.actionBase:"transparent"}`,background:selected?"#f0f4ff":active?"#f8fafc":T.cardBg,opacity:fading?0:resolved?0.55:1,transition:"opacity 0.3s",cursor:"pointer",display:"flex",alignItems:"center"}}>
+  return <div role="button" tabIndex={0} className="exc-card" onClick={onClick} onKeyDown={e=>e.key==="Enter"&&onClick()} style={{padding:"8px 12px 8px 0",borderBottom:`1px solid ${T.border}`,borderLeft:`3px solid ${selected||active?T.actionBase:resolved?T.okBase:"transparent"}`,background:selected?"#f0f4ff":active?"#f8fafc":resolved?T.okBg:T.cardBg,opacity:resolved?0.7:1,cursor:"pointer",display:"flex",alignItems:"center"}}>
     <div style={{width:36,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}} onClick={e=>{e.stopPropagation();onToggleSelect(exc.id);}}>
       <input type="checkbox" checked={selected} onChange={()=>{}} style={{margin:0}}/>
     </div>
@@ -1608,6 +1598,7 @@ function ExcCard({exc,active,selected,onClick,onToggleSelect}) {
         <div style={{display:"flex",alignItems:"center",gap:6, overflow:"hidden"}}>
           <Badge severity={exc.severity} size="sm"/>
           <span style={{...SANS,fontWeight:600,fontSize:12,color:T.textPrimary,textDecoration:resolved?"line-through":"none",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}} title={exc.title}>{exc.title}</span>
+          {resolved && <span style={{...SANS,fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:3,background:T.okBg,color:T.okBase,border:`1px solid ${T.okBorder}`,marginLeft:6,verticalAlign:"middle",flexShrink:0}}>✓ Resolved</span>}
         </div>
         <span style={{...MONO,fontSize:11,fontWeight:700,color:resolved?T.textMuted:T.textPrimary,flexShrink:0}}>{fmtUSD(exc.amount)}</span>
       </div>
@@ -1628,7 +1619,7 @@ function BulkActionBar({selected,exceptions,onBulkResolve,onBulkAssign,onClear})
   const allOpen=exceptions.filter(e=>selected.has(e.id)&&e.status==="open");
   const allResolved=exceptions.filter(e=>selected.has(e.id)&&e.status==="resolved");
   if(selected.size===0)return null;
-  return <div className="bulk-bar" style={{position:"sticky",bottom:0,zIndex:50,background:T.navyHeader,borderTop:`2px solid ${T.actionBase}`,padding:"10px 16px",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+  return <div className="bulk-bar" style={{position:"fixed",bottom:0,left:0,right:0,zIndex:500,background:T.navyHeader,borderTop:`2px solid ${T.actionBase}`,padding:"10px 24px",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",boxShadow:"0 -4px 12px rgba(0,0,0,0.15)"}}>
     <div style={{...SANS,fontSize:12,fontWeight:700,color:"#fff",background:"#253547",padding:"5px 10px",borderRadius:5,display:"flex",alignItems:"center",gap:6}}><span style={{background:T.actionBase,color:"#fff",borderRadius:"50%",width:18,height:18,fontSize:10,fontWeight:700,display:"inline-flex",alignItems:"center",justifyContent:"center"}}>{selected.size}</span>selected</div>
     {allOpen.length>0&&<div style={{display:"flex",alignItems:"center",gap:6}}>
       <select value={bulkAction} onChange={e=>setBulkAction(e.target.value)} style={{...SANS,fontSize:12,padding:"6px 10px",borderRadius:5,border:`1px solid #374151`,background:"#253547",color:"#e2e6ed",cursor:"pointer"}}><option value="">— Bulk action…</option>{RESOLUTIONS.error.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}</select>
@@ -1892,8 +1883,9 @@ function ExceptionsTab({exceptions,approval,onResolve,onReopen,onUpdate,onAddThr
   const openErrors=exceptions.filter(e=>e.severity==="error"&&e.status==="open");
   const autoResolvedCount = AI_DECISION_LOG.filter(log => log.type === 'autonomous').length;
 
-  // C-04: Close Certified State
-  if (openErrors.length === 0 && exceptions.length > 0 && approval?.status === "open" && !forceShowResolved) {
+  // C-04: Close Certified State — only when ALL exceptions are resolved
+  const anyOpen = exceptions.some(e => e.status === "open");
+  if (!anyOpen && exceptions.length > 0 && approval?.status === "open" && !forceShowResolved) {
     return (
       <div className="fade-in" style={{display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:"100%", background:T.appBg}}>
         <div style={{fontSize: 72, marginBottom: 16, animation: "slideUp 0.6s ease forwards"}}>📜</div>
