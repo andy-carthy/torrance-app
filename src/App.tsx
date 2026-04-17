@@ -4293,6 +4293,110 @@ function FinancialStatementsTab({ fund, fxOverrideActive, exceptions = [] }: { f
               </tbody>
             </table>
           </>)}
+
+          {activeStmt==="soi"&&(<>
+            <FsHeader title="Schedule of Investments" subtitle="As of December 31, 2024 (Unaudited)" />
+
+            {/* Group holdings by asset class */}
+            {(() => {
+              const assetClasses = [...new Set(HOLDINGS.map(h => h.assetClass))];
+              const totalMV = HOLDINGS.reduce((s, h) => s + h.mv, 0);
+
+              return (
+                <>
+                  {/* Column headers — GAAP SOI format */}
+                  <div style={{ display:"grid", gridTemplateColumns:"2fr 80px 120px 120px 80px 60px", gap:0, borderBottom:`2px solid ${T.textPrimary}`, paddingBottom:4, marginBottom:8 }}>
+                    {["Security Description", "Shares / Par", "Cost", "Fair Value", "% of Net Assets", "Level"].map((h, i) => (
+                      <div key={h} style={{ ...SANS, fontSize:11, fontWeight:700, color:T.textPrimary, textAlign:i > 0 ? "right" : "left", paddingRight:8 }}>{h}</div>
+                    ))}
+                  </div>
+
+                  {assetClasses.map(cls => {
+                    const rows = HOLDINGS.filter(h => h.assetClass === cls);
+                    const subtotalMV = rows.reduce((s, h) => s + h.mv, 0);
+                    const subtotalCost = rows.reduce((s, h) => s + h.cost, 0);
+
+                    return (
+                      <div key={cls} style={{ marginBottom:16 }}>
+                        {/* Asset class header — italic, no indent */}
+                        <div style={{ ...SANS, fontWeight:700, fontStyle:"italic", fontSize:13, color:T.textPrimary, marginBottom:4 }}>{cls}</div>
+
+                        {rows.map(h => (
+                          <div key={h.position_id} style={{ display:"grid", gridTemplateColumns:"2fr 80px 120px 120px 80px 60px", gap:0, padding:"2px 0", borderBottom:`1px solid #f1f5f9` }}>
+                            {/* Security name — indented */}
+                            <div style={{ paddingLeft:16 }}>
+                              <div style={{ ...SANS, fontSize:12, color:T.textPrimary }}>{h.name}</div>
+                              {h.coupon_rate && (
+                                <div style={{ ...SANS, fontSize:10, color:T.textMuted }}>
+                                  {h.coupon_rate}% due {h.maturity_date} | {h.currency}
+                                </div>
+                              )}
+                              {h.is_restricted && (
+                                <div style={{ ...SANS, fontSize:9, color:T.warnBase }}>† Restricted Security</div>
+                              )}
+                              {h.is_on_loan && (
+                                <div style={{ ...SANS, fontSize:9, color:T.textMuted }}>‡ On Loan</div>
+                              )}
+                            </div>
+                            <div style={{ ...MONO, fontSize:11, textAlign:"right", paddingRight:8, color:T.textPrimary }}>
+                              {h.shares > 0 ? h.shares.toLocaleString("en-US", { minimumFractionDigits: 0 }) : "—"}
+                            </div>
+                            <div style={{ ...MONO, fontSize:11, textAlign:"right", paddingRight:8, color:T.textPrimary }}>
+                              {fmtUSD(h.cost)}
+                            </div>
+                            <div style={{ ...MONO, fontSize:11, textAlign:"right", paddingRight:8, color:T.textPrimary }}>
+                              {fmtUSD(h.mv)}
+                            </div>
+                            <div style={{ ...MONO, fontSize:11, textAlign:"right", paddingRight:8, color:T.textMuted }}>
+                              {((h.mv / FS.net_assets) * 100).toFixed(2)}%
+                            </div>
+                            <div style={{ textAlign:"right", paddingRight:4 }}>
+                              <FvBadge level={h.fvLevel} />
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* Subtotal row */}
+                        <div style={{ display:"grid", gridTemplateColumns:"2fr 80px 120px 120px 80px 60px", gap:0, padding:"4px 0", borderTop:`1px solid ${T.textPrimary}`, marginTop:2 }}>
+                          <div style={{ ...SANS, fontSize:12, fontWeight:700, fontStyle:"italic", paddingLeft:16 }}>Total {cls}</div>
+                          <div />
+                          <div style={{ ...MONO, fontSize:12, fontWeight:700, textAlign:"right", paddingRight:8 }}>{fmtUSD(subtotalCost)}</div>
+                          <div style={{ ...MONO, fontSize:12, fontWeight:700, textAlign:"right", paddingRight:8 }}>{fmtUSD(subtotalMV)}</div>
+                          <div style={{ ...MONO, fontSize:11, textAlign:"right", paddingRight:8, color:T.textMuted }}>
+                            {((subtotalMV / FS.net_assets) * 100).toFixed(2)}%
+                          </div>
+                          <div />
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Grand total */}
+                  <div style={{ display:"grid", gridTemplateColumns:"2fr 80px 120px 120px 80px 60px", borderTop:`2px solid ${T.textPrimary}`, borderBottom:`3px double ${T.textPrimary}`, padding:"6px 0", marginTop:8 }}>
+                    <div style={{ ...SANS, fontSize:13, fontWeight:700 }}>Total Investments, at Value</div>
+                    <div />
+                    <div style={{ ...MONO, fontSize:13, fontWeight:700, textAlign:"right", paddingRight:8 }}>
+                      {fmtUSD(HOLDINGS.reduce((s, h) => s + h.cost, 0))}
+                    </div>
+                    <div style={{ ...MONO, fontSize:13, fontWeight:700, textAlign:"right", paddingRight:8 }}>
+                      {fmtUSD(HOLDINGS.reduce((s, h) => s + h.mv, 0))}
+                    </div>
+                    <div style={{ ...MONO, fontSize:12, fontWeight:700, textAlign:"right", paddingRight:8 }}>
+                      {((HOLDINGS.reduce((s, h) => s + h.mv, 0) / FS.net_assets) * 100).toFixed(2)}%
+                    </div>
+                    <div />
+                  </div>
+
+                  {/* Footnotes */}
+                  <div style={{ marginTop:16, ...SANS, fontSize:11, color:T.textMuted, lineHeight:1.7 }}>
+                    <div>† Restricted securities are valued using Level 3 inputs. See Note 2 — Fair Value Measurements.</div>
+                    <div>‡ Securities on loan. Collateral received consists of cash equivalents.</div>
+                    <div style={{ marginTop:4 }}>The accompanying notes are an integral part of these financial statements.</div>
+                  </div>
+                </>
+              );
+            })()}
+          </>)}
         </div>
       </div>
       {showPdf && <PdfModal onClose={() => setShowPdf(false)} fund={fund} fsData={FS_DYNAMIC} tbData={TB_ROWS} resolvedExceptions={exceptions.filter(e=>e.status==='resolved')} />}
