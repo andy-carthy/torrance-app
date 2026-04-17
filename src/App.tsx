@@ -4232,9 +4232,12 @@ function FootnoteEditorTab({ fund, FS_DYNAMIC, templates = WORKPAPER_TEMPLATES }
 
   function AddFootnoteModal() {
     const [title, setTitle] = useState("");
-    const [category, setCategory] = useState("Significant Accounting Policies");
+    const [categorySelect, setCategorySelect] = useState("Significant Accounting Policies");
+    const [customCategory, setCustomCategory] = useState("");
     const [content, setContent] = useState("");
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+    const category = categorySelect === "__new__" ? customCategory : categorySelect;
 
     const insertVarInModal = (varKey: string) => {
       const ta = textareaRef.current;
@@ -4246,7 +4249,7 @@ function FootnoteEditorTab({ fund, FS_DYNAMIC, templates = WORKPAPER_TEMPLATES }
     };
 
     const handleCreate = () => {
-      if (!title.trim() || !content.trim()) return;
+      if (!title.trim() || !content.trim() || !category.trim()) return;
       const id = `fn-${Date.now()}`;
       const newFn = { id, title: title.trim(), category, aiDrafted: false, varBindings: [], content: content.trim(), lastEdited: "Just now", wordCount: content.trim().split(/\s+/).length };
       setFootnotes(prev => [...prev, newFn]);
@@ -4258,6 +4261,7 @@ function FootnoteEditorTab({ fund, FS_DYNAMIC, templates = WORKPAPER_TEMPLATES }
 
     const cats = Array.from(new Set(AI_FOOTNOTES.map(f => f.category)));
     const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
+    const canCreate = title.trim() && content.trim() && category.trim();
 
     return (
       <div style={{position:"fixed",inset:0,background:"rgba(26,35,50,0.65)",zIndex:700,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>setShowAddModal(false)}>
@@ -4275,10 +4279,13 @@ function FootnoteEditorTab({ fund, FS_DYNAMIC, templates = WORKPAPER_TEMPLATES }
                 </div>
                 <div>
                   <FieldLabel required>Category</FieldLabel>
-                  <select value={category} onChange={e=>setCategory(e.target.value)} style={{...SANS,width:"100%",padding:"8px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,outline:"none",background:T.cardBg}}>
-                    {cats.map(c=><option key={c}>{c}</option>)}
-                    <option>Other</option>
+                  <select value={categorySelect} onChange={e=>setCategorySelect(e.target.value)} style={{...SANS,width:"100%",padding:"8px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,outline:"none",background:T.cardBg}}>
+                    {cats.map(c=><option key={c} value={c}>{c}</option>)}
+                    <option value="__new__">+ New Category...</option>
                   </select>
+                  {categorySelect === "__new__" && (
+                    <input value={customCategory} onChange={e=>setCustomCategory(e.target.value)} placeholder="Category name" style={{...SANS,width:"100%",padding:"7px 12px",borderRadius:6,border:`1px solid ${T.actionBase}`,fontSize:13,outline:"none",marginTop:6,boxSizing:"border-box"}} />
+                  )}
                 </div>
               </div>
               <div>
@@ -4310,7 +4317,7 @@ function FootnoteEditorTab({ fund, FS_DYNAMIC, templates = WORKPAPER_TEMPLATES }
           </div>
           <div style={{padding:"16px 24px",borderTop:`1px solid ${T.border}`,display:"flex",justifyContent:"flex-end",gap:12}}>
             <button onClick={()=>setShowAddModal(false)} style={{...SANS,fontSize:13,fontWeight:600,padding:"8px 16px",borderRadius:6,border:`1px solid ${T.border}`,background:"none",cursor:"pointer",color:T.textMuted}}>Cancel</button>
-            <button onClick={handleCreate} disabled={!title.trim()||!content.trim()} style={{...SANS,fontSize:13,fontWeight:700,padding:"8px 18px",borderRadius:6,border:"none",background:(!title.trim()||!content.trim())?T.border:T.actionBase,color:(!title.trim()||!content.trim())?T.textMuted:"#fff",cursor:(!title.trim()||!content.trim())?"not-allowed":"pointer"}}>Create Footnote</button>
+            <button onClick={handleCreate} disabled={!canCreate} style={{...SANS,fontSize:13,fontWeight:700,padding:"8px 18px",borderRadius:6,border:"none",background:canCreate?T.actionBase:T.border,color:canCreate?"#fff":T.textMuted,cursor:canCreate?"pointer":"not-allowed"}}>Create Footnote</button>
           </div>
         </div>
       </div>
@@ -4322,36 +4329,36 @@ function FootnoteEditorTab({ fund, FS_DYNAMIC, templates = WORKPAPER_TEMPLATES }
       {showAddModal && <AddFootnoteModal />}
 
       {/* Left nav */}
-      <aside style={{width:280,borderRight:`1px solid ${T.border}`,background:T.navyHeader,display:"flex",flexDirection:"column",flexShrink:0}}>
-        <div style={{padding:"16px 20px",borderBottom:`1px solid rgba(255,255,255,0.1)`}}>
-          <div style={{...SANS,fontWeight:700,fontSize:13,color:"#fff",marginBottom:10}}>Footnotes</div>
+      <aside style={{width:280,borderRight:`1px solid ${T.border}`,background:T.cardBg,display:"flex",flexDirection:"column",flexShrink:0}}>
+        <div style={{padding:"16px 20px",borderBottom:`1px solid ${T.border}`}}>
+          <div style={{...SANS,fontWeight:700,fontSize:13,color:T.textPrimary,marginBottom:10}}>Footnotes</div>
           <div style={{position:"relative"}}>
-            <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"rgba(255,255,255,0.4)",fontSize:13}}>⌕</span>
-            <input type="text" placeholder="Search footnotes..." value={search} onChange={e=>setSearch(e.target.value)} style={{...SANS,width:"100%",padding:"6px 12px 6px 30px",borderRadius:6,border:"1px solid rgba(255,255,255,0.15)",background:"rgba(255,255,255,0.07)",color:"#fff",fontSize:12,outline:"none",boxSizing:"border-box"}} />
+            <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:T.textMuted,fontSize:13}}>⌕</span>
+            <input type="text" placeholder="Search footnotes..." value={search} onChange={e=>setSearch(e.target.value)} style={{...SANS,width:"100%",padding:"6px 12px 6px 30px",borderRadius:6,border:`1px solid ${T.border}`,background:T.appBg,color:T.textPrimary,fontSize:12,outline:"none",boxSizing:"border-box"}} />
           </div>
         </div>
 
         <div style={{overflowY:"auto",flex:1}}>
           {Object.entries(navGroups).length === 0 ? (
-            <div style={{padding:"30px 20px",textAlign:"center",color:"rgba(255,255,255,0.4)",...SANS,fontSize:13}}>No footnotes match "{search}"</div>
+            <div style={{padding:"30px 20px",textAlign:"center",color:T.textMuted,...SANS,fontSize:13}}>No footnotes match "{search}"</div>
           ) : (
             Object.entries(navGroups).map(([cat, fns]) => {
               const collapsed = collapsedCats[cat];
               return (
                 <div key={cat}>
-                  <div onClick={()=>toggleCat(cat)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 20px",cursor:"pointer",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
-                    <span style={{...SANS,fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.7)",textTransform:"uppercase",letterSpacing:"0.05em"}}>{cat}</span>
-                    <span style={{color:"rgba(255,255,255,0.4)",fontSize:11}}>{collapsed?"▶":"▼"} {fns.length}</span>
+                  <div onClick={()=>toggleCat(cat)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 20px",cursor:"pointer",background:"#f8fafc",borderBottom:`1px solid ${T.border}`}}>
+                    <span style={{...SANS,fontSize:11,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em"}}>{cat}</span>
+                    <span style={{color:T.textMuted,fontSize:11}}>{collapsed?"▶":"▼"} {fns.length}</span>
                   </div>
                   {!collapsed && fns.map(fn => {
                     const isActive = activeId === fn.id;
                     const isFlash = justAddedId === fn.id;
                     return (
-                      <div key={fn.id} onClick={()=>setActiveId(fn.id)} style={{padding:"10px 20px 10px 28px",borderBottom:"1px solid rgba(255,255,255,0.05)",cursor:"pointer",background:isFlash?"rgba(52,211,153,0.15)":isActive?"rgba(255,255,255,0.1)":"transparent",borderLeft:`3px solid ${isActive?T.actionBase:"transparent"}`,transition:"background 0.2s"}}>
+                      <div key={fn.id} onClick={()=>setActiveId(fn.id)} style={{padding:"10px 20px 10px 28px",borderBottom:`1px solid ${T.border}`,cursor:"pointer",background:isFlash?"#f0fdf4":isActive?"#eff6ff":T.cardBg,borderLeft:`3px solid ${isActive?T.actionBase:"transparent"}`,transition:"background 0.2s"}}>
                         <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:6}}>
                           <div style={{flex:1}}>
-                            <div style={{...SANS,fontWeight:600,fontSize:12,color:isActive?"#fff":"rgba(255,255,255,0.85)",marginBottom:2}}>{fn.title}</div>
-                            <div style={{...SANS,fontSize:10,color:"rgba(255,255,255,0.4)"}}>{fn.lastEdited}</div>
+                            <div style={{...SANS,fontWeight:600,fontSize:12,color:isActive?T.actionBase:T.textPrimary,marginBottom:2}}>{fn.title}</div>
+                            <div style={{...SANS,fontSize:10,color:T.textMuted}}>{fn.lastEdited}</div>
                           </div>
                           {fn.aiDrafted
                             ? <span style={{...MONO,fontSize:9,fontWeight:700,padding:"2px 5px",borderRadius:4,background:T.aiBg,color:T.aiBase,flexShrink:0}}>✦ AI</span>
@@ -4367,8 +4374,8 @@ function FootnoteEditorTab({ fund, FS_DYNAMIC, templates = WORKPAPER_TEMPLATES }
           )}
         </div>
 
-        <div style={{flexShrink:0,padding:"12px 16px",borderTop:"1px solid rgba(255,255,255,0.1)"}}>
-          <button onClick={()=>setShowAddModal(true)} style={{...SANS,width:"100%",padding:"9px",borderRadius:7,border:"1px dashed rgba(255,255,255,0.25)",background:"rgba(255,255,255,0.05)",color:"rgba(255,255,255,0.75)",fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"center"}}>+ Add Footnote</button>
+        <div style={{flexShrink:0,padding:"12px 16px",borderTop:`1px solid ${T.border}`,background:"#f8fafc"}}>
+          <button onClick={()=>setShowAddModal(true)} style={{...SANS,width:"100%",padding:"9px",borderRadius:7,border:`1px dashed ${T.actionBase}`,background:"transparent",color:T.actionBase,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"center"}}>+ Add Footnote</button>
         </div>
       </aside>
 
@@ -5491,6 +5498,13 @@ function WorkpapersTab({ fund, masterFeeds, sharedTemplates, onTemplatesChange }
     Committed_Cap: 500000000, Hurdle_Rate: 0.08, Total_Level_3_Assets: 45000000, Net_Assets: 687400000
   };
 
+  const handleSaveFormula = () => {
+    const next = templates.map(t => t.id === activeCalcId ? {...t, formula: draftFormula} : t);
+    setTemplates(next);
+    onTemplatesChange?.(next);
+    setIsEditing(false);
+  };
+
   const handleDeploy = () => {
     setDeploying(true);
     setTimeout(() => {
@@ -5540,14 +5554,34 @@ function WorkpapersTab({ fund, masterFeeds, sharedTemplates, onTemplatesChange }
   function AddFormulaModal() {
     const [name, setName] = useState("");
     const [formula, setFormula] = useState("");
-    const [category, setCategory] = useState("Custom Formulas");
+    const [categorySelect, setCategorySelect] = useState("Custom Formulas");
+    const [customCategory, setCustomCategory] = useState("");
     const [subcategory, setSubcategory] = useState("Ad Hoc");
     const [unit, setUnit] = useState("%");
     const [isGlobal, setIsGlobal] = useState(true);
+    const formulaRef = React.useRef<HTMLTextAreaElement>(null);
 
+    const category = categorySelect === "__new__" ? customCategory : categorySelect;
     const varKey = name.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "");
-    const canSubmit = name.trim() && formula.trim();
+    const canSubmit = name.trim() && formula.trim() && category.trim();
     const cats = Array.from(new Set(WORKPAPER_TEMPLATES.map(t => t.category)));
+
+    const MODEL_DATA_POINTS: Record<string, string[]> = {
+      "Balance Sheet": ["Net_Assets","Total_Assets","Total_Liabilities","Total_Level_3_Assets","Committed_Cap","Ending_NAV","Beginning_NAV","Gross_Asset_Value"],
+      "Income & Expenses": ["Total_Expenses","Fee_Waivers","Advisory_Fee","Admin_Fee","Performance_Fee","Interest_Income","Dividend_Income","Realized_Gain_Loss","Unrealized_Gain_Loss"],
+      "Averages & Rates": ["Avg_Daily_Net_Assets","Mgmt_Fee_Rate","Perf_Fee_Rate","Hurdle_Rate","Days_In_Period","Days_In_Year"],
+      "Portfolio": ["Total_Investments","Portfolio_Cost","Long_Exposure","Short_Exposure","Gross_Exposure","Net_Exposure","Num_Positions"],
+      "Capital Activity": ["Total_Subscriptions","Total_Redemptions","Net_Capital_Activity","Shares_Outstanding","NAV_Per_Share"],
+    };
+
+    const insertDataPoint = (pt: string) => {
+      const ta = formulaRef.current;
+      const token = `[${pt}]`;
+      if (!ta) { setFormula(f => f + token); return; }
+      const s = ta.selectionStart, e = ta.selectionEnd;
+      setFormula(f => f.slice(0, s) + token + f.slice(e));
+      setTimeout(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = s + token.length; }, 0);
+    };
 
     const handleCreate = () => {
       if (!canSubmit) return;
@@ -5563,53 +5597,81 @@ function WorkpapersTab({ fund, masterFeeds, sharedTemplates, onTemplatesChange }
 
     return (
       <div style={{position:"fixed",inset:0,background:"rgba(26,35,50,0.65)",zIndex:700,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>setShowAddModal(false)}>
-        <div style={{background:T.cardBg,borderRadius:12,width:600,maxHeight:"88vh",display:"flex",flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,0.3)",overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
+        <div style={{background:T.cardBg,borderRadius:12,width:860,maxHeight:"90vh",display:"flex",flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,0.3)",overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
           <div style={{padding:"20px 24px",borderBottom:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <div style={{...SANS,fontWeight:700,fontSize:16}}>New Formula</div>
             <button onClick={()=>setShowAddModal(false)} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:T.textMuted}}>✕</button>
           </div>
-          <div style={{padding:"24px",overflowY:"auto",display:"flex",flexDirection:"column",gap:16}}>
-            <div>
-              <FieldLabel required>Formula Name</FieldLabel>
-              <input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Sharpe Ratio" style={{...SANS,width:"100%",padding:"8px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,outline:"none",boxSizing:"border-box"}} />
-              {varKey && (
-                <div style={{marginTop:8,padding:"8px 12px",borderRadius:6,background:"#eff6ff",border:`1px solid ${T.actionBase}`}}>
-                  <span style={{...SANS,fontSize:11,color:T.textMuted}}>Token key: </span>
-                  <span style={{...MONO,fontSize:12,color:T.actionBase,fontWeight:700}}>{`{{${varKey}}}`}</span>
-                  <span style={{...SANS,fontSize:11,color:T.textMuted}}> — use this in Footnote Editor to insert the live value</span>
+          <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+            {/* Left: form */}
+            <div style={{flex:1,padding:"24px",overflowY:"auto",display:"flex",flexDirection:"column",gap:16}}>
+              <div>
+                <FieldLabel required>Formula Name</FieldLabel>
+                <input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Sharpe Ratio" style={{...SANS,width:"100%",padding:"8px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,outline:"none",boxSizing:"border-box"}} />
+                {varKey && (
+                  <div style={{marginTop:8,padding:"8px 12px",borderRadius:6,background:"#eff6ff",border:`1px solid ${T.actionBase}`}}>
+                    <span style={{...SANS,fontSize:11,color:T.textMuted}}>Token key: </span>
+                    <span style={{...MONO,fontSize:12,color:T.actionBase,fontWeight:700}}>{`{{${varKey}}}`}</span>
+                    <span style={{...SANS,fontSize:11,color:T.textMuted}}> — use in Footnote Editor</span>
+                  </div>
+                )}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 90px",gap:12}}>
+                <div>
+                  <FieldLabel required>Category</FieldLabel>
+                  <select value={categorySelect} onChange={e=>setCategorySelect(e.target.value)} style={{...SANS,width:"100%",padding:"8px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,outline:"none",background:T.cardBg}}>
+                    {cats.map(c=><option key={c} value={c}>{c}</option>)}
+                    <option value="Custom Formulas">Custom Formulas</option>
+                    <option value="__new__">+ New Category...</option>
+                  </select>
+                  {categorySelect === "__new__" && (
+                    <input value={customCategory} onChange={e=>setCustomCategory(e.target.value)} placeholder="Category name" style={{...SANS,width:"100%",padding:"7px 12px",borderRadius:6,border:`1px solid ${T.actionBase}`,fontSize:13,outline:"none",marginTop:6,boxSizing:"border-box"}} />
+                  )}
                 </div>
-              )}
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 100px",gap:12}}>
-              <div>
-                <FieldLabel required>Category</FieldLabel>
-                <select value={category} onChange={e=>setCategory(e.target.value)} style={{...SANS,width:"100%",padding:"8px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,outline:"none",background:T.cardBg}}>
-                  {cats.map(c=><option key={c}>{c}</option>)}
-                  <option>Custom Formulas</option>
-                </select>
+                <div>
+                  <FieldLabel>Subcategory</FieldLabel>
+                  <input value={subcategory} onChange={e=>setSubcategory(e.target.value)} placeholder="e.g. Ad Hoc" style={{...SANS,width:"100%",padding:"8px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,outline:"none",boxSizing:"border-box"}} />
+                </div>
+                <div>
+                  <FieldLabel>Unit</FieldLabel>
+                  <select value={unit} onChange={e=>setUnit(e.target.value)} style={{...SANS,width:"100%",padding:"8px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,outline:"none",background:T.cardBg}}>
+                    {["%","$","days","x","bps"].map(u=><option key={u}>{u}</option>)}
+                  </select>
+                </div>
               </div>
               <div>
-                <FieldLabel>Subcategory</FieldLabel>
-                <input value={subcategory} onChange={e=>setSubcategory(e.target.value)} placeholder="e.g. Ad Hoc" style={{...SANS,width:"100%",padding:"8px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,outline:"none",boxSizing:"border-box"}} />
+                <FieldLabel required>Formula</FieldLabel>
+                <textarea ref={formulaRef} value={formula} onChange={e=>setFormula(e.target.value)} rows={5} placeholder="( [Total_Expenses] - [Fee_Waivers] ) / [Avg_Daily_Net_Assets]" style={{...MONO,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:12,lineHeight:1.6,resize:"vertical",outline:"none",boxSizing:"border-box"}} />
+                <div style={{...SANS,fontSize:11,color:T.textMuted,marginTop:4}}>Click data points on the right to insert at cursor, or type <span style={{...MONO,background:"#e2e8f0",padding:"1px 4px",borderRadius:3}}>[Variable_Name]</span> manually.</div>
               </div>
-              <div>
-                <FieldLabel>Unit</FieldLabel>
-                <select value={unit} onChange={e=>setUnit(e.target.value)} style={{...SANS,width:"100%",padding:"8px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,outline:"none",background:T.cardBg}}>
-                  {["%","$","days","x","bps"].map(u=><option key={u}>{u}</option>)}
-                </select>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <span style={{...SANS,fontSize:13,fontWeight:600,color:T.textPrimary}}>Global Template</span>
+                <div onClick={()=>setIsGlobal(g=>!g)} style={{width:40,height:22,borderRadius:11,background:isGlobal?T.actionBase:"#cbd5e1",cursor:"pointer",position:"relative",transition:"background 0.2s",flexShrink:0}}>
+                  <div style={{position:"absolute",top:3,left:isGlobal?20:3,width:16,height:16,borderRadius:8,background:"#fff",transition:"left 0.2s",boxShadow:"0 1px 3px rgba(0,0,0,0.2)"}} />
+                </div>
+                <span style={{...SANS,fontSize:11,color:T.textMuted}}>Apply across all synced funds</span>
               </div>
             </div>
-            <div>
-              <FieldLabel required>Formula</FieldLabel>
-              <textarea value={formula} onChange={e=>setFormula(e.target.value)} rows={4} placeholder="( [Total_Expenses] - [Fee_Waivers] ) / [Avg_Daily_Net_Assets]" style={{...MONO,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:12,lineHeight:1.6,resize:"vertical",outline:"none",boxSizing:"border-box"}} />
-              <div style={{...SANS,fontSize:11,color:T.textMuted,marginTop:4}}>Use <span style={{...MONO,background:"#e2e8f0",padding:"1px 4px",borderRadius:3}}>[Variable_Name]</span> to reference Trial Balance fields.</div>
-            </div>
-            <div style={{display:"flex",alignItems:"center",gap:12}}>
-              <span style={{...SANS,fontSize:13,fontWeight:600,color:T.textPrimary}}>Global Template</span>
-              <div onClick={()=>setIsGlobal(g=>!g)} style={{width:40,height:22,borderRadius:11,background:isGlobal?T.actionBase:"#cbd5e1",cursor:"pointer",position:"relative",transition:"background 0.2s",flexShrink:0}}>
-                <div style={{position:"absolute",top:3,left:isGlobal?20:3,width:16,height:16,borderRadius:8,background:"#fff",transition:"left 0.2s",boxShadow:"0 1px 3px rgba(0,0,0,0.2)"}} />
+            {/* Right: data point picker */}
+            <div style={{width:240,borderLeft:`1px solid ${T.border}`,background:T.appBg,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+              <div style={{padding:"16px",borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+                <div style={{...SANS,fontSize:11,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em"}}>Data Model</div>
+                <div style={{...SANS,fontSize:11,color:T.textMuted,marginTop:3}}>Click to insert at cursor</div>
               </div>
-              <span style={{...SANS,fontSize:11,color:T.textMuted}}>Apply this formula across all synced funds</span>
+              <div style={{overflowY:"auto",flex:1,padding:"12px"}}>
+                {Object.entries(MODEL_DATA_POINTS).map(([grp,pts])=>(
+                  <div key={grp} style={{marginBottom:14}}>
+                    <div style={{...SANS,fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:5}}>{grp}</div>
+                    <div style={{display:"flex",flexDirection:"column",gap:3}}>
+                      {pts.map(pt=>(
+                        <button key={pt} onClick={()=>insertDataPoint(pt)} style={{...MONO,textAlign:"left",fontSize:10,padding:"5px 8px",background:T.cardBg,border:`1px solid ${T.border}`,borderRadius:5,color:T.actionBase,cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.borderColor=T.actionBase} onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}>
+                          [{pt}]
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           <div style={{padding:"16px 24px",borderTop:`1px solid ${T.border}`,display:"flex",justifyContent:"flex-end",gap:12}}>
@@ -5626,44 +5688,44 @@ function WorkpapersTab({ fund, masterFeeds, sharedTemplates, onTemplatesChange }
       {showAddModal && <AddFormulaModal />}
 
       {/* Left nav */}
-      <div style={{width:300,background:T.navyHeader,borderRight:`1px solid rgba(255,255,255,0.08)`,display:"flex",flexDirection:"column",flexShrink:0}}>
-        <div style={{padding:"16px 20px",borderBottom:"1px solid rgba(255,255,255,0.1)"}}>
-          <div style={{...SANS,fontWeight:700,fontSize:13,color:"#fff",marginBottom:10}}>Workpapers Engine</div>
+      <div style={{width:300,background:T.cardBg,borderRight:`1px solid ${T.border}`,display:"flex",flexDirection:"column",flexShrink:0}}>
+        <div style={{padding:"16px 20px",borderBottom:`1px solid ${T.border}`}}>
+          <div style={{...SANS,fontWeight:700,fontSize:13,color:T.textPrimary,marginBottom:10}}>Workpapers Engine</div>
           <div style={{position:"relative"}}>
-            <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"rgba(255,255,255,0.4)",fontSize:13}}>⌕</span>
-            <input type="text" placeholder="Search formulas..." value={search} onChange={e=>setSearch(e.target.value)} style={{...SANS,width:"100%",padding:"6px 12px 6px 30px",borderRadius:6,border:"1px solid rgba(255,255,255,0.15)",background:"rgba(255,255,255,0.07)",color:"#fff",fontSize:12,outline:"none",boxSizing:"border-box"}} />
+            <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:T.textMuted,fontSize:13}}>⌕</span>
+            <input type="text" placeholder="Search formulas..." value={search} onChange={e=>setSearch(e.target.value)} style={{...SANS,width:"100%",padding:"6px 12px 6px 30px",borderRadius:6,border:`1px solid ${T.border}`,background:T.appBg,color:T.textPrimary,fontSize:12,outline:"none",boxSizing:"border-box"}} />
           </div>
         </div>
 
         <div style={{overflowY:"auto",flex:1}}>
           {Object.keys(navTree).length === 0 ? (
-            <div style={{padding:"30px 20px",textAlign:"center",color:"rgba(255,255,255,0.4)",...SANS,fontSize:13}}>No formulas match</div>
+            <div style={{padding:"30px 20px",textAlign:"center",color:T.textMuted,...SANS,fontSize:13}}>No formulas match</div>
           ) : (
             Object.entries(navTree).map(([cat, subs]) => {
               const catCollapsed = collapsedCats[cat];
               const catCount = Object.values(subs).reduce((s,a)=>s+a.length,0);
               return (
                 <div key={cat}>
-                  <div onClick={()=>toggleCat(cat)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 20px",cursor:"pointer",borderBottom:"1px solid rgba(255,255,255,0.07)",userSelect:"none"}}>
-                    <span style={{...SANS,fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.75)",textTransform:"uppercase",letterSpacing:"0.05em"}}>{cat}</span>
-                    <span style={{color:"rgba(255,255,255,0.4)",fontSize:11}}>{catCollapsed?"▶":"▼"} {catCount}</span>
+                  <div onClick={()=>toggleCat(cat)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 20px",cursor:"pointer",background:"#f8fafc",borderBottom:`1px solid ${T.border}`,userSelect:"none"}}>
+                    <span style={{...SANS,fontSize:11,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em"}}>{cat}</span>
+                    <span style={{color:T.textMuted,fontSize:11}}>{catCollapsed?"▶":"▼"} {catCount}</span>
                   </div>
                   {!catCollapsed && Object.entries(subs).map(([sub, items]) => {
                     const subKey = `${cat}::${sub}`;
                     const subCollapsed = collapsedSubs[subKey];
                     return (
                       <div key={sub}>
-                        <div onClick={()=>toggleSub(subKey)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"7px 20px 7px 32px",cursor:"pointer",borderBottom:"1px solid rgba(255,255,255,0.05)",userSelect:"none"}}>
-                          <span style={{...SANS,fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.5)"}}>{sub}</span>
-                          <span style={{color:"rgba(255,255,255,0.3)",fontSize:10}}>{subCollapsed?"▶":"▼"} {items.length}</span>
+                        <div onClick={()=>toggleSub(subKey)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"7px 20px 7px 32px",cursor:"pointer",background:"#f8fafc",borderBottom:`1px solid ${T.border}`,userSelect:"none"}}>
+                          <span style={{...SANS,fontSize:10,fontWeight:600,color:T.textMuted}}>{sub}</span>
+                          <span style={{color:T.textMuted,fontSize:10}}>{subCollapsed?"▶":"▼"} {items.length}</span>
                         </div>
                         {!subCollapsed && items.map(calc => {
                           const isActive = activeCalcId === calc.id;
                           const isFlash = justAdded === calc.id;
                           return (
-                            <div key={calc.id} onClick={()=>{setActiveCalcId(calc.id);setIsEditing(false);setHasOverride(false);}} style={{padding:"9px 20px 9px 40px",borderBottom:"1px solid rgba(255,255,255,0.04)",cursor:"pointer",background:isFlash?"rgba(52,211,153,0.15)":isActive?"rgba(255,255,255,0.1)":"transparent",borderLeft:`3px solid ${isActive?T.actionBase:"transparent"}`,transition:"background 0.2s"}}>
-                              <div style={{...SANS,fontSize:12,fontWeight:600,color:isActive?"#fff":"rgba(255,255,255,0.8)",marginBottom:2}}>{calc.name}</div>
-                              <div style={{...MONO,fontSize:9,color:"rgba(255,255,255,0.35)"}}>{calc.varKey?`{{${calc.varKey}}}`:" "}</div>
+                            <div key={calc.id} onClick={()=>{setActiveCalcId(calc.id);setIsEditing(false);setHasOverride(false);}} style={{padding:"9px 20px 9px 40px",borderBottom:`1px solid ${T.border}`,cursor:"pointer",background:isFlash?"#f0fdf4":isActive?"#eff6ff":T.cardBg,borderLeft:`3px solid ${isActive?T.actionBase:"transparent"}`,transition:"background 0.2s"}}>
+                              <div style={{...SANS,fontSize:12,fontWeight:600,color:isActive?T.actionBase:T.textPrimary,marginBottom:2}}>{calc.name}</div>
+                              <div style={{...MONO,fontSize:9,color:T.textMuted}}>{calc.varKey?`{{${calc.varKey}}}`:" "}</div>
                             </div>
                           );
                         })}
@@ -5676,8 +5738,8 @@ function WorkpapersTab({ fund, masterFeeds, sharedTemplates, onTemplatesChange }
           )}
         </div>
 
-        <div style={{flexShrink:0,padding:"12px 16px",borderTop:"1px solid rgba(255,255,255,0.1)"}}>
-          <button onClick={()=>setShowAddModal(true)} style={{...SANS,width:"100%",padding:"9px",borderRadius:7,border:"1px dashed rgba(255,255,255,0.25)",background:"rgba(255,255,255,0.05)",color:"rgba(255,255,255,0.75)",fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"center"}}>+ New Formula</button>
+        <div style={{flexShrink:0,padding:"12px 16px",borderTop:`1px solid ${T.border}`,background:"#f8fafc"}}>
+          <button onClick={()=>setShowAddModal(true)} style={{...SANS,width:"100%",padding:"9px",borderRadius:7,border:`1px dashed ${T.actionBase}`,background:"transparent",color:T.actionBase,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"center"}}>+ New Formula</button>
         </div>
       </div>
 
@@ -5716,7 +5778,10 @@ function WorkpapersTab({ fund, masterFeeds, sharedTemplates, onTemplatesChange }
                 <div style={{...SANS,fontSize:13,fontWeight:700,color:T.textPrimary}}>Calculation Logic</div>
                 {!isEditing
                   ? <button onClick={()=>{setDraftFormula(activeCalc.formula);setIsEditing(true);}} style={{...SANS,fontSize:11,fontWeight:600,color:T.actionBase,background:"none",border:"none",cursor:"pointer"}}>✎ Edit Formula</button>
-                  : <button onClick={()=>setIsEditing(false)} style={{...SANS,fontSize:11,fontWeight:600,color:T.textMuted,background:"none",border:"none",cursor:"pointer"}}>Cancel Edit</button>
+                  : <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                      <button onClick={()=>setIsEditing(false)} style={{...SANS,fontSize:11,fontWeight:600,color:T.textMuted,background:"none",border:"none",cursor:"pointer",padding:"4px 0"}}>Cancel</button>
+                      <button onClick={handleSaveFormula} style={{...SANS,fontSize:11,fontWeight:700,padding:"5px 14px",borderRadius:5,border:"none",background:T.actionBase,color:"#fff",cursor:"pointer"}}>Save Formula</button>
+                    </div>
                 }
               </div>
               <div style={{padding:20}}>
@@ -5817,6 +5882,8 @@ function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFee
   const [tab,setTab]=useState("exceptions");
   const [showFundPdf, setShowFundPdf] = useState(false);
   const [sharedTemplates, setSharedTemplates] = useState(WORKPAPER_TEMPLATES);
+  const [activePeriod, setActivePeriod] = useState(fund.period || "December 31, 2024");
+  const AVAILABLE_PERIODS = ["December 31, 2024","September 30, 2024","June 30, 2024","March 31, 2024","December 31, 2023","September 30, 2023"];
   
   const handleNextFund = () => {
     const currentIndex = blockedFunds.findIndex(f => f.fund_id === fund.fund_id);
@@ -5845,7 +5912,12 @@ function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFee
     <div style={{background:T.navyHeader,padding:"8px 24px",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
       <div style={{display:"flex",alignItems:"center",gap:12}}>
         <FundSelectorCombobox fund={fund} fundSeeds={fundSeeds} onSelectFund={onSelectFund} />
-        <div style={{fontWeight:400,color:"#8898aa",fontSize:12, ...SANS}}>| {fund.series} · {fund.period}</div>
+        <div style={{display:"flex",alignItems:"center",gap:6,color:"#8898aa",fontSize:12,...SANS}}>
+          <span>| {fund.series} ·</span>
+          <select value={activePeriod} onChange={e=>setActivePeriod(e.target.value)} style={{...SANS,fontSize:12,fontWeight:500,color:"#8898aa",background:"transparent",border:"none",outline:"none",cursor:"pointer",padding:"0 2px"}}>
+            {AVAILABLE_PERIODS.map(p=><option key={p} value={p} style={{color:T.textPrimary,background:T.cardBg}}>{p}</option>)}
+          </select>
+        </div>
         <SlaPill daysLeft={fund.sla_days}/>
         
         {blockedFunds.length > 0 && (
