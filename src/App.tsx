@@ -3732,6 +3732,15 @@ function JournalEntriesTab({ fund, fundSeeds, masterFeeds, currentUser, onPostJE
   const [jeDesc, setJeDesc] = useState("");
   const [jeRef, setJeRef] = useState("");
 
+  useEffect(() => {
+    const handler = (e) => {
+      if (!fund || e.detail.fundId !== fund.fund_id) return;
+      setEntries(prev => [e.detail.je, ...prev]);
+    };
+    window.addEventListener("je-auto-posted", handler);
+    return () => window.removeEventListener("je-auto-posted", handler);
+  }, [fund]);
+
   // Extract unique accounts from the GL for the combobox
   const availableAccounts = useMemo(() => {
     const accts = new Map();
@@ -3786,9 +3795,9 @@ function JournalEntriesTab({ fund, fundSeeds, masterFeeds, currentUser, onPostJE
   };
 
   return (
-    <div style={{display:"flex", height:"100%", background:T.appBg}}>
+    <div style={{display:"flex", height:"100%", overflow:"hidden", background:T.appBg}}>
       {/* Left Sidebar: JE Ledger */}
-      <div style={{width: 340, background:T.cardBg, borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column"}}>
+      <div style={{width: 340, background:T.cardBg, borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column", height:"100%"}}>
         <div style={{padding:"16px", borderBottom:`1px solid ${T.border}`}}>
           <div style={{...SANS, fontWeight:700, fontSize:15, color:T.textPrimary}}>Ledger Adjustments</div>
           <div style={{...SANS, fontSize:11, color:T.textMuted, marginTop:2}}>Maker / Checker Workflow</div>
@@ -3804,6 +3813,15 @@ function JournalEntriesTab({ fund, fundSeeds, masterFeeds, currentUser, onPostJE
               <div style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
                 <span style={{...SANS, fontSize:11, color:T.textMuted}}>By: {TEAM.find(m=>m.id===je.createdBy)?.name}</span>
                 {je.mode === "target_balance" && <span style={{...MONO, fontSize:9, fontWeight:700, background:T.aiBg, color:T.aiBase, padding:"2px 6px", borderRadius:4, border:`1px solid ${T.aiBorder}`}}>TARGET BAL</span>}
+                {je.mode === "exception_auto" && (
+                  <span style={{
+                    ...MONO, fontSize: 8, fontWeight: 700, padding: "1px 5px",
+                    borderRadius: 3, background: T.aiBg, color: T.aiBase,
+                    border: `1px solid ${T.aiBorder}`,
+                  }}>
+                    AUTO · EXC
+                  </span>
+                )}
               </div>
             </div>
           ))}
@@ -3811,7 +3829,7 @@ function JournalEntriesTab({ fund, fundSeeds, masterFeeds, currentUser, onPostJE
       </div>
 
       {/* Right Pane: Drafting & Review */}
-      <div style={{flex:1, padding:"24px 32px", overflowY:"auto"}}>
+      <div style={{flex:1, padding:"24px 32px", overflowY:"auto", height:"100%"}}>
         <div style={{background:T.cardBg, border:`1px solid ${T.border}`, borderRadius:10, overflow:"hidden", boxShadow:"0 4px 12px rgba(0,0,0,0.03)", maxWidth:1000}}>
           <div style={{background:T.navyHeader, padding:"16px 24px", color:"#fff", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
             <div style={{...SANS, fontWeight:700, fontSize:16}}>Draft New Journal Entry</div>
@@ -3849,7 +3867,7 @@ function JournalEntriesTab({ fund, fundSeeds, masterFeeds, currentUser, onPostJE
                   </div>
                 </div>
 
-                <div style={{overflowX:"auto"}}>
+                <div style={{overflowX:"auto", width:"100%"}}>
                   <table style={{width:"100%", borderCollapse:"collapse", marginBottom:20, minWidth:800}}>
                     <thead>
                       <tr style={{borderBottom:`2px solid ${T.border}`}}>
@@ -9397,7 +9415,28 @@ export default function App() {
       if(!prev[realFid]) return prev;
       return {...prev,[realFid]:prev[realFid].map(e=>e.id===id?{...e,status:"resolved",resolution:res,overrideValue:ov||"",resolvedBy:currentUserId}:e)}
     });
-  },[currentUserId]);
+    // Auto-post Journal Entry for override or corrected-source resolutions
+    if (res === "override_value" || res === "corrected_source") {
+      const exc = (fundState[fid] || []).find(e => e.id === id);
+      if (exc) {
+        const newJe = {
+          id: `je-exc-${id}-${Date.now()}`,
+          date: "2024-12-31",
+          ref: `ADJ-${id}`,
+          desc: `Auto-adjustment: ${exc.title}${ov ? ` — Override to ${ov}` : ""}`,
+          status: "posted",
+          mode: "exception_auto",
+          lines: [
+            { fundId: fid, acct: exc.account_number || "9999", debit: exc.amount || 0, credit: 0 },
+            { fundId: fid, acct: "1000",                       debit: 0,               credit: exc.amount || 0 },
+          ],
+          createdBy: currentUserId,
+          excRef: id,
+        };
+        window.dispatchEvent(new CustomEvent("je-auto-posted", { detail: { fundId: fid, je: newJe } }));
+      }
+    }
+  },[currentUserId, fundState]);
 
   const handleReopen=useCallback((fid,id)=>setFundState(prev=>{
     const realFid = getRealFid(prev, fid, id);
