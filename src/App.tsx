@@ -2585,15 +2585,18 @@ function HoldingsGrid({ holdings }) {
   const [groupBy, setGroupBy] = useState(true);
   const [sortBy, setSortBy] = useState("mv_desc");
   const [showAllCols, setShowAllCols] = useState(false); // NEW: Hierarchy Toggle
+  const [holdingsData, setHoldingsData] = useState(holdings);
+  const [editingCell, setEditingCell] = useState(null); // { positionId, field }
+  const [editValue, setEditValue] = useState("");
 
-  const totalMV = holdings.reduce((s,h) => s+h.mv, 0);
-  const l1MV    = holdings.filter(h=>h.fvLevel===1).reduce((s,h)=>s+h.mv,0);
-  const l2MV    = holdings.filter(h=>h.fvLevel===2).reduce((s,h)=>s+h.mv,0);
-  const l3MV    = holdings.filter(h=>h.fvLevel===3).reduce((s,h)=>s+h.mv,0);
-  const assetClasses = [...new Set(holdings.map(h=>h.assetClass))];
+  const totalMV = holdingsData.reduce((s,h) => s+h.mv, 0);
+  const l1MV    = holdingsData.filter(h=>h.fvLevel===1).reduce((s,h)=>s+h.mv,0);
+  const l2MV    = holdingsData.filter(h=>h.fvLevel===2).reduce((s,h)=>s+h.mv,0);
+  const l3MV    = holdingsData.filter(h=>h.fvLevel===3).reduce((s,h)=>s+h.mv,0);
+  const assetClasses = [...new Set(holdingsData.map(h=>h.assetClass))];
 
   const filteredAndSorted = useMemo(() => {
-    let result = [...holdings]; 
+    let result = [...holdingsData];
     if (levelFilter !== "All") result = result.filter(h => h.fvLevel.toString() === levelFilter);
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -2606,7 +2609,7 @@ function HoldingsGrid({ holdings }) {
       return 0;
     });
     return result;
-  }, [holdings, search, levelFilter, sortBy]); 
+  }, [holdingsData, search, levelFilter, sortBy]);
 
   const COLS = ["Position ID", "Fund ID", "As Of Date", "CUSIP / ISIN", "SEDOL", "LEI", "Ticker", "Security Name", "Asset Class", "Asset Subclass", "Sector", "Country of Risk", "Country of Issuer", "Currency", "Shares / Par", "Cost Basis", "Market Value Local", "Market Value", "Price", "Price Date", "Price Source", "FV Technique", "Maturity Date", "Coupon Rate", "Coupon Type", "Notional Amount", "Is Restricted", "Restriction Note", "Is On Loan", "Share Class", "Liquidity Category", "Is Illiquid", "Unrealized G/L", "FV Level", "% of NAV"];
   
@@ -2639,13 +2642,35 @@ function HoldingsGrid({ holdings }) {
           const isPct = colIdx === 34;
           const isFvLevel = colIdx === 33;
           const align = RIGHT_COLS.includes(colIdx) ? "right" : CENTER_COLS.includes(colIdx) ? "center" : "left";
-          
+          const isEditable = EDITABLE_COL_INDICES.has(colIdx);
+          const field = EDITABLE_COL_FIELDS[colIdx];
+          const isEditing = isEditable && editingCell?.positionId === h.position_id && editingCell?.field === field;
+
           return (
-            <td key={colIdx} style={{ ...MONO, padding:"6px 12px", fontSize:11, color:T.textPrimary, whiteSpace:"nowrap", textAlign: align }}>
-              {isFvLevel ? <FvBadge level={val}/> : 
-               isUSD ? fmtUSD(val) : 
-               isPct ? fmtPct(val) : 
-               val == null ? "—" : val.toString()}
+            <td key={colIdx}
+              onDoubleClick={() => isEditable && handleHdDoubleClick(h.position_id, field)}
+              style={{ ...MONO, padding:"6px 12px", fontSize:11, color:T.textPrimary, whiteSpace:"nowrap", textAlign: align, background: isEditing ? T.actionBg : isEditable ? "#fafffe" : "transparent", borderLeft: isEditable ? "1px solid #e2e8f0" : "none", borderRight: isEditable ? "1px solid #e2e8f0" : "none", cursor: isEditable ? "cell" : "default" }}>
+              {isEditing ? (
+                field === "fvLevel" ? (
+                  <select autoFocus value={editValue} onChange={e => setEditValue(e.target.value)} onBlur={() => commitHdEdit(h.position_id, "fvLevel")}
+                    style={{ ...MONO, fontSize:11, width:"100%", padding:"2px 6px", border:`1px solid ${T.actionBase}`, borderRadius:3 }}>
+                    {FV_LEVEL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                ) : field === "assetClass" ? (
+                  <select autoFocus value={editValue} onChange={e => setEditValue(e.target.value)} onBlur={() => commitHdEdit(h.position_id, "assetClass")}
+                    style={{ ...MONO, fontSize:11, width:"100%", padding:"2px 6px", border:`1px solid ${T.actionBase}`, borderRadius:3 }}>
+                    {ASSET_CLASS_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                ) : (
+                  <input autoFocus value={editValue} onChange={e => setEditValue(e.target.value)} onBlur={() => commitHdEdit(h.position_id, field)} onKeyDown={e => handleHdKeyDown(e, h.position_id, field)}
+                    style={{ ...MONO, fontSize:11, width:"100%", padding:"2px 6px", border:`1px solid ${T.actionBase}`, borderRadius:3, outline:"none" }} />
+                )
+              ) : (
+                isFvLevel ? <FvBadge level={val}/> :
+                isUSD ? fmtUSD(val) :
+                isPct ? fmtPct(val) :
+                val == null ? "—" : val.toString()
+              )}
             </td>
           );
         })}
@@ -2654,7 +2679,7 @@ function HoldingsGrid({ holdings }) {
   };
 
   const renderSubtotalRow = (cls) => {
-    const rows    = holdings.filter(h=>h.assetClass===cls);
+    const rows    = holdingsData.filter(h=>h.assetClass===cls);
     const clsMV   = rows.reduce((s,h)=>s+h.mv,0);
     const clsPct  = (clsMV/FS.net_assets)*100;
 
@@ -2673,6 +2698,45 @@ function HoldingsGrid({ holdings }) {
         <td style={{ ...MONO, padding:"5px 8px", textAlign:"right", fontWeight:700, fontSize:12, borderBottom:`2px solid ${T.border}`, borderTop:`1px solid ${T.border}` }}>{fmtPct(clsPct)}</td>
       </tr>
     );
+  };
+
+  const EDITABLE_COL_FIELDS = { 8: "assetClass", 14: "shares", 15: "cost", 17: "mv", 18: "price", 33: "fvLevel" };
+  const EDITABLE_COL_INDICES = new Set([8, 14, 15, 17, 18, 33]);
+  const FV_LEVEL_OPTIONS = [
+    { value: 1, label: "Level 1 — Quoted Price" },
+    { value: 2, label: "Level 2 — Observable Inputs" },
+    { value: 3, label: "Level 3 — Unobservable Inputs" },
+  ];
+  const ASSET_CLASS_OPTIONS = [
+    "Common Stock", "Government Bond", "Corporate Bond", "Municipal Bond",
+    "Private Debt", "Future", "Interest Rate Swap", "FX Forward", "Call Option",
+    "Put Option", "ETF", "Preferred Stock",
+  ];
+
+  const handleHdDoubleClick = (posId, field) => {
+    const row = holdingsData.find(h => h.position_id === posId);
+    if (!row) return;
+    setEditingCell({ positionId: posId, field });
+    setEditValue(String(row[field] ?? ""));
+  };
+
+  const commitHdEdit = (posId, field) => {
+    setHoldingsData(prev => prev.map(h => {
+      if (h.position_id !== posId) return h;
+      let v = editValue;
+      if (field !== "fvLevel" && field !== "assetClass") {
+        v = editValue !== "" && !isNaN(Number(editValue)) ? Number(editValue) : editValue;
+      } else if (field === "fvLevel") {
+        v = Number(editValue);
+      }
+      return { ...h, [field]: v };
+    }));
+    setEditingCell(null);
+  };
+
+  const handleHdKeyDown = (e, posId, field) => {
+    if (e.key === "Enter") commitHdEdit(posId, field);
+    if (e.key === "Escape") setEditingCell(null);
   };
 
   return <div style={{display:"flex", flexDirection:"column", height:"100%"}}>
@@ -2731,8 +2795,9 @@ function HoldingsGrid({ holdings }) {
               {COLS.map((h,i) => {
                 if (!showAllCols && !PRIMARY_HD_COLS.includes(i)) return null;
                 const align = RIGHT_COLS.includes(i) ? "right" : CENTER_COLS.includes(i) ? "center" : "left";
+                const isEditableCol = EDITABLE_COL_INDICES.has(i);
                 return (
-                  <th key={h} style={{...SANS,padding:"8px 12px",textAlign:align,color:T.textMuted,fontWeight:700,fontSize:10,letterSpacing:"0.05em",textTransform:"uppercase",borderBottom:`2px solid ${T.border}`,whiteSpace:"nowrap"}}>{h}</th>
+                  <th key={h} style={{...SANS, padding:"8px 12px", textAlign:align, color: isEditableCol ? T.actionBase : T.textMuted, fontWeight:700, fontSize:10, letterSpacing:"0.05em", textTransform:"uppercase", borderBottom:`2px solid ${T.border}`, background: isEditableCol ? "#eff6ff" : T.appBg, borderLeft: isEditableCol ? "1px solid #bfdbfe" : "none", borderRight: isEditableCol ? "1px solid #bfdbfe" : "none", whiteSpace:"nowrap"}}>{h}{isEditableCol ? " ✎" : ""}</th>
                 );
               })}
             </tr>
