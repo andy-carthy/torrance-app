@@ -6187,7 +6187,7 @@ function TouchlessFlowDashboard({ fundSeeds, onReassign, fundState, onRunDemo, i
             <h2 style={{...SANS, fontSize: 18, fontWeight: 700, color: "#fff", margin: 0}}>Autonomous Operations</h2>
             <p style={{...SANS, fontSize: 13, color: "rgba(255,255,255,0.6)", marginTop: 4}}>Live view of global STP flow and process bottlenecks.</p>
           </div>
-          {/* Instruction 9: STP Rate Gauge + Demo button */}
+          {/* Instruction 9: STP Rate Gauge + Demo button 
           <div style={{display:"flex",alignItems:"center",gap:16}}>
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
               <svg width="96" height="96" viewBox="0 0 96 96">
@@ -6205,7 +6205,7 @@ function TouchlessFlowDashboard({ fundSeeds, onReassign, fundState, onRunDemo, i
                 {isDemoRunning ? "⏹ Stop Demo" : "▶ Run Touchless Demo"}
               </button>
             )}
-          </div>
+          </div>*/}
         </div>
 
         <div style={{display: "flex", alignItems: "flex-start", position: "relative"}}>
@@ -6236,7 +6236,7 @@ function TouchlessFlowDashboard({ fundSeeds, onReassign, fundState, onRunDemo, i
           })}
         </div>
 
-        {/* Feed log + AI log rows */}
+        {/* Feed log + AI log rows 
         {(feedLog.length > 0 || aiLog.length > 0) && (
           <div style={{display: "flex", gap: 12, marginTop: 20}}>
             {feedLog.length > 0 && (
@@ -6256,7 +6256,7 @@ function TouchlessFlowDashboard({ fundSeeds, onReassign, fundState, onRunDemo, i
               </div>
             )}
           </div>
-        )}
+        )}*/}
       </div>
 
       {/* ─── BOTTOM PANE: Human-in-the-Loop Capacity Grid ─── */}
@@ -8230,6 +8230,7 @@ function Dashboard({onBulkSubmitForReview,dashSubView, fundState, fundSeeds, app
       </div>
 {/** TODO: Make {val:"flow",label:"Autonomous Flow"}, default for Controler logim, Remove view from preparer  */}
       <div style={{display:"flex",gap:8,alignItems:"center"}}>
+ 
       <div style={{display:"flex",background:T.appBg,border:`1px solid ${T.border}`,borderRadius:7,padding:3,gap:2}}>
           {/* NEW: Conditionally render Autonomous Flow for Controllers only */}
           {[
@@ -8251,6 +8252,7 @@ function Dashboard({onBulkSubmitForReview,dashSubView, fundState, fundSeeds, app
             <button onClick={()=>setLayoutStyle("grid")} title="Grid View" style={{...SANS, fontSize:12, fontWeight:600, display:"flex", alignItems:"center", gap:5, background:layoutStyle==="grid"?T.cardBg:"transparent", color:layoutStyle==="grid"?T.textPrimary:T.textMuted, border:"none", borderRadius:5, padding:"5px 10px", cursor:"pointer", boxShadow:layoutStyle==="grid"?"0 1px 3px rgba(0,0,0,0.1)":"none"}}><span style={{fontSize:14, opacity:layoutStyle==="grid"?1:0.5}}>⊞</span> Grid</button>
           </div>
       )} */}
+
         <button onClick={()=>setShowGlobalExcs(true)} style={{...SANS,fontSize:12,fontWeight:700,color:T.aiBase,padding:"7px 14px",borderRadius:7,border:`1px solid ${T.aiBorder}`,background:T.aiBg,cursor:"pointer",display:"flex",alignItems:"center",gap:6,marginLeft:12}}><span>🌍</span>Global Exceptions</button>
         <button onClick={()=>setShowClientPortal(true)} style={{...SANS,fontSize:12,fontWeight:600,color:T.textPrimary,padding:"7px 14px",borderRadius:7,border:`1px solid ${T.border}`,background:T.cardBg,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}><span>🏢</span>Client Portal</button>
         <button onClick={()=>setShowAuditorPortal(true)} style={{...SANS,fontSize:12,fontWeight:600,color:T.textPrimary,padding:"7px 14px",borderRadius:7,border:`1px solid ${T.border}`,background:T.cardBg,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}><span>🔒</span>Auditor Portal</button>
@@ -8325,7 +8327,9 @@ function Dashboard({onBulkSubmitForReview,dashSubView, fundState, fundSeeds, app
             </button>
           ))}
         </div>
+
       </div>
+      
     )}
 
 {dashView==="inbox" ? <InboxView notifications={notifications} onSelectFund={onSelectFund} /> : 
@@ -8879,7 +8883,7 @@ function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIn
       </div>
       </div>
 
-      {/* KPI ticker chips */}
+      {/* KPI ticker chips 
       {fundState && (
         <div style={{display:"flex",alignItems:"center",gap:6}}>
           <div style={{...SANS,fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:5,background:"rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.85)",border:"1px solid rgba(255,255,255,0.12)",whiteSpace:"nowrap"}}>
@@ -8892,7 +8896,7 @@ function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIn
             {touchlessPct}% Touchless
           </div>
         </div>
-      )}
+      )}*/}
 
       <div style={{display:"flex",alignItems:"center",gap:10}}>
 
