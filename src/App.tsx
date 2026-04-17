@@ -216,10 +216,18 @@ const PRIOR_PERIOD_FLAGS = {
   "EXC-007":{type:"routine",message:"GBP FX variance has appeared in 5 of last 6 periods. Consistent end-of-month pattern.",priorOccurrences:5},
 };
 const AI_FOOTNOTES = [
-  {id:"fn-1",title:"Fair Value — Level 3 Investments",category:"Fair Value Hierarchy",aiDrafted:true,content:`The Fund uses a three-tier fair value hierarchy to classify the inputs used in measuring fair value. As of December 31, 2024, the Fund held no Level 3 investments. All portfolio securities were classified as Level 1 (exchange-traded equities) or Level 2 (OTC derivatives valued using broker-dealer quotes and discounted cash flow models).`,lastEdited:"AI-drafted · Dec 31, 2024",wordCount:62},
-  {id:"fn-2",title:"Foreign Currency Translation",category:"Significant Accounting Policies",aiDrafted:true,content:`The Fund's functional and reporting currency is the U.S. Dollar. Portfolio investments denominated in foreign currencies are translated at WM/Reuters 4:00 PM London closing exchange rates on December 31, 2024. EUR/USD 1.0842, GBP/USD 1.2715, JPY/USD 0.006711.`,lastEdited:"AI-drafted · Dec 31, 2024",wordCount:48},
-  {id:"fn-3",title:"Investment Advisory Fees",category:"Related Party Transactions",aiDrafted:true,content:`Pennywise Capital Advisors LLC receives an annual advisory fee at 0.75% (Class A), 0.60% (Institutional), 0.55% (R6) of average daily net assets. For the year ended December 31, 2024, advisory fees incurred were $6,400,000, of which $590,000 remained payable at period end.`,lastEdited:"AI-drafted · Dec 31, 2024",wordCount:47},
-  {id:"fn-4",title:"Derivatives and Hedging",category:"Derivative Instruments",aiDrafted:false,content:`[HUMAN EDIT REQUIRED: Confirm notional amounts and fair values for all open derivative positions as of December 31, 2024. Current unrealized appreciation on futures: $1,250,000; on swaps: $680,000; on FX forwards: $340,000.]`,lastEdited:"Partially edited · Sarah Chen · Dec 31, 11:30 AM",wordCount:38},
+  { id:"fn-1",  title:"Basis of Presentation",           category:"Significant Accounting Policies", aiDrafted:false, varBindings:[],                                          content:`These financial statements have been prepared in conformity with accounting principles generally accepted in the United States of America (U.S. GAAP) as applicable to investment companies under ASC Topic 946. The fiscal year end is December 31, 2024.`,                                                                                                                                                                       lastEdited:"Edited · Sarah Chen · Dec 31, 2024",         wordCount:42 },
+  { id:"fn-2",  title:"Fair Value — Level 3 Investments",category:"Fair Value Hierarchy",             aiDrafted:true,  varBindings:["ASC820_L3_PCT","L1_MARKET_VALUE","NET_ASSETS"], content:`The Fund uses a three-tier fair value hierarchy. As of December 31, 2024, Level 3 investments represented {{ASC820_L3_PCT}} of net assets of {{NET_ASSETS}}. Level 1 exchange-traded securities totalled {{L1_MARKET_VALUE}}. All Level 3 positions were valued using a discounted cash flow methodology with unobservable inputs reviewed quarterly by the Valuation Committee.`,                                              lastEdited:"AI-drafted · Dec 31, 2024",                  wordCount:62 },
+  { id:"fn-3",  title:"Foreign Currency Translation",    category:"Significant Accounting Policies", aiDrafted:true,  varBindings:[],                                          content:`The Fund's functional and reporting currency is the U.S. Dollar. Portfolio investments denominated in foreign currencies are translated at WM/Reuters 4:00 PM London closing exchange rates on December 31, 2024. EUR/USD 1.0842, GBP/USD 1.2715, JPY/USD 0.006711. Net realized and unrealized currency gains and losses are presented separately on the Statement of Operations.`,                                                  lastEdited:"AI-drafted · Dec 31, 2024",                  wordCount:65 },
+  { id:"fn-4",  title:"Investment Advisory Fees",        category:"Related Party Transactions",       aiDrafted:true,  varBindings:["NET_EXPENSE_RATIO","MGMT_FEE_ACCRUAL"],    content:`Pennywise Capital Advisors LLC receives an annual advisory fee at 0.75% (Class A), 0.60% (Institutional), 0.55% (R6) of average daily net assets. For the year ended December 31, 2024, advisory fees incurred were {{MGMT_FEE_ACCRUAL}}, of which $590,000 remained payable at period end. The net expense ratio was {{NET_EXPENSE_RATIO}}.`,                                                                                    lastEdited:"AI-drafted · Dec 31, 2024",                  wordCount:58 },
+  { id:"fn-5",  title:"Derivatives and Hedging",         category:"Derivative Instruments",           aiDrafted:false, varBindings:["CPTY_EXPOSURE_PCT"],                       content:`[HUMAN EDIT REQUIRED: Confirm notional amounts and fair values for all open derivative positions as of December 31, 2024. Current unrealized appreciation on futures: $1,250,000; on swaps: $680,000; on FX forwards: $340,000. Counterparty exposure as a percentage of net assets: {{CPTY_EXPOSURE_PCT}}. Confirm this does not exceed Form PF disclosure thresholds.]`,                                                               lastEdited:"Partially edited · Sarah Chen · Dec 31, 2024",wordCount:56 },
+  { id:"fn-6",  title:"Securities Lending",              category:"Significant Accounting Policies", aiDrafted:true,  varBindings:[],                                          content:`The Fund participates in a securities lending program managed by State Street Bank & Trust Co. As of December 31, 2024, the fair value of securities on loan was approximately $157.8M. Collateral received consists solely of cash equivalents held in a separately managed account. Securities lending income of $320,000 is included within investment income on the Statement of Operations.`,                                         lastEdited:"AI-drafted · Dec 31, 2024",                  wordCount:62 },
+  { id:"fn-7",  title:"Concentration Risk",              category:"Risk Disclosures",                 aiDrafted:false, varBindings:["HIGHLY_LIQUID_PCT"],                       content:`As of December 31, 2024, approximately 34% of net assets were invested in technology sector securities. The three largest positions (Apple Inc., Microsoft Corp., Alphabet Inc.) represented 68% of the equity sleeve. Highly liquid investments as a percentage of net assets were {{HIGHLY_LIQUID_PCT}}. Investors should consider the concentration risk inherent in this allocation.`,                                                  lastEdited:"Edited · James Okafor · Dec 31, 2024",       wordCount:61 },
+  { id:"fn-8",  title:"Management Fee Waiver",           category:"Related Party Transactions",       aiDrafted:true,  varBindings:["NET_EXPENSE_RATIO","MGMT_FEE_ACCRUAL"],    content:`The Adviser has contractually agreed to waive fees and/or reimburse Fund expenses to limit total annual operating expenses to 0.75% (Class A) through at least April 30, 2026. For the year ended December 31, 2024, fee waivers amounted to $150,000. The management fee accrual was {{MGMT_FEE_ACCRUAL}} and the resulting net expense ratio was {{NET_EXPENSE_RATIO}}.`,                                                            lastEdited:"AI-drafted · Dec 31, 2024",                  wordCount:60 },
+  { id:"fn-9",  title:"Capital Share Transactions",      category:"Capital Activity",                 aiDrafted:true,  varBindings:["CLASS_A_INCOME_ALLOC","INST_INCOME_ALLOC"],content:`For the year ended December 31, 2024, the Fund had net subscriptions of $8.6M and net redemptions of $2.5M across all share classes. Income allocated to Class A shareholders was {{CLASS_A_INCOME_ALLOC}}. Income allocated to Institutional shareholders was {{INST_INCOME_ALLOC}}. Dividend reinvestments totalled $65,431 during the period.`,                                                                                             lastEdited:"AI-drafted · Dec 31, 2024",                  wordCount:58 },
+  { id:"fn-10", title:"Portfolio Turnover Rate",         category:"Financial Highlights",             aiDrafted:true,  varBindings:["PORTFOLIO_TURNOVER","SEC_30_DAY_YIELD"],   content:`For the year ended December 31, 2024, the portfolio turnover rate was {{PORTFOLIO_TURNOVER}}. Portfolio turnover is calculated by dividing the lesser of purchases or sales of portfolio securities for the period by the average monthly value of portfolio securities owned during the period. The 30-day SEC Yield as of period end was {{SEC_30_DAY_YIELD}}.`,                                                                              lastEdited:"AI-drafted · Dec 31, 2024",                  wordCount:59 },
+  { id:"fn-11", title:"Subsequent Events",               category:"Subsequent Events",                aiDrafted:false, varBindings:[],                                          content:`Management has evaluated subsequent events through the date the financial statements were available to be issued. No events have occurred subsequent to December 31, 2024 that would require recognition or disclosure in the financial statements, except as already described herein. The Fund's next distribution record date is January 15, 2025.`,                                                                                     lastEdited:"Edited · James Okafor · Dec 31, 2024",       wordCount:54 },
+  { id:"fn-12", title:"Indemnifications",                category:"Significant Accounting Policies", aiDrafted:true,  varBindings:[],                                          content:`In the normal course of business, the Fund enters into contracts that contain a variety of indemnifications. The Fund's maximum exposure under these arrangements is unknown. However, the Fund has not had prior claims or losses pursuant to these indemnification contracts and expects the risk of loss to be remote.`,                                                                                                                lastEdited:"AI-drafted · Dec 31, 2024",                  wordCount:50 },
 ];
 
 // ─── TRIAL BALANCE (IT2 — unchanged) ─────────────────────────────────────────
@@ -4133,124 +4141,312 @@ function FinancialStatementsTab({ fund, fxOverrideActive, exceptions = [] }: { f
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// UPGRADED: FOOTNOTE EDITOR (Adds Library Search)
+// FOOTNOTE EDITOR TAB
 // ═══════════════════════════════════════════════════════════════════════════════
-function FootnoteEditorTab({ fund, FS_DYNAMIC }) {
+function FootnoteEditorTab({ fund, FS_DYNAMIC, templates = WORKPAPER_TEMPLATES }) {
   const [footnotes,setFootnotes]=useState(AI_FOOTNOTES);
   const [activeId,setActiveId]=useState("fn-1");
   const [editContent,setEditContent]=useState({});
   const [saved,setSaved]=useState({});
   const [previewMode, setPreviewMode] = useState(true);
-  const [search, setSearch] = useState(""); // NEW: Search state
+  const [search, setSearch] = useState("");
+  const [collapsedCats, setCollapsedCats] = useState<Record<string,boolean>>({});
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [justAddedId, setJustAddedId] = useState<string|null>(null);
 
-  const filteredFootnotes = useMemo(() => {
-    if (!search.trim()) return footnotes;
-    const q = search.toLowerCase();
-    return footnotes.filter(f => f.title.toLowerCase().includes(q) || f.category.toLowerCase().includes(q));
-  }, [footnotes, search]);
+  const BUILTIN_VARS = [
+    { varKey:"FUND_NAME",            label:"Fund Name",              value: fund?.name || "[Fund Name]" },
+    { varKey:"PERIOD_END",           label:"Period End",             value: "December 31, 2024" },
+    { varKey:"NET_ASSETS",           label:"Net Assets",             value: fmtUSD(FS_DYNAMIC?.net_assets || 0) },
+    { varKey:"TOTAL_INVESTMENTS",    label:"Total Investments",      value: fmtUSD(FS_DYNAMIC?.investments_at_value || 0) },
+    { varKey:"ADVISORY_FEE_EXPENSE", label:"Advisory Fee Expense",   value: fmtUSD(FS_DYNAMIC?.advisory_fees || 0) },
+  ];
 
-  const active=footnotes.find(f=>f.id===activeId);
+  const allVars = useMemo(() => [
+    ...BUILTIN_VARS,
+    ...templates
+      .filter(t => t.varKey)
+      .map(t => ({
+        varKey: t.varKey,
+        label: t.name,
+        value: t.unit === "$"
+          ? fmtUSD(t.liveValue)
+          : t.unit === "%"
+          ? `${t.liveValue}%`
+          : `${t.liveValue} ${t.unit}`,
+        category: t.category,
+      })),
+  ], [templates]);
+
+  const resolved = useMemo(() => {
+    const m: Record<string,string> = {};
+    allVars.forEach(v => { m[v.varKey] = v.value; });
+    return m;
+  }, [allVars]);
+
+  const active = footnotes.find(f => f.id === activeId);
   const currentText = editContent[activeId] ?? active?.content ?? "";
 
-  const handleSave = id => { 
-    setFootnotes(prev=>prev.map(f=>f.id===id?{...f,content:editContent[id]||f.content,aiDrafted:false,lastEdited:`Edited · System User · Just now`}:f));
-    setSaved(p=>({...p,[id]:true}));
-    setTimeout(()=>setSaved(p=>({...p,[id]:false})),2000); 
+  const parsedContent = useMemo(() => {
+    let t = currentText;
+    Object.entries(resolved).forEach(([k, v]) => {
+      t = t.replace(new RegExp(`\\{\\{${k}\\}\\}`, "g"), v);
+    });
+    return t;
+  }, [currentText, resolved]);
+
+  const groupedVars = useMemo(() => {
+    const groups: Record<string, typeof allVars> = { "Core Fund Data": BUILTIN_VARS };
+    allVars.filter(v => (v as any).category).forEach(v => {
+      const cat = (v as any).category;
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(v);
+    });
+    return groups;
+  }, [allVars]);
+
+  const navGroups = useMemo(() => {
+    const g: Record<string, typeof footnotes> = {};
+    const list = search.trim()
+      ? footnotes.filter(f => f.title.toLowerCase().includes(search.toLowerCase()) || f.category.toLowerCase().includes(search.toLowerCase()))
+      : footnotes;
+    list.forEach(fn => {
+      if (!g[fn.category]) g[fn.category] = [];
+      g[fn.category].push(fn);
+    });
+    return g;
+  }, [footnotes, search]);
+
+  const handleSave = (id: string) => {
+    setFootnotes(prev => prev.map(f => f.id===id ? {...f, content: editContent[id]||f.content, aiDrafted:false, lastEdited:`Edited · System User · Just now`} : f));
+    setSaved(p => ({...p, [id]:true}));
+    setTimeout(() => setSaved(p => ({...p, [id]:false})), 2000);
   };
 
-  const insertVariable = (variable) => {
+  const insertVariable = (varKey: string) => {
     if (previewMode) setPreviewMode(false);
-    setEditContent(p => ({...p, [activeId]: `${currentText} {{${variable}}}`}));
+    setEditContent(p => ({...p, [activeId]: `${currentText} {{${varKey}}}`}));
   };
 
-  const parsedContent = currentText
-    .replace(/\{\{FUND_NAME\}\}/g, fund?.name || "[Fund Name]")
-    .replace(/\{\{PERIOD_END\}\}/g, "December 31, 2024")
-    .replace(/\{\{NET_ASSETS\}\}/g, fmtUSD(FS_DYNAMIC?.net_assets || 0))
-    .replace(/\{\{TOTAL_INVESTMENTS\}\}/g, fmtUSD(FS_DYNAMIC?.investments_at_value || 0))
-    .replace(/\{\{ADVISORY_FEE_EXPENSE\}\}/g, fmtUSD(FS_DYNAMIC?.advisory_fees || 0));
+  const toggleCat = (cat: string) => setCollapsedCats(p => ({...p, [cat]: !p[cat]}));
 
-  return <div style={{display:"flex",height:"100%"}}>
-    <aside style={{width:280,borderRight:`1px solid ${T.border}`,background:T.cardBg,display:"flex",flexDirection:"column",flexShrink:0}}>
-      <div style={{padding:"16px 20px",borderBottom:`1px solid ${T.border}`}}>
-        <div style={{...SANS,fontWeight:700,fontSize:14,marginBottom:4}}>Footnote Templates</div>
-        <div style={{...SANS,fontSize:11,color:T.textMuted,marginBottom:12}}>Manage dynamic disclosures.</div>
-        
-        {/* NEW: Search Input */}
-        <div style={{position:"relative"}}>
-          <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:T.textMuted,fontSize:14}}>⌕</span>
-          <input type="text" placeholder="Search footnotes..." value={search} onChange={e=>setSearch(e.target.value)} style={{...SANS, width:"100%", padding:"6px 12px 6px 30px", borderRadius:6, border:`1px solid ${T.border}`, fontSize:12, outline:"none"}} />
-        </div>
-      </div>
-      <div style={{overflowY:"auto", flex:1}}>
-        {filteredFootnotes.length === 0 ? (
-           <div style={{padding:"30px 20px", textAlign:"center", color:T.textMuted, ...SANS, fontSize:13}}>No footnotes match "{search}"</div>
-        ) : (
-          filteredFootnotes.map(fn=>(
-            <div key={fn.id} onClick={()=>setActiveId(fn.id)} style={{padding:"12px 20px",borderBottom:`1px solid ${T.border}`,cursor:"pointer",borderLeft:`4px solid ${activeId===fn.id?T.actionBase:"transparent"}`,background:activeId===fn.id?"#f0f4ff":T.cardBg}}>
-              <div style={{display:"flex",alignItems:"flex-start",gap:6,marginBottom:4}}>
-                <div style={{flex:1}}><div style={{...SANS,fontWeight:600,fontSize:12,marginBottom:2}}>{fn.title}</div><div style={{...SANS,fontSize:10,color:T.textMuted}}>{fn.category}</div></div>
-                {fn.aiDrafted?<span style={{...MONO,fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:4,background:T.aiBg,color:T.aiBase,border:`1px solid ${T.aiBorder}`,flexShrink:0}}>✦ AI</span>:<span style={{...SANS,fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:4,background:T.warnBg,color:T.warnBase,border:`1px solid ${T.warnBorder}`,flexShrink:0}}>EDITED</span>}
+  function AddFootnoteModal() {
+    const [title, setTitle] = useState("");
+    const [categorySelect, setCategorySelect] = useState("Significant Accounting Policies");
+    const [customCategory, setCustomCategory] = useState("");
+    const [content, setContent] = useState("");
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+    const category = categorySelect === "__new__" ? customCategory : categorySelect;
+
+    const insertVarInModal = (varKey: string) => {
+      const ta = textareaRef.current;
+      if (!ta) { setContent(c => `${c} {{${varKey}}}`); return; }
+      const s = ta.selectionStart, e = ta.selectionEnd;
+      const token = `{{${varKey}}}`;
+      setContent(c => c.slice(0, s) + token + c.slice(e));
+      setTimeout(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = s + token.length; }, 0);
+    };
+
+    const handleCreate = () => {
+      if (!title.trim() || !content.trim() || !category.trim()) return;
+      const id = `fn-${Date.now()}`;
+      const newFn = { id, title: title.trim(), category, aiDrafted: false, varBindings: [], content: content.trim(), lastEdited: "Just now", wordCount: content.trim().split(/\s+/).length };
+      setFootnotes(prev => [...prev, newFn]);
+      setActiveId(id);
+      setJustAddedId(id);
+      setTimeout(() => setJustAddedId(null), 3500);
+      setShowAddModal(false);
+    };
+
+    const cats = Array.from(new Set(AI_FOOTNOTES.map(f => f.category)));
+    const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
+    const canCreate = title.trim() && content.trim() && category.trim();
+
+    return (
+      <div style={{position:"fixed",inset:0,background:"rgba(26,35,50,0.65)",zIndex:700,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>setShowAddModal(false)}>
+        <div style={{background:T.cardBg,borderRadius:12,width:820,maxHeight:"88vh",display:"flex",flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,0.3)",overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
+          <div style={{padding:"20px 24px",borderBottom:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{...SANS,fontWeight:700,fontSize:16}}>Add Footnote</div>
+            <button onClick={()=>setShowAddModal(false)} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:T.textMuted}}>✕</button>
+          </div>
+          <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+            <div style={{flex:1,padding:"24px",overflowY:"auto",display:"flex",flexDirection:"column",gap:16}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+                <div>
+                  <FieldLabel required>Title</FieldLabel>
+                  <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="e.g. Subsequent Events" style={{...SANS,width:"100%",padding:"8px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,outline:"none",boxSizing:"border-box"}} />
+                </div>
+                <div>
+                  <FieldLabel required>Category</FieldLabel>
+                  <select value={categorySelect} onChange={e=>setCategorySelect(e.target.value)} style={{...SANS,width:"100%",padding:"8px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,outline:"none",background:T.cardBg}}>
+                    {cats.map(c=><option key={c} value={c}>{c}</option>)}
+                    <option value="__new__">+ New Category...</option>
+                  </select>
+                  {categorySelect === "__new__" && (
+                    <input value={customCategory} onChange={e=>setCustomCategory(e.target.value)} placeholder="Category name" style={{...SANS,width:"100%",padding:"7px 12px",borderRadius:6,border:`1px solid ${T.actionBase}`,fontSize:13,outline:"none",marginTop:6,boxSizing:"border-box"}} />
+                  )}
+                </div>
+              </div>
+              <div>
+                <FieldLabel required>Content</FieldLabel>
+                <textarea ref={textareaRef} value={content} onChange={e=>setContent(e.target.value)} rows={10} placeholder="Write your footnote content here. Use the variable picker on the right to insert live data bindings." style={{...MONO,width:"100%",padding:"12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:12,lineHeight:1.6,minHeight:220,resize:"vertical",outline:"none",boxSizing:"border-box"}} />
+                <div style={{...SANS,fontSize:11,color:T.textMuted,marginTop:4}}>{wordCount} word{wordCount!==1?"s":""}</div>
               </div>
             </div>
-          ))
-        )}
-      </div>
-    </aside>
-
-    {active&&<div style={{flex:1,overflowY:"auto",background:T.appBg,display:"flex",flexDirection:"column"}}>
-      <div style={{background:T.cardBg,borderBottom:`1px solid ${T.border}`,padding:"12px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
-        <div>
-          <div style={{...SANS,fontWeight:700,fontSize:16}}>{active.title}</div>
-          <div style={{display:"flex",alignItems:"center",gap:8,marginTop:4}}>
-            <span style={{...SANS,fontSize:11,color:T.textMuted}}>{active.category}</span><span>·</span>
-            {active.aiDrafted?<span style={{...MONO,fontSize:10,fontWeight:700,color:T.aiBase}}>✦ AI-Drafted</span>:<span style={{...SANS,fontSize:10,fontWeight:600,color:T.okBase}}>✓ Human Reviewed</span>}
-            <span>·</span><span style={{...SANS,fontSize:11,color:T.textMuted}}>{active.lastEdited}</span>
-          </div>
-        </div>
-        <div style={{display:"flex",gap:12,alignItems:"center"}}>
-          <div style={{display:"flex",background:T.appBg,border:`1px solid ${T.border}`,borderRadius:6,padding:3,gap:2}}>
-            <button onClick={()=>setPreviewMode(false)} style={{...SANS,fontSize:12,fontWeight:600,padding:"6px 12px",borderRadius:4,border:"none",background:!previewMode?T.cardBg:"transparent",color:!previewMode?T.textPrimary:T.textMuted,cursor:"pointer",boxShadow:!previewMode?"0 1px 3px rgba(0,0,0,0.1)":"none"}}>✎ Edit Template</button>
-            <button onClick={()=>setPreviewMode(true)} style={{...SANS,fontSize:12,fontWeight:600,padding:"6px 12px",borderRadius:4,border:"none",background:previewMode?T.cardBg:"transparent",color:previewMode?T.textPrimary:T.textMuted,cursor:"pointer",boxShadow:previewMode?"0 1px 3px rgba(0,0,0,0.1)":"none"}}>👁 Live Preview</button>
-          </div>
-          {saved[activeId]&&<span style={{...SANS,fontSize:12,color:T.okBase,fontWeight:600}}>✓ Saved</span>}
-          <button onClick={()=>handleSave(activeId)} style={{...SANS,fontSize:12,fontWeight:700,padding:"8px 16px",borderRadius:6,border:"none",background:T.actionBase,color:"#fff",cursor:"pointer"}}>Save Template</button>
-        </div>
-      </div>
-      
-      <div style={{display:"flex", flex:1, overflow:"hidden"}}>
-        <div style={{flex:1, padding:"24px 32px", overflowY:"auto"}}>
-          {previewMode ? (
-            <div style={{background:"#fff", border:`1px solid ${T.border}`, borderRadius:8, padding:"32px", fontSize:14, lineHeight:1.8, color:"#000", fontFamily:"serif", boxShadow:"0 4px 6px rgba(0,0,0,0.02)", minHeight:400}}>
-              {parsedContent}
+            <div style={{width:260,borderLeft:`1px solid ${T.border}`,background:T.appBg,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+              <div style={{padding:"16px",borderBottom:`1px solid ${T.border}`}}>
+                <div style={{...SANS,fontSize:11,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em"}}>Variable Picker</div>
+                <div style={{...SANS,fontSize:11,color:T.textMuted,marginTop:4}}>Click to insert at cursor</div>
+              </div>
+              <div style={{overflowY:"auto",flex:1,padding:"12px"}}>
+                {Object.entries(groupedVars).map(([grp,vars])=>(
+                  <div key={grp} style={{marginBottom:12}}>
+                    <div style={{...SANS,fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>{grp}</div>
+                    <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                      {vars.map(v=>(
+                        <button key={v.varKey} onClick={()=>insertVarInModal(v.varKey)} style={{...MONO,textAlign:"left",fontSize:10,padding:"6px 8px",background:T.cardBg,border:`1px solid ${T.border}`,borderRadius:5,color:T.actionBase,cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.borderColor=T.actionBase} onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}>
+                          {`{{${v.varKey}}}`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
+          </div>
+          <div style={{padding:"16px 24px",borderTop:`1px solid ${T.border}`,display:"flex",justifyContent:"flex-end",gap:12}}>
+            <button onClick={()=>setShowAddModal(false)} style={{...SANS,fontSize:13,fontWeight:600,padding:"8px 16px",borderRadius:6,border:`1px solid ${T.border}`,background:"none",cursor:"pointer",color:T.textMuted}}>Cancel</button>
+            <button onClick={handleCreate} disabled={!canCreate} style={{...SANS,fontSize:13,fontWeight:700,padding:"8px 18px",borderRadius:6,border:"none",background:canCreate?T.actionBase:T.border,color:canCreate?"#fff":T.textMuted,cursor:canCreate?"pointer":"not-allowed"}}>Create Footnote</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{display:"flex",height:"100%"}}>
+      {showAddModal && <AddFootnoteModal />}
+
+      {/* Left nav */}
+      <aside style={{width:280,borderRight:`1px solid ${T.border}`,background:T.cardBg,display:"flex",flexDirection:"column",flexShrink:0}}>
+        <div style={{padding:"16px 20px",borderBottom:`1px solid ${T.border}`}}>
+          <div style={{...SANS,fontWeight:700,fontSize:13,color:T.textPrimary,marginBottom:10}}>Footnotes</div>
+          <div style={{position:"relative"}}>
+            <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:T.textMuted,fontSize:13}}>⌕</span>
+            <input type="text" placeholder="Search footnotes..." value={search} onChange={e=>setSearch(e.target.value)} style={{...SANS,width:"100%",padding:"6px 12px 6px 30px",borderRadius:6,border:`1px solid ${T.border}`,background:T.appBg,color:T.textPrimary,fontSize:12,outline:"none",boxSizing:"border-box"}} />
+          </div>
+        </div>
+
+        <div style={{overflowY:"auto",flex:1}}>
+          {Object.entries(navGroups).length === 0 ? (
+            <div style={{padding:"30px 20px",textAlign:"center",color:T.textMuted,...SANS,fontSize:13}}>No footnotes match "{search}"</div>
           ) : (
-            <textarea 
-              value={currentText} 
-              onChange={e=>setEditContent(p=>({...p,[activeId]:e.target.value}))} 
-              className="wysiwyg-body" 
-              style={{...MONO, width:"100%", border:`1px solid ${T.border}`, borderRadius:8, padding:"24px", fontSize:13, lineHeight:1.6, minHeight:400, background:"#f8fafc"}}
-            />
+            Object.entries(navGroups).map(([cat, fns]) => {
+              const collapsed = collapsedCats[cat];
+              return (
+                <div key={cat}>
+                  <div onClick={()=>toggleCat(cat)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 20px",cursor:"pointer",background:"#f8fafc",borderBottom:`1px solid ${T.border}`}}>
+                    <span style={{...SANS,fontSize:11,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em"}}>{cat}</span>
+                    <span style={{color:T.textMuted,fontSize:11}}>{collapsed?"▶":"▼"} {fns.length}</span>
+                  </div>
+                  {!collapsed && fns.map(fn => {
+                    const isActive = activeId === fn.id;
+                    const isFlash = justAddedId === fn.id;
+                    return (
+                      <div key={fn.id} onClick={()=>setActiveId(fn.id)} style={{padding:"10px 20px 10px 28px",borderBottom:`1px solid ${T.border}`,cursor:"pointer",background:isFlash?"#f0fdf4":isActive?"#eff6ff":T.cardBg,borderLeft:`3px solid ${isActive?T.actionBase:"transparent"}`,transition:"background 0.2s"}}>
+                        <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:6}}>
+                          <div style={{flex:1}}>
+                            <div style={{...SANS,fontWeight:600,fontSize:12,color:isActive?T.actionBase:T.textPrimary,marginBottom:2}}>{fn.title}</div>
+                            <div style={{...SANS,fontSize:10,color:T.textMuted}}>{fn.lastEdited}</div>
+                          </div>
+                          {fn.aiDrafted
+                            ? <span style={{...MONO,fontSize:9,fontWeight:700,padding:"2px 5px",borderRadius:4,background:T.aiBg,color:T.aiBase,flexShrink:0}}>✦ AI</span>
+                            : <span style={{...SANS,fontSize:9,fontWeight:700,padding:"2px 5px",borderRadius:4,background:T.warnBg,color:T.warnBase,flexShrink:0}}>EDITED</span>
+                          }
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })
           )}
         </div>
 
-        {!previewMode && (
-          <div style={{width:240, background:T.cardBg, borderLeft:`1px solid ${T.border}`, padding:"20px", overflowY:"auto"}}>
-            <div style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:12}}>Dynamic Variables</div>
-            <div style={{...SANS, fontSize:12, color:T.textMuted, marginBottom:16, lineHeight:1.4}}>Click to insert a live data binding into the template.</div>
-            
-            <div style={{display:"flex", flexDirection:"column", gap:8}}>
-              {["FUND_NAME", "PERIOD_END", "NET_ASSETS", "TOTAL_INVESTMENTS", "ADVISORY_FEE_EXPENSE"].map(v => (
-                <button key={v} onClick={()=>insertVariable(v)} style={{...MONO, textAlign:"left", fontSize:11, padding:"8px 10px", background:T.appBg, border:`1px solid ${T.border}`, borderRadius:6, color:T.actionBase, cursor:"pointer", transition:"border-color 0.2s"}} onMouseEnter={e=>e.currentTarget.style.borderColor=T.actionBase} onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}>
-                  &#123;&#123;{v}&#125;&#125;
-                </button>
-              ))}
+        <div style={{flexShrink:0,padding:"12px 16px",borderTop:`1px solid ${T.border}`,background:"#f8fafc"}}>
+          <button onClick={()=>setShowAddModal(true)} style={{...SANS,width:"100%",padding:"9px",borderRadius:7,border:`1px dashed ${T.actionBase}`,background:"transparent",color:T.actionBase,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"center"}}>+ Add Footnote</button>
+        </div>
+      </aside>
+
+      {/* Right pane */}
+      {active && (
+        <div style={{flex:1,overflowY:"auto",background:T.appBg,display:"flex",flexDirection:"column"}}>
+          <div style={{background:T.cardBg,borderBottom:`1px solid ${T.border}`,padding:"12px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+            <div>
+              <div style={{...SANS,fontWeight:700,fontSize:16}}>{active.title}</div>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginTop:4}}>
+                <span style={{...SANS,fontSize:11,color:T.textMuted}}>{active.category}</span><span>·</span>
+                {active.aiDrafted
+                  ? <span style={{...MONO,fontSize:10,fontWeight:700,color:T.aiBase}}>✦ AI-Drafted</span>
+                  : <span style={{...SANS,fontSize:10,fontWeight:600,color:T.okBase}}>✓ Human Reviewed</span>}
+                <span>·</span><span style={{...SANS,fontSize:11,color:T.textMuted}}>{active.lastEdited}</span>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:12,alignItems:"center"}}>
+              <div style={{display:"flex",background:T.appBg,border:`1px solid ${T.border}`,borderRadius:6,padding:3,gap:2}}>
+                <button onClick={()=>setPreviewMode(false)} style={{...SANS,fontSize:12,fontWeight:600,padding:"6px 12px",borderRadius:4,border:"none",background:!previewMode?T.cardBg:"transparent",color:!previewMode?T.textPrimary:T.textMuted,cursor:"pointer",boxShadow:!previewMode?"0 1px 3px rgba(0,0,0,0.1)":"none"}}>✎ Edit Template</button>
+                <button onClick={()=>setPreviewMode(true)} style={{...SANS,fontSize:12,fontWeight:600,padding:"6px 12px",borderRadius:4,border:"none",background:previewMode?T.cardBg:"transparent",color:previewMode?T.textPrimary:T.textMuted,cursor:"pointer",boxShadow:previewMode?"0 1px 3px rgba(0,0,0,0.1)":"none"}}>👁 Live Preview</button>
+              </div>
+              {saved[activeId] && <span style={{...SANS,fontSize:12,color:T.okBase,fontWeight:600}}>✓ Saved</span>}
+              <button onClick={()=>handleSave(activeId)} style={{...SANS,fontSize:12,fontWeight:700,padding:"8px 16px",borderRadius:6,border:"none",background:T.actionBase,color:"#fff",cursor:"pointer"}}>Save Template</button>
             </div>
           </div>
-        )}
-      </div>
-    </div>}
-  </div>;
+
+          <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+            <div style={{flex:1,padding:"24px 32px",overflowY:"auto"}}>
+              {previewMode ? (
+                <div>
+                  <div style={{...SANS,fontWeight:700,fontSize:18,marginBottom:16}}>{active.title}</div>
+                  <div style={{background:"#fff",border:`1px solid ${T.border}`,borderRadius:8,padding:"32px",fontSize:14,lineHeight:1.8,color:"#000",fontFamily:"Georgia, 'Times New Roman', serif",boxShadow:"0 4px 6px rgba(0,0,0,0.02)",minHeight:400,whiteSpace:"pre-wrap"}}>{parsedContent}</div>
+                </div>
+              ) : (
+                <textarea
+                  value={currentText}
+                  onChange={e=>setEditContent(p=>({...p,[activeId]:e.target.value}))}
+                  className="wysiwyg-body"
+                  style={{...MONO,width:"100%",border:`1px solid ${T.border}`,borderRadius:8,padding:"24px",fontSize:13,lineHeight:1.6,minHeight:400,background:"#f8fafc",boxSizing:"border-box"}}
+                />
+              )}
+            </div>
+
+            {!previewMode && (
+              <div style={{width:240,background:T.cardBg,borderLeft:`1px solid ${T.border}`,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+                <div style={{padding:"16px 20px",borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+                  <div style={{...SANS,fontSize:11,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em"}}>Dynamic Variables</div>
+                  <div style={{...SANS,fontSize:11,color:T.textMuted,marginTop:4}}>Click to insert at cursor</div>
+                </div>
+                <div style={{overflowY:"auto",flex:1,padding:"12px"}}>
+                  {Object.entries(groupedVars).map(([grp,vars])=>(
+                    <div key={grp} style={{marginBottom:14}}>
+                      <div style={{...SANS,fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>{grp}</div>
+                      <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                        {vars.map(v=>(
+                          <button key={v.varKey} onClick={()=>insertVariable(v.varKey)} style={{...MONO,textAlign:"left",fontSize:11,padding:"7px 10px",background:T.appBg,border:`1px solid ${T.border}`,borderRadius:6,color:T.actionBase,cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.borderColor=T.actionBase} onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}>
+                            {`{{${v.varKey}}}`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ─── Remaining tabs and modals (IT4 — unchanged) ─────────────────────────────
@@ -5243,50 +5439,70 @@ function FundSelectorCombobox({fund, fundSeeds, onSelectFund}) {
 // UPGRADED: WORKPAPERS ENGINE (Batch Compute, Audit Logs & Search Filtering)
 // ═══════════════════════════════════════════════════════════════════════════════
 const WORKPAPER_TEMPLATES = [
-  { id: "wp-1", category: "Ratios & Performance", name: "Net Expense Ratio", formula: "( [Total_Expenses] - [Fee_Waivers] ) / [Avg_Daily_Net_Assets]", isGlobal: true, aiVerified: true, feeds: ["Financial Highlights", "Form N-CEN"], syncedFunds: 498, outOfSync: 2 },
-  { id: "wp-2", category: "Ratios & Performance", name: "30-Day SEC Yield", formula: "2 * ((( [a_Net_Income] - [b_Accrued_Exp] ) / ( [c_Avg_Shares] * [d_Max_Price] ) + 1 ) ^ 6 - 1)", isGlobal: true, aiVerified: false, feeds: ["Fact Sheet", "Form N-PORT"], syncedFunds: 500, outOfSync: 0 },
-  { id: "wp-3", category: "Accruals & Fees", name: "Management Fee Accrual", formula: "( [Avg_Daily_Net_Assets] * [Mgmt_Fee_Rate] ) / 365 * [Days_In_Period]", isGlobal: true, aiVerified: true, feeds: ["Statement of Operations", "Form PF"], syncedFunds: 500, outOfSync: 0 },
-  { id: "wp-4", category: "Allocations", name: "Carried Interest (European)", formula: "MAX( 0, ( [Ending_NAV] - [Committed_Cap] * (1 + [Hurdle_Rate]) ) * 0.20 )", isGlobal: true, aiVerified: true, feeds: ["Partners Capital", "K-1s"], syncedFunds: 142, outOfSync: 0 },
-  { id: "wp-5", category: "Regulatory Metrics", name: "ASC 820 Level 3 %", formula: "[Total_Level_3_Assets] / [Net_Assets] * 100", isGlobal: true, aiVerified: true, feeds: ["Form N-PORT", "Fair Value Notes"], syncedFunds: 500, outOfSync: 0 },
+  // ── Ratios & Performance ──
+  { id:"wp-1",  category:"Ratios & Performance", subcategory:"Expense Ratios",  name:"Net Expense Ratio",              varKey:"NET_EXPENSE_RATIO",       formula:"( [Total_Expenses] - [Fee_Waivers] ) / [Avg_Daily_Net_Assets]",                            isGlobal:true,  aiVerified:true,  feeds:["Financial Highlights","Form N-CEN"],       syncedFunds:498, outOfSync:2,  liveValue:1.19,      unit:"%" },
+  { id:"wp-2",  category:"Ratios & Performance", subcategory:"Yield Metrics",   name:"30-Day SEC Yield",               varKey:"SEC_30_DAY_YIELD",         formula:"2 * ((( [Net_Income] - [Accrued_Exp] ) / ( [Avg_Shares] * [Max_Price] ) + 1 ) ^ 6 - 1)",   isGlobal:true,  aiVerified:false, feeds:["Fact Sheet","Form N-PORT"],                syncedFunds:500, outOfSync:0,  liveValue:4.82,      unit:"%" },
+  { id:"wp-3",  category:"Ratios & Performance", subcategory:"Return Metrics",  name:"Total Return (YTD)",             varKey:"TOTAL_RETURN_YTD",         formula:"( [Ending_NAV] - [Beginning_NAV] + [Distributions] ) / [Beginning_NAV]",                    isGlobal:true,  aiVerified:true,  feeds:["Financial Highlights"],                    syncedFunds:500, outOfSync:1,  liveValue:6.84,      unit:"%" },
+  { id:"wp-4",  category:"Ratios & Performance", subcategory:"Turnover",        name:"Portfolio Turnover Rate",        varKey:"PORTFOLIO_TURNOVER",       formula:"MIN( [Purchases], [Sales] ) / [Avg_Net_Assets]",                                            isGlobal:true,  aiVerified:true,  feeds:["Financial Highlights","Form N-CEN"],       syncedFunds:500, outOfSync:0,  liveValue:42.0,      unit:"%" },
+  // ── Accruals & Fees ──
+  { id:"wp-5",  category:"Accruals & Fees",      subcategory:"Management",      name:"Management Fee Accrual",         varKey:"MGMT_FEE_ACCRUAL",         formula:"( [Avg_Daily_Net_Assets] * [Mgmt_Fee_Rate] ) / 365 * [Days_In_Period]",                     isGlobal:true,  aiVerified:true,  feeds:["Statement of Operations","Form PF"],       syncedFunds:500, outOfSync:0,  liveValue:13748000,  unit:"$" },
+  { id:"wp-6",  category:"Accruals & Fees",      subcategory:"Management",      name:"Performance Fee (HWM)",          varKey:"PERF_FEE_HWM",             formula:"MAX( 0, ( [Ending_NAV] - [HWM] ) * [Perf_Fee_Rate] )",                                      isGlobal:false, aiVerified:true,  feeds:["Statement of Operations"],                 syncedFunds:220, outOfSync:0,  liveValue:4280000,   unit:"$" },
+  { id:"wp-7",  category:"Accruals & Fees",      subcategory:"Admin & Custody", name:"Admin Fee Accrual",              varKey:"ADMIN_FEE_ACCRUAL",         formula:"( [Avg_Daily_Net_Assets] * [Admin_Fee_Rate] ) / 365 * [Days_In_Period]",                    isGlobal:true,  aiVerified:true,  feeds:["Statement of Operations"],                 syncedFunds:500, outOfSync:0,  liveValue:1410000,   unit:"$" },
+  { id:"wp-8",  category:"Accruals & Fees",      subcategory:"Distributions",   name:"Dividend Accrual Per Share",     varKey:"DIV_ACCRUAL_PER_SHARE",    formula:"[Total_Dividends_Declared] / [Shares_Outstanding]",                                        isGlobal:true,  aiVerified:true,  feeds:["Financial Highlights"],                    syncedFunds:320, outOfSync:0,  liveValue:0.22,      unit:"$" },
+  // ── Allocations ──
+  { id:"wp-9",  category:"Allocations",          subcategory:"Private Equity",  name:"Carried Interest (European)",   varKey:"CARRIED_INTEREST",         formula:"MAX( 0, ( [Ending_NAV] - [Committed_Cap] * (1 + [Hurdle_Rate]) ) * 0.20 )",                 isGlobal:true,  aiVerified:true,  feeds:["Partners Capital","K-1s"],                 syncedFunds:142, outOfSync:0,  liveValue:0,         unit:"$" },
+  { id:"wp-10", category:"Allocations",          subcategory:"Share Class",     name:"Class A Income Allocation",     varKey:"CLASS_A_INCOME_ALLOC",     formula:"[Total_Net_Income] * ( [Class_A_NAV] / [Total_NAV] )",                                      isGlobal:true,  aiVerified:true,  feeds:["Statement of Operations"],                 syncedFunds:500, outOfSync:0,  liveValue:2200000,   unit:"$" },
+  { id:"wp-11", category:"Allocations",          subcategory:"Share Class",     name:"Institutional Income Allocation",varKey:"INST_INCOME_ALLOC",        formula:"[Total_Net_Income] * ( [Inst_NAV] / [Total_NAV] )",                                         isGlobal:true,  aiVerified:true,  feeds:["Statement of Operations"],                 syncedFunds:500, outOfSync:0,  liveValue:3400000,   unit:"$" },
+  // ── Regulatory Metrics ──
+  { id:"wp-12", category:"Regulatory Metrics",   subcategory:"Fair Value",      name:"ASC 820 Level 3 %",             varKey:"ASC820_L3_PCT",            formula:"[Total_Level_3_Assets] / [Net_Assets] * 100",                                              isGlobal:true,  aiVerified:true,  feeds:["Form N-PORT","Fair Value Notes"],           syncedFunds:500, outOfSync:0,  liveValue:6.54,      unit:"%" },
+  { id:"wp-13", category:"Regulatory Metrics",   subcategory:"Fair Value",      name:"Level 1 Market Value",          varKey:"L1_MARKET_VALUE",          formula:"SUM([All_L1_Positions_MV])",                                                               isGlobal:true,  aiVerified:true,  feeds:["Schedule of Investments"],                 syncedFunds:500, outOfSync:0,  liveValue:313008500, unit:"$" },
+  { id:"wp-14", category:"Regulatory Metrics",   subcategory:"Liquidity",       name:"Highly Liquid Investment %",    varKey:"HIGHLY_LIQUID_PCT",        formula:"[Bucket_1_Assets] / [Total_Net_Assets] * 100",                                             isGlobal:true,  aiVerified:true,  feeds:["Form N-PORT Part D"],                       syncedFunds:500, outOfSync:0,  liveValue:85.3,      unit:"%" },
+  { id:"wp-15", category:"Regulatory Metrics",   subcategory:"Risk",            name:"Counterparty Exposure > 5%",    varKey:"CPTY_EXPOSURE_PCT",        formula:"SUM([Exposures_Above_5pct]) / [Net_Assets] * 100",                                         isGlobal:false, aiVerified:false, feeds:["Form PF Q22"],                             syncedFunds:220, outOfSync:1,  liveValue:7.2,       unit:"%" },
+  { id:"wp-16", category:"Regulatory Metrics",   subcategory:"Risk",            name:"Weighted Average Maturity",     varKey:"WEIGHTED_AVG_MATURITY",    formula:"SUM([Position_MV] * [Days_To_Maturity]) / [Total_Portfolio_MV]",                           isGlobal:false, aiVerified:true,  feeds:["Form N-MFP"],                              syncedFunds:90,  outOfSync:0,  liveValue:42,        unit:"days" },
+  // ── Custom Formulas ──
+  { id:"wp-17", category:"Custom Formulas",      subcategory:"Ad Hoc",          name:"Q4 Incentive Fee True-Up",      varKey:"Q4_INCENTIVE_TRUE_UP",     formula:"[Q4_Net_Profit] * [Incentive_Rate] - [Quarterly_Prepayments]",                             isGlobal:false, aiVerified:false, feeds:["Statement of Operations"],                 syncedFunds:14,  outOfSync:0,  liveValue:0,         unit:"$" },
 ];
 
-function WorkpapersTab({ fund, masterFeeds }) {
-  const [templates, setTemplates] = useState(WORKPAPER_TEMPLATES);
+function WorkpapersTab({ fund, masterFeeds, sharedTemplates, onTemplatesChange }) {
+  const [templates, setTemplates] = useState(sharedTemplates || WORKPAPER_TEMPLATES);
   const [activeCalcId, setActiveCalcId] = useState("wp-1");
   const [deploying, setDeploying] = useState(false);
-  
-  // Edit & Override States
   const [isEditing, setIsEditing] = useState(false);
   const [draftFormula, setDraftFormula] = useState("");
-  const [hasOverride, setHasOverride] = useState(false); 
-  const [overrideValue, setOverrideValue] = useState("0.65%");
-
-  // Batch Compute & Search States
-  const [batchComputing, setBatchComputing] = useState(false);
+  const [hasOverride, setHasOverride] = useState(false);
+  const [overrideValue, setOverrideValue] = useState("");
   const [search, setSearch] = useState("");
+  const [collapsedCats, setCollapsedCats] = useState<Record<string,boolean>>({});
+  const [collapsedSubs, setCollapsedSubs] = useState<Record<string,boolean>>({});
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [justAdded, setJustAdded] = useState<string|null>(null);
 
-  // Search Filtering Logic
-  const filteredTemplates = useMemo(() => {
-    if (!search.trim()) return templates;
-    const q = search.toLowerCase();
-    return templates.filter(t => t.name.toLowerCase().includes(q) || t.category.toLowerCase().includes(q) || t.id.toLowerCase().includes(q));
+  const navTree = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    const filtered = q ? templates.filter(t => t.name.toLowerCase().includes(q) || t.category.toLowerCase().includes(q) || (t.subcategory||"").toLowerCase().includes(q)) : templates;
+    const tree: Record<string, Record<string, typeof templates>> = {};
+    filtered.forEach(t => {
+      if (!tree[t.category]) tree[t.category] = {};
+      const sub = t.subcategory || "General";
+      if (!tree[t.category][sub]) tree[t.category][sub] = [];
+      tree[t.category][sub].push(t);
+    });
+    return tree;
   }, [templates, search]);
 
   const activeCalc = templates.find(c => c.id === activeCalcId);
-  const categories = [...new Set(filteredTemplates.map(c => c.category))];
 
-  // Dummy runtime values for the active fund preview
-  const runtimeValues = {
-    Total_Expenses: 8308000,
-    Fee_Waivers: 150000,
-    Avg_Daily_Net_Assets: 685000000,
-    Mgmt_Fee_Rate: 0.0075,
-    Days_In_Period: 31,
-    Ending_NAV: 687400000,
-    Committed_Cap: 500000000,
-    Hurdle_Rate: 0.08,
-    Total_Level_3_Assets: 45000000,
-    Net_Assets: 687400000
+  const runtimeValues: Record<string,number> = {
+    Total_Expenses: 8308000, Fee_Waivers: 150000, Avg_Daily_Net_Assets: 685000000,
+    Mgmt_Fee_Rate: 0.0075, Days_In_Period: 31, Ending_NAV: 687400000,
+    Committed_Cap: 500000000, Hurdle_Rate: 0.08, Total_Level_3_Assets: 45000000, Net_Assets: 687400000
+  };
+
+  const handleSaveFormula = () => {
+    const next = templates.map(t => t.id === activeCalcId ? {...t, formula: draftFormula} : t);
+    setTemplates(next);
+    onTemplatesChange?.(next);
+    setIsEditing(false);
   };
 
   const handleDeploy = () => {
@@ -5294,264 +5510,365 @@ function WorkpapersTab({ fund, masterFeeds }) {
     setTimeout(() => {
       setDeploying(false);
       setIsEditing(false);
-      setTemplates(prev => prev.map(t => t.id === activeCalcId ? { ...t, formula: draftFormula } : t));
+      const next = templates.map(t => t.id === activeCalcId ? {...t, formula: draftFormula} : t);
+      setTemplates(next);
+      onTemplatesChange?.(next);
     }, 1500);
   };
 
-  const startEditing = () => {
-    setDraftFormula(activeCalc.formula);
-    setIsEditing(true);
+  const handleAddFormula = (item: typeof templates[0]) => {
+    const next = [...templates, item];
+    setTemplates(next);
+    onTemplatesChange?.(next);
+    setActiveCalcId(item.id);
+    setJustAdded(item.id);
+    setTimeout(() => setJustAdded(null), 3500);
+    setShowAddModal(false);
   };
 
-  const handleAddNew = () => {
-    const newId = `wp-${Date.now()}`;
-    const newCalc = { id: newId, category: "Custom Formulas", name: "New Calculation", formula: "[Variable_1] + [Variable_2]", isGlobal: true, aiVerified: false, feeds: [], syncedFunds: 0, outOfSync: 0 };
-    setTemplates([newCalc, ...templates]);
-    setActiveCalcId(newId);
-    setDraftFormula(newCalc.formula);
-    setIsEditing(true);
-    setSearch(""); // Clear search to ensure new formula is visible
-  };
+  const toggleCat = (cat: string) => setCollapsedCats(p => ({...p, [cat]: !p[cat]}));
+  const toggleSub = (key: string) => setCollapsedSubs(p => ({...p, [key]: !p[key]}));
 
-  const runBatchCompute = () => {
-    setBatchComputing(true);
-    setTimeout(() => setBatchComputing(false), 2000);
-  };
-
-  const renderFormula = (formulaString) => {
+  const renderFormula = (formulaString: string) => {
     const tokens = formulaString.split(/(\[.*?\]|[\(\)\/\*\-\+\^])/g).filter(t => t.trim());
     return (
-      <div style={{display:"flex", flexWrap:"wrap", gap:6, alignItems:"center", padding:"16px", background:T.navyHeader, borderRadius:8, fontFamily:MONO.fontFamily, fontSize:14, lineHeight:2}}>
+      <div style={{display:"flex",flexWrap:"wrap",gap:6,alignItems:"center",padding:"16px",background:T.navyHeader,borderRadius:8,fontFamily:MONO.fontFamily,fontSize:14,lineHeight:2}}>
         {tokens.map((token, i) => {
           if (token.startsWith("[")) {
             const varName = token.replace(/[\[\]]/g, "");
             return (
-              <div key={i} style={{background:T.actionBase, color:"#fff", padding:"2px 10px", borderRadius:6, fontWeight:700, display:"flex", flexDirection:"column", alignItems:"center"}}>
+              <div key={i} style={{background:T.actionBase,color:"#fff",padding:"2px 10px",borderRadius:6,fontWeight:700,display:"flex",flexDirection:"column",alignItems:"center"}}>
                 <span>{varName}</span>
-                <span style={{fontSize:10, color:"#a5b4fc", fontWeight:500, marginTop:2}}>{fmtNum(runtimeValues[varName] || 0)}</span>
+                <span style={{fontSize:10,color:"#a5b4fc",fontWeight:500,marginTop:2}}>{fmtNum(runtimeValues[varName]||0)}</span>
               </div>
             );
           }
-          if (["+", "-", "*", "/", "^"].includes(token)) {
-            return <span key={i} style={{color:"#cbd5e1", fontWeight:700, margin:"0 4px"}}>{token}</span>;
-          }
-          if (["(", ")"].includes(token)) {
-            return <span key={i} style={{color:"#94a3b8", fontWeight:700, fontSize:16}}>{token}</span>;
-          }
-          return <span key={i} style={{color:"#34d399", fontWeight:700}}>{token}</span>;
+          if (["+","-","*","/","^"].includes(token)) return <span key={i} style={{color:"#cbd5e1",fontWeight:700,margin:"0 4px"}}>{token}</span>;
+          if (["(", ")"].includes(token)) return <span key={i} style={{color:"#94a3b8",fontWeight:700,fontSize:16}}>{token}</span>;
+          return <span key={i} style={{color:"#34d399",fontWeight:700}}>{token}</span>;
         })}
       </div>
     );
   };
 
-  return (
-    <div style={{display:"flex", height:"100%", background:T.appBg}}>
-      
-      {/* Left Sidebar: Calculation Library */}
-      <div style={{width: 320, background:T.cardBg, borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column", flexShrink:0}}>
-        <div style={{padding:"16px 20px", borderBottom:`1px solid ${T.border}`}}>
-          <div style={{...SANS, fontWeight:700, fontSize:15, color:T.textPrimary}}>Workpapers Engine</div>
-          <div style={{...SANS, fontSize:11, color:T.textMuted, marginTop:2}}>Global Variables & Derived Values</div>
-          
-          {/* NEW: Search Bar */}
-          <div style={{position:"relative", marginTop:12}}>
-            <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:T.textMuted,fontSize:14}}>⌕</span>
-            <input 
-              type="text" 
-              placeholder="Search formulas..." 
-              value={search} 
-              onChange={e=>setSearch(e.target.value)} 
-              style={{...SANS, width:"100%", padding:"8px 12px 8px 30px", borderRadius:6, border:`1px solid ${T.border}`, fontSize:12, outline:"none"}} 
-            />
-          </div>
+  function AddFormulaModal() {
+    const [name, setName] = useState("");
+    const [formula, setFormula] = useState("");
+    const [categorySelect, setCategorySelect] = useState("Custom Formulas");
+    const [customCategory, setCustomCategory] = useState("");
+    const [subcategory, setSubcategory] = useState("Ad Hoc");
+    const [unit, setUnit] = useState("%");
+    const [isGlobal, setIsGlobal] = useState(true);
+    const formulaRef = React.useRef<HTMLTextAreaElement>(null);
 
-          <button onClick={runBatchCompute} disabled={batchComputing} style={{...SANS, marginTop:12, width:"100%", fontSize:12, fontWeight:700, padding:"8px", borderRadius:6, border:"none", background:T.actionBase, color:"#fff", cursor:"pointer", transition:"all 0.2s"}}>
-            {batchComputing ? <><span style={{animation:"pulse 0.8s infinite"}}>●</span> Computing all funds...</> : "▶ Run Batch Compute"}
-          </button>
-        </div>
-        <div style={{overflowY:"auto", flex:1}}>
-          {categories.length === 0 ? (
-            <div style={{padding:"30px 20px", textAlign:"center", color:T.textMuted, ...SANS, fontSize:13}}>
-              No formulas match "{search}"
-            </div>
-          ) : (
-            categories.map(cat => (
-              <div key={cat}>
-                <div style={{padding:"12px 20px", background:"#f8fafc", borderBottom:`1px solid ${T.border}`, ...SANS, fontSize:10, fontWeight:700, color:T.textMuted, textTransform:"uppercase", letterSpacing:"0.05em"}}>
-                  {cat}
+    const category = categorySelect === "__new__" ? customCategory : categorySelect;
+    const varKey = name.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "");
+    const canSubmit = name.trim() && formula.trim() && category.trim();
+    const cats = Array.from(new Set(WORKPAPER_TEMPLATES.map(t => t.category)));
+
+    const MODEL_DATA_POINTS: Record<string, string[]> = {
+      "Balance Sheet": ["Net_Assets","Total_Assets","Total_Liabilities","Total_Level_3_Assets","Committed_Cap","Ending_NAV","Beginning_NAV","Gross_Asset_Value"],
+      "Income & Expenses": ["Total_Expenses","Fee_Waivers","Advisory_Fee","Admin_Fee","Performance_Fee","Interest_Income","Dividend_Income","Realized_Gain_Loss","Unrealized_Gain_Loss"],
+      "Averages & Rates": ["Avg_Daily_Net_Assets","Mgmt_Fee_Rate","Perf_Fee_Rate","Hurdle_Rate","Days_In_Period","Days_In_Year"],
+      "Portfolio": ["Total_Investments","Portfolio_Cost","Long_Exposure","Short_Exposure","Gross_Exposure","Net_Exposure","Num_Positions"],
+      "Capital Activity": ["Total_Subscriptions","Total_Redemptions","Net_Capital_Activity","Shares_Outstanding","NAV_Per_Share"],
+    };
+
+    const insertDataPoint = (pt: string) => {
+      const ta = formulaRef.current;
+      const token = `[${pt}]`;
+      if (!ta) { setFormula(f => f + token); return; }
+      const s = ta.selectionStart, e = ta.selectionEnd;
+      setFormula(f => f.slice(0, s) + token + f.slice(e));
+      setTimeout(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = s + token.length; }, 0);
+    };
+
+    const handleCreate = () => {
+      if (!canSubmit) return;
+      handleAddFormula({
+        id: `wp-${Date.now()}`,
+        category, subcategory, name: name.trim(),
+        varKey, formula: formula.trim(),
+        isGlobal, aiVerified: false,
+        feeds: [], syncedFunds: 0, outOfSync: 0,
+        liveValue: 0, unit,
+      });
+    };
+
+    return (
+      <div style={{position:"fixed",inset:0,background:"rgba(26,35,50,0.65)",zIndex:700,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>setShowAddModal(false)}>
+        <div style={{background:T.cardBg,borderRadius:12,width:860,maxHeight:"90vh",display:"flex",flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,0.3)",overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
+          <div style={{padding:"20px 24px",borderBottom:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{...SANS,fontWeight:700,fontSize:16}}>New Formula</div>
+            <button onClick={()=>setShowAddModal(false)} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:T.textMuted}}>✕</button>
+          </div>
+          <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+            {/* Left: form */}
+            <div style={{flex:1,padding:"24px",overflowY:"auto",display:"flex",flexDirection:"column",gap:16}}>
+              <div>
+                <FieldLabel required>Formula Name</FieldLabel>
+                <input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Sharpe Ratio" style={{...SANS,width:"100%",padding:"8px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,outline:"none",boxSizing:"border-box"}} />
+                {varKey && (
+                  <div style={{marginTop:8,padding:"8px 12px",borderRadius:6,background:"#eff6ff",border:`1px solid ${T.actionBase}`}}>
+                    <span style={{...SANS,fontSize:11,color:T.textMuted}}>Token key: </span>
+                    <span style={{...MONO,fontSize:12,color:T.actionBase,fontWeight:700}}>{`{{${varKey}}}`}</span>
+                    <span style={{...SANS,fontSize:11,color:T.textMuted}}> — use in Footnote Editor</span>
+                  </div>
+                )}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 90px",gap:12}}>
+                <div>
+                  <FieldLabel required>Category</FieldLabel>
+                  <select value={categorySelect} onChange={e=>setCategorySelect(e.target.value)} style={{...SANS,width:"100%",padding:"8px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,outline:"none",background:T.cardBg}}>
+                    {cats.map(c=><option key={c} value={c}>{c}</option>)}
+                    <option value="Custom Formulas">Custom Formulas</option>
+                    <option value="__new__">+ New Category...</option>
+                  </select>
+                  {categorySelect === "__new__" && (
+                    <input value={customCategory} onChange={e=>setCustomCategory(e.target.value)} placeholder="Category name" style={{...SANS,width:"100%",padding:"7px 12px",borderRadius:6,border:`1px solid ${T.actionBase}`,fontSize:13,outline:"none",marginTop:6,boxSizing:"border-box"}} />
+                  )}
                 </div>
-                {filteredTemplates.filter(c => c.category === cat).map(calc => (
-                  <div key={calc.id} onClick={() => {setActiveCalcId(calc.id); setIsEditing(false); setHasOverride(false);}} style={{padding:"12px 20px", borderBottom:`1px solid ${T.border}`, background: activeCalcId === calc.id ? "#eff6ff" : T.cardBg, cursor:"pointer", borderLeft:`4px solid ${activeCalcId === calc.id ? T.actionBase : "transparent"}`}}>
-                    <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:4}}>
-                      <div style={{...SANS, fontSize:12, fontWeight:600, color:T.textPrimary}}>{calc.name}</div>
-                      {calc.isGlobal && <span title="Global Template" style={{fontSize:12}}>🌍</span>}
-                    </div>
-                    <div style={{display:"flex", alignItems:"center", gap:6}}>
-                      {calc.aiVerified && <span style={{...MONO, fontSize:9, fontWeight:700, padding:"2px 6px", borderRadius:4, background:T.aiBg, color:T.aiBase, border:`1px solid ${T.aiBorder}`}}>✦ AI VERIFIED</span>}
-                      <span style={{...SANS, fontSize:10, color:T.textMuted}}>{calc.feeds.length} downstream feeds</span>
+                <div>
+                  <FieldLabel>Subcategory</FieldLabel>
+                  <input value={subcategory} onChange={e=>setSubcategory(e.target.value)} placeholder="e.g. Ad Hoc" style={{...SANS,width:"100%",padding:"8px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,outline:"none",boxSizing:"border-box"}} />
+                </div>
+                <div>
+                  <FieldLabel>Unit</FieldLabel>
+                  <select value={unit} onChange={e=>setUnit(e.target.value)} style={{...SANS,width:"100%",padding:"8px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13,outline:"none",background:T.cardBg}}>
+                    {["%","$","days","x","bps"].map(u=><option key={u}>{u}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <FieldLabel required>Formula</FieldLabel>
+                <textarea ref={formulaRef} value={formula} onChange={e=>setFormula(e.target.value)} rows={5} placeholder="( [Total_Expenses] - [Fee_Waivers] ) / [Avg_Daily_Net_Assets]" style={{...MONO,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:12,lineHeight:1.6,resize:"vertical",outline:"none",boxSizing:"border-box"}} />
+                <div style={{...SANS,fontSize:11,color:T.textMuted,marginTop:4}}>Click data points on the right to insert at cursor, or type <span style={{...MONO,background:"#e2e8f0",padding:"1px 4px",borderRadius:3}}>[Variable_Name]</span> manually.</div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <span style={{...SANS,fontSize:13,fontWeight:600,color:T.textPrimary}}>Global Template</span>
+                <div onClick={()=>setIsGlobal(g=>!g)} style={{width:40,height:22,borderRadius:11,background:isGlobal?T.actionBase:"#cbd5e1",cursor:"pointer",position:"relative",transition:"background 0.2s",flexShrink:0}}>
+                  <div style={{position:"absolute",top:3,left:isGlobal?20:3,width:16,height:16,borderRadius:8,background:"#fff",transition:"left 0.2s",boxShadow:"0 1px 3px rgba(0,0,0,0.2)"}} />
+                </div>
+                <span style={{...SANS,fontSize:11,color:T.textMuted}}>Apply across all synced funds</span>
+              </div>
+            </div>
+            {/* Right: data point picker */}
+            <div style={{width:240,borderLeft:`1px solid ${T.border}`,background:T.appBg,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+              <div style={{padding:"16px",borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+                <div style={{...SANS,fontSize:11,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em"}}>Data Model</div>
+                <div style={{...SANS,fontSize:11,color:T.textMuted,marginTop:3}}>Click to insert at cursor</div>
+              </div>
+              <div style={{overflowY:"auto",flex:1,padding:"12px"}}>
+                {Object.entries(MODEL_DATA_POINTS).map(([grp,pts])=>(
+                  <div key={grp} style={{marginBottom:14}}>
+                    <div style={{...SANS,fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:5}}>{grp}</div>
+                    <div style={{display:"flex",flexDirection:"column",gap:3}}>
+                      {pts.map(pt=>(
+                        <button key={pt} onClick={()=>insertDataPoint(pt)} style={{...MONO,textAlign:"left",fontSize:10,padding:"5px 8px",background:T.cardBg,border:`1px solid ${T.border}`,borderRadius:5,color:T.actionBase,cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.borderColor=T.actionBase} onMouseLeave={e=>e.currentTarget.style.borderColor=T.border}>
+                          [{pt}]
+                        </button>
+                      ))}
                     </div>
                   </div>
                 ))}
               </div>
-            ))
+            </div>
+          </div>
+          <div style={{padding:"16px 24px",borderTop:`1px solid ${T.border}`,display:"flex",justifyContent:"flex-end",gap:12}}>
+            <button onClick={()=>setShowAddModal(false)} style={{...SANS,fontSize:13,fontWeight:600,padding:"8px 16px",borderRadius:6,border:`1px solid ${T.border}`,background:"none",cursor:"pointer",color:T.textMuted}}>Cancel</button>
+            <button onClick={handleCreate} disabled={!canSubmit} style={{...SANS,fontSize:13,fontWeight:700,padding:"8px 18px",borderRadius:6,border:"none",background:canSubmit?T.actionBase:T.border,color:canSubmit?"#fff":T.textMuted,cursor:canSubmit?"pointer":"not-allowed"}}>Add Formula</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{display:"flex",height:"100%",background:T.appBg}}>
+      {showAddModal && <AddFormulaModal />}
+
+      {/* Left nav */}
+      <div style={{width:300,background:T.cardBg,borderRight:`1px solid ${T.border}`,display:"flex",flexDirection:"column",flexShrink:0}}>
+        <div style={{padding:"16px 20px",borderBottom:`1px solid ${T.border}`}}>
+          <div style={{...SANS,fontWeight:700,fontSize:13,color:T.textPrimary,marginBottom:10}}>Workpapers Engine</div>
+          <div style={{position:"relative"}}>
+            <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:T.textMuted,fontSize:13}}>⌕</span>
+            <input type="text" placeholder="Search formulas..." value={search} onChange={e=>setSearch(e.target.value)} style={{...SANS,width:"100%",padding:"6px 12px 6px 30px",borderRadius:6,border:`1px solid ${T.border}`,background:T.appBg,color:T.textPrimary,fontSize:12,outline:"none",boxSizing:"border-box"}} />
+          </div>
+        </div>
+
+        <div style={{overflowY:"auto",flex:1}}>
+          {Object.keys(navTree).length === 0 ? (
+            <div style={{padding:"30px 20px",textAlign:"center",color:T.textMuted,...SANS,fontSize:13}}>No formulas match</div>
+          ) : (
+            Object.entries(navTree).map(([cat, subs]) => {
+              const catCollapsed = collapsedCats[cat];
+              const catCount = Object.values(subs).reduce((s,a)=>s+a.length,0);
+              return (
+                <div key={cat}>
+                  <div onClick={()=>toggleCat(cat)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 20px",cursor:"pointer",background:"#f8fafc",borderBottom:`1px solid ${T.border}`,userSelect:"none"}}>
+                    <span style={{...SANS,fontSize:11,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em"}}>{cat}</span>
+                    <span style={{color:T.textMuted,fontSize:11}}>{catCollapsed?"▶":"▼"} {catCount}</span>
+                  </div>
+                  {!catCollapsed && Object.entries(subs).map(([sub, items]) => {
+                    const subKey = `${cat}::${sub}`;
+                    const subCollapsed = collapsedSubs[subKey];
+                    return (
+                      <div key={sub}>
+                        <div onClick={()=>toggleSub(subKey)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"7px 20px 7px 32px",cursor:"pointer",background:"#f8fafc",borderBottom:`1px solid ${T.border}`,userSelect:"none"}}>
+                          <span style={{...SANS,fontSize:10,fontWeight:600,color:T.textMuted}}>{sub}</span>
+                          <span style={{color:T.textMuted,fontSize:10}}>{subCollapsed?"▶":"▼"} {items.length}</span>
+                        </div>
+                        {!subCollapsed && items.map(calc => {
+                          const isActive = activeCalcId === calc.id;
+                          const isFlash = justAdded === calc.id;
+                          return (
+                            <div key={calc.id} onClick={()=>{setActiveCalcId(calc.id);setIsEditing(false);setHasOverride(false);}} style={{padding:"9px 20px 9px 40px",borderBottom:`1px solid ${T.border}`,cursor:"pointer",background:isFlash?"#f0fdf4":isActive?"#eff6ff":T.cardBg,borderLeft:`3px solid ${isActive?T.actionBase:"transparent"}`,transition:"background 0.2s"}}>
+                              <div style={{...SANS,fontSize:12,fontWeight:600,color:isActive?T.actionBase:T.textPrimary,marginBottom:2}}>{calc.name}</div>
+                              <div style={{...MONO,fontSize:9,color:T.textMuted}}>{calc.varKey?`{{${calc.varKey}}}`:" "}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })
           )}
         </div>
-        <div style={{padding:"16px 20px", borderTop:`1px solid ${T.border}`, background:"#f8fafc"}}>
-          <button onClick={handleAddNew} style={{...SANS, fontSize:12, fontWeight:600, width:"100%", padding:"8px 0", borderRadius:6, border:`1px dashed ${T.actionBase}`, background:"transparent", color:T.actionBase, cursor:"pointer"}}>+ Build New Formula</button>
+
+        <div style={{flexShrink:0,padding:"12px 16px",borderTop:`1px solid ${T.border}`,background:"#f8fafc"}}>
+          <button onClick={()=>setShowAddModal(true)} style={{...SANS,width:"100%",padding:"9px",borderRadius:7,border:`1px dashed ${T.actionBase}`,background:"transparent",color:T.actionBase,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"center"}}>+ New Formula</button>
         </div>
       </div>
 
-      {/* Right Pane: Formula Builder & Context */}
-      <div style={{flex:1, overflowY:"auto", padding:"24px 32px"}}>
+      {/* Right pane */}
+      <div style={{flex:1,overflowY:"auto",padding:"24px 32px"}}>
         {activeCalc && (
           <div className="fade-in">
-            {/* Header & Scale Status */}
-            <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:24}}>
+            {justAdded === activeCalc.id && (
+              <div style={{marginBottom:20,padding:"12px 16px",borderRadius:8,background:"#f0fdf4",border:`1px solid ${T.okBorder}`,display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:16,color:T.okBase}}>✓</span>
+                <span style={{...SANS,fontSize:13,fontWeight:600,color:T.okBase}}>Formula added! Use <span style={{...MONO}}>{`{{${activeCalc.varKey||activeCalc.id}}}`}</span> in the Footnote Editor to bind this value.</span>
+              </div>
+            )}
+
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24}}>
               <div>
-                <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:8}}>
-                  <span style={{...SANS, fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:4, background:T.okBg, color:T.okBase, border:`1px solid ${T.okBorder}`}}>GLOBAL TEMPLATE</span>
-                  <span style={{...MONO, fontSize:11, color:T.textMuted}}>ID: {activeCalc.id}</span>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                  <span style={{...SANS,fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:4,background:T.okBg,color:T.okBase,border:`1px solid ${T.okBorder}`}}>GLOBAL TEMPLATE</span>
+                  {activeCalc.varKey && <span style={{...MONO,fontSize:11,padding:"3px 8px",borderRadius:4,background:T.appBg,color:T.actionBase,border:`1px solid ${T.border}`}}>{`{{${activeCalc.varKey}}}`}</span>}
+                  <span style={{...MONO,fontSize:11,color:T.textMuted}}>ID: {activeCalc.id}</span>
                 </div>
-                <div style={{...SANS, fontSize:22, fontWeight:700, color:T.textPrimary}}>{activeCalc.name}</div>
+                <div style={{...SANS,fontSize:22,fontWeight:700,color:T.textPrimary}}>{activeCalc.name}</div>
               </div>
               <div style={{textAlign:"right"}}>
-                <div style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:4}}>Cross-Fund Sync Status</div>
-                <div style={{display:"flex", alignItems:"center", gap:12}}>
-                  <div style={{display:"flex", alignItems:"center", gap:4}}><span style={{color:T.okBase, fontSize:14}}>●</span><span style={{...MONO, fontSize:13, fontWeight:700, color:T.textPrimary}}>{activeCalc.syncedFunds}</span><span style={{...SANS, fontSize:11, color:T.textMuted}}>Synced</span></div>
-                  <div style={{display:"flex", alignItems:"center", gap:4}}><span style={{color:activeCalc.outOfSync > 0 ? T.errorBase : T.textMuted, fontSize:14}}>●</span><span style={{...MONO, fontSize:13, fontWeight:700, color:T.textPrimary}}>{activeCalc.outOfSync}</span><span style={{...SANS, fontSize:11, color:T.textMuted}}>Overrides</span></div>
+                <div style={{...SANS,fontSize:11,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:4}}>Cross-Fund Sync Status</div>
+                <div style={{display:"flex",alignItems:"center",gap:12}}>
+                  <div style={{display:"flex",alignItems:"center",gap:4}}><span style={{color:T.okBase,fontSize:14}}>●</span><span style={{...MONO,fontSize:13,fontWeight:700,color:T.textPrimary}}>{activeCalc.syncedFunds}</span><span style={{...SANS,fontSize:11,color:T.textMuted}}>Synced</span></div>
+                  <div style={{display:"flex",alignItems:"center",gap:4}}><span style={{color:activeCalc.outOfSync>0?T.errorBase:T.textMuted,fontSize:14}}>●</span><span style={{...MONO,fontSize:13,fontWeight:700,color:T.textPrimary}}>{activeCalc.outOfSync}</span><span style={{...SANS,fontSize:11,color:T.textMuted}}>Overrides</span></div>
                 </div>
               </div>
             </div>
 
             {/* Formula Builder */}
-            <div style={{background:T.cardBg, border:`1px solid ${T.border}`, borderRadius:10, overflow:"hidden", marginBottom:24, boxShadow:"0 2px 10px rgba(0,0,0,0.02)"}}>
-              <div style={{padding:"12px 20px", borderBottom:`1px solid ${T.border}`, display:"flex", justifyContent:"space-between", alignItems:"center", background:"#f8fafc"}}>
-                <div style={{...SANS, fontSize:13, fontWeight:700, color:T.textPrimary}}>Calculation Logic</div>
-                {!isEditing ? (
-                  <button onClick={startEditing} style={{...SANS, fontSize:11, fontWeight:600, color:T.actionBase, background:"none", border:"none", cursor:"pointer"}}>✎ Edit Formula</button>
-                ) : (
-                  <button onClick={() => setIsEditing(false)} style={{...SANS, fontSize:11, fontWeight:600, color:T.textMuted, background:"none", border:"none", cursor:"pointer"}}>Cancel Edit</button>
-                )}
+            <div style={{background:T.cardBg,border:`1px solid ${T.border}`,borderRadius:10,overflow:"hidden",marginBottom:24,boxShadow:"0 2px 10px rgba(0,0,0,0.02)"}}>
+              <div style={{padding:"12px 20px",borderBottom:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",background:"#f8fafc"}}>
+                <div style={{...SANS,fontSize:13,fontWeight:700,color:T.textPrimary}}>Calculation Logic</div>
+                {!isEditing
+                  ? <button onClick={()=>{setDraftFormula(activeCalc.formula);setIsEditing(true);}} style={{...SANS,fontSize:11,fontWeight:600,color:T.actionBase,background:"none",border:"none",cursor:"pointer"}}>✎ Edit Formula</button>
+                  : <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                      <button onClick={()=>setIsEditing(false)} style={{...SANS,fontSize:11,fontWeight:600,color:T.textMuted,background:"none",border:"none",cursor:"pointer",padding:"4px 0"}}>Cancel</button>
+                      <button onClick={handleSaveFormula} style={{...SANS,fontSize:11,fontWeight:700,padding:"5px 14px",borderRadius:5,border:"none",background:T.actionBase,color:"#fff",cursor:"pointer"}}>Save Formula</button>
+                    </div>
+                }
               </div>
               <div style={{padding:20}}>
                 {isEditing ? (
                   <div>
-                    <textarea 
-                      value={draftFormula} 
-                      onChange={e=>setDraftFormula(e.target.value)} 
-                      style={{...MONO, width:"100%", padding:"16px", borderRadius:8, border:`1px solid ${T.actionBase}`, fontSize:14, minHeight:100, background:"#f8fafc"}} 
-                    />
-                    <div style={{...SANS, fontSize:11, color:T.textMuted, marginTop:8}}>Use <span style={{...MONO, background:"#e2e8f0", padding:"2px 4px", borderRadius:3}}> [Variable_Name] </span> syntax to reference Trial Balance or Entity Setup fields.</div>
+                    <textarea value={draftFormula} onChange={e=>setDraftFormula(e.target.value)} style={{...MONO,width:"100%",padding:"16px",borderRadius:8,border:`1px solid ${T.actionBase}`,fontSize:14,minHeight:100,background:"#f8fafc",boxSizing:"border-box"}} />
+                    <div style={{...SANS,fontSize:11,color:T.textMuted,marginTop:8}}>Use <span style={{...MONO,background:"#e2e8f0",padding:"2px 4px",borderRadius:3}}>[Variable_Name]</span> syntax.</div>
                   </div>
-                ) : (
-                  renderFormula(activeCalc.formula)
-                )}
-                
-                <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:20, paddingTop:16, borderTop:`1px dashed ${T.border}`}}>
-                  <div style={{...SANS, fontSize:12, color:T.textMuted}}>
-                    Live Preview for <strong>{fund.name}</strong>
-                  </div>
-                  <div style={{display:"flex", alignItems:"center", gap:12}}>
-                    <span style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textTransform:"uppercase", letterSpacing:"0.05em"}}>Calculated Result =</span>
-                    <span style={{...MONO, fontSize:18, fontWeight:700, color: hasOverride ? T.warnBase : T.okBase, background: hasOverride ? T.warnBg : T.okBg, padding:"4px 12px", borderRadius:6, border:`1px solid ${hasOverride ? T.warnBorder : T.okBorder}`}}>
-                      {hasOverride ? overrideValue : "1.19%"}
+                ) : renderFormula(activeCalc.formula)}
+
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:20,paddingTop:16,borderTop:`1px dashed ${T.border}`}}>
+                  <div style={{...SANS,fontSize:12,color:T.textMuted}}>Live Preview for <strong>{fund.name}</strong></div>
+                  <div style={{display:"flex",alignItems:"center",gap:12}}>
+                    <span style={{...SANS,fontSize:11,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em"}}>Calculated Result =</span>
+                    <span style={{...MONO,fontSize:18,fontWeight:700,color:hasOverride?T.warnBase:T.okBase,background:hasOverride?T.warnBg:T.okBg,padding:"4px 12px",borderRadius:6,border:`1px solid ${hasOverride?T.warnBorder:T.okBorder}`}}>
+                      {hasOverride ? overrideValue : (activeCalc.unit==="$" ? fmtUSD(activeCalc.liveValue||0) : `${activeCalc.liveValue||0}${activeCalc.unit||""}`)}
                     </span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Fund-Level Override Card with Audit Trail */}
-            <div style={{background: hasOverride ? T.warnBg : T.cardBg, border:`1px solid ${hasOverride ? T.warnBorder : T.border}`, borderRadius:10, overflow:"hidden", marginBottom:24, transition:"all 0.2s"}}>
-              <div style={{padding:"16px 20px", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+            {/* Fund-Level Override */}
+            <div style={{background:hasOverride?T.warnBg:T.cardBg,border:`1px solid ${hasOverride?T.warnBorder:T.border}`,borderRadius:10,overflow:"hidden",marginBottom:24,transition:"all 0.2s"}}>
+              <div style={{padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <div>
-                  <div style={{...SANS, fontSize:14, fontWeight:700, color: hasOverride ? T.warnBase : T.textPrimary, display:"flex", alignItems:"center", gap:8}}>
-                    <span>{hasOverride ? "⚠" : "🔗"}</span> Fund-Level Override
+                  <div style={{...SANS,fontSize:14,fontWeight:700,color:hasOverride?T.warnBase:T.textPrimary,display:"flex",alignItems:"center",gap:8}}>
+                    <span>{hasOverride?"⚠":"🔗"}</span> Fund-Level Override
                   </div>
-                  <div style={{...SANS, fontSize:12, color:T.textMuted, marginTop:4}}>
-                    Sever the link to the global template and apply a static manual value for this fund only.
-                  </div>
+                  <div style={{...SANS,fontSize:12,color:T.textMuted,marginTop:4}}>Sever the link to the global template and apply a static manual value for this fund only.</div>
                 </div>
-                <label style={{display:"flex", alignItems:"center", gap:8, cursor:"pointer"}}>
-                  <span style={{...SANS, fontSize:12, fontWeight:600, color:T.textPrimary}}>Override Active</span>
-                  <input type="checkbox" checked={hasOverride} onChange={e=>setHasOverride(e.target.checked)} style={{accentColor:T.warnBase, width:16, height:16}} />
+                <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}>
+                  <span style={{...SANS,fontSize:12,fontWeight:600,color:T.textPrimary}}>Override Active</span>
+                  <input type="checkbox" checked={hasOverride} onChange={e=>setHasOverride(e.target.checked)} style={{accentColor:T.warnBase,width:16,height:16}} />
                 </label>
               </div>
               {hasOverride && (
-                <div className="slide-in" style={{padding:"0 20px 20px", display:"flex", gap:16, alignItems:"flex-start", flexWrap:"wrap"}}>
-                  <div style={{flex:1, minWidth:200}}>
+                <div className="slide-in" style={{padding:"0 20px 20px",display:"flex",gap:16,alignItems:"flex-start",flexWrap:"wrap"}}>
+                  <div style={{flex:1,minWidth:200}}>
                     <FieldLabel>Static Override Value</FieldLabel>
-                    <input type="text" value={overrideValue} onChange={e=>setOverrideValue(e.target.value)} style={{...MONO, width:"100%", padding:"10px 14px", borderRadius:6, border:`1px solid ${T.warnBorder}`, fontSize:14, background:"#fff"}} />
+                    <input type="text" value={overrideValue} onChange={e=>setOverrideValue(e.target.value)} style={{...MONO,width:"100%",padding:"10px 14px",borderRadius:6,border:`1px solid ${T.warnBorder}`,fontSize:14,background:"#fff",boxSizing:"border-box"}} />
                   </div>
-                  <div style={{flex:2, minWidth:300}}>
+                  <div style={{flex:2,minWidth:300}}>
                     <FieldLabel>Justification / Supporting File</FieldLabel>
-                    <input type="text" placeholder="e.g., Refer to Side Letter A for fee waiver..." style={{...SANS, width:"100%", padding:"10px 14px", borderRadius:6, border:`1px solid ${T.warnBorder}`, fontSize:13, background:"#fff"}} />
+                    <input type="text" placeholder="e.g., Refer to Side Letter A for fee waiver..." style={{...SANS,width:"100%",padding:"10px 14px",borderRadius:6,border:`1px solid ${T.warnBorder}`,fontSize:13,background:"#fff",boxSizing:"border-box"}} />
                   </div>
-                  <div style={{width:"100%", marginTop:8, ...MONO, fontSize:10, color:T.warnBase, background:"#fff", padding:"8px", borderRadius:4, border:`1px dashed ${T.warnBorder}`}}>
+                  <div style={{width:"100%",marginTop:8,...MONO,fontSize:10,color:T.warnBase,background:"#fff",padding:"8px",borderRadius:4,border:`1px dashed ${T.warnBorder}`}}>
                     AUDIT LOG: Override enacted by Sarah Chen (u1) on Dec 31, 2024 at 10:45 AM. Justification recorded.
                   </div>
                 </div>
               )}
             </div>
 
-            <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(300px, 1fr))", gap:24}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(300px, 1fr))",gap:24}}>
               {/* Downstream Lineage */}
-              <div style={{background:T.cardBg, border:`1px solid ${T.border}`, borderRadius:10, overflow:"hidden", boxShadow:"0 2px 10px rgba(0,0,0,0.02)"}}>
-                <div style={{padding:"12px 20px", borderBottom:`1px solid ${T.border}`, background:"#f8fafc", ...SANS, fontSize:13, fontWeight:700, color:T.textPrimary}}>
-                  Downstream Data Lineage
-                </div>
+              <div style={{background:T.cardBg,border:`1px solid ${T.border}`,borderRadius:10,overflow:"hidden",boxShadow:"0 2px 10px rgba(0,0,0,0.02)"}}>
+                <div style={{padding:"12px 20px",borderBottom:`1px solid ${T.border}`,background:"#f8fafc",...SANS,fontSize:13,fontWeight:700,color:T.textPrimary}}>Downstream Data Lineage</div>
                 <div style={{padding:20}}>
-                  <div style={{...SANS, fontSize:12, color:T.textMuted, marginBottom:16}}>This calculation dynamically feeds the following deliverables. Any changes here will force an automatic recalculation downstream.</div>
-                  <div style={{display:"flex", flexWrap:"wrap", gap:8}}>
-                    {activeCalc.feeds.map(f => (
-                      <span key={f} style={{...SANS, fontSize:11, fontWeight:600, padding:"6px 12px", borderRadius:20, background:T.appBg, border:`1px solid ${T.border}`, color:T.textPrimary, display:"flex", alignItems:"center", gap:6}}>
+                  <div style={{...SANS,fontSize:12,color:T.textMuted,marginBottom:16}}>This calculation dynamically feeds the following deliverables.</div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:activeCalc.varKey?16:0}}>
+                    {(activeCalc.feeds||[]).map(f=>(
+                      <span key={f} style={{...SANS,fontSize:11,fontWeight:600,padding:"6px 12px",borderRadius:20,background:T.appBg,border:`1px solid ${T.border}`,color:T.textPrimary,display:"flex",alignItems:"center",gap:6}}>
                         <span style={{color:T.actionBase}}>↳</span> {f}
                       </span>
                     ))}
                   </div>
-                </div>
-              </div>
-
-              {/* AI Prospectus Reconciliation */}
-              <div style={{background:T.cardBg, border:`1px solid ${T.aiBorder}`, borderRadius:10, overflow:"hidden", boxShadow:"0 2px 10px rgba(99,102,241,0.05)"}}>
-                <div style={{padding:"12px 20px", borderBottom:`1px solid ${T.aiBorder}`, background:T.aiBg, display:"flex", alignItems:"center", gap:8}}>
-                  <span style={{color:T.aiBase, fontSize:16}}>✦</span>
-                  <span style={{...SANS, fontSize:13, fontWeight:700, color:T.aiDark}}>AI Prospectus Reconciliation</span>
-                </div>
-                <div style={{padding:20}}>
-                  {activeCalc.aiVerified ? (
-                    <>
-                      <div style={{...SANS, fontSize:12, color:T.textPrimary, marginBottom:12, lineHeight:1.5}}>
-                        Torrance AI has verified that this global formula mathematically matches the legal definition found in the fund's offering documents.
-                      </div>
-                      <div style={{background:"#f8fafc", padding:"12px", borderRadius:6, borderLeft:`3px solid ${T.aiBase}`, ...SANS, fontSize:11, color:T.textMuted, fontStyle:"italic", lineHeight:1.6}}>
-                        "The Fund shall pay the Adviser a management fee, calculated daily and payable monthly in arrears, at an annual rate of 0.75% of the Fund’s average daily net assets."<br/>
-                        <span style={{fontWeight:600, color:T.textPrimary, fontStyle:"normal", marginTop:6, display:"inline-block"}}>— Amended and Restated Prospectus (Oct 2024), Section 4.1</span>
-                      </div>
-                    </>
-                  ) : (
-                    <div style={{...SANS, fontSize:12, color:T.warnBase, display:"flex", alignItems:"flex-start", gap:8}}>
-                      <span style={{fontSize:16}}>⚠</span>
-                      <span>This calculation was manually created and has not yet been reconciled against the legal offering documents. Click "Run AI Check" to verify.</span>
+                  {activeCalc.varKey && (
+                    <div style={{padding:"10px 12px",borderRadius:6,background:T.appBg,border:`1px solid ${T.border}`}}>
+                      <div style={{...SANS,fontSize:11,fontWeight:600,color:T.textMuted,marginBottom:6}}>Use in Footnote Editor →</div>
+                      <span style={{...MONO,fontSize:12,color:T.actionBase}}>{`{{${activeCalc.varKey}}}`}</span>
                     </div>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Mass Deployment Action (Only visible in Edit Mode) */}
             {isEditing && (
-              <div className="slide-in" style={{marginTop:24, padding:"20px", background:"#fff", border:`1px solid ${T.border}`, borderRadius:10, display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+              <div className="slide-in" style={{marginTop:24,padding:"20px",background:"#fff",border:`1px solid ${T.border}`,borderRadius:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <div>
-                  <div style={{...SANS, fontSize:14, fontWeight:700, color:T.textPrimary}}>Deploy Global Updates</div>
-                  <div style={{...SANS, fontSize:12, color:T.textMuted, marginTop:4}}>Push any formula changes out to the {activeCalc.syncedFunds} actively synced funds. This will regenerate affected workpapers immediately.</div>
+                  <div style={{...SANS,fontSize:14,fontWeight:700,color:T.textPrimary}}>Deploy Global Updates</div>
+                  <div style={{...SANS,fontSize:12,color:T.textMuted,marginTop:4}}>Push formula changes to {activeCalc.syncedFunds} actively synced funds.</div>
                 </div>
-                <button disabled={deploying} onClick={handleDeploy} style={{...SANS, fontSize:13, fontWeight:700, padding:"10px 24px", borderRadius:6, border:"none", background: deploying ? "#94a3b8" : T.actionBase, color:"#fff", cursor:deploying ? "not-allowed" : "pointer", display:"flex", alignItems:"center", gap:8, transition:"background 0.2s"}}>
-                  {deploying ? <><span style={{animation:"pulse 0.8s infinite"}}>●</span> Synchronizing Database...</> : <><span>🌍</span> Deploy to {activeCalc.syncedFunds} Funds</>}
+                <button disabled={deploying} onClick={handleDeploy} style={{...SANS,fontSize:13,fontWeight:700,padding:"10px 24px",borderRadius:6,border:"none",background:deploying?"#94a3b8":T.actionBase,color:"#fff",cursor:deploying?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:8,transition:"background 0.2s"}}>
+                  {deploying ? <><span style={{animation:"pulse 0.8s infinite"}}>●</span> Synchronizing...</> : <><span>🌍</span> Deploy to {activeCalc.syncedFunds} Funds</>}
                 </button>
               </div>
             )}
-
           </div>
         )}
       </div>
@@ -5564,6 +5881,9 @@ function WorkpapersTab({ fund, masterFeeds }) {
 function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFeeds, blockedFunds, onUpdateFeedRecord, onSelectFund, onResolve, onReopen, onUpdate, onAddThread, onSubmit, onApprove, onBack, demoActiveExcId, demoTypingText, demoShouldSubmit, fxOverrideActive}) {
   const [tab,setTab]=useState("exceptions");
   const [showFundPdf, setShowFundPdf] = useState(false);
+  const [sharedTemplates, setSharedTemplates] = useState(WORKPAPER_TEMPLATES);
+  const [activePeriod, setActivePeriod] = useState(fund.period || "December 31, 2024");
+  const AVAILABLE_PERIODS = ["December 31, 2024","September 30, 2024","June 30, 2024","March 31, 2024","December 31, 2023","September 30, 2023"];
   
   const handleNextFund = () => {
     const currentIndex = blockedFunds.findIndex(f => f.fund_id === fund.fund_id);
@@ -5592,7 +5912,12 @@ function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFee
     <div style={{background:T.navyHeader,padding:"8px 24px",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
       <div style={{display:"flex",alignItems:"center",gap:12}}>
         <FundSelectorCombobox fund={fund} fundSeeds={fundSeeds} onSelectFund={onSelectFund} />
-        <div style={{fontWeight:400,color:"#8898aa",fontSize:12, ...SANS}}>| {fund.series} · {fund.period}</div>
+        <div style={{display:"flex",alignItems:"center",gap:6,color:"#8898aa",fontSize:12,...SANS}}>
+          <span>| {fund.series} ·</span>
+          <select value={activePeriod} onChange={e=>setActivePeriod(e.target.value)} style={{...SANS,fontSize:12,fontWeight:500,color:"#8898aa",background:"transparent",border:"none",outline:"none",cursor:"pointer",padding:"0 2px"}}>
+            {AVAILABLE_PERIODS.map(p=><option key={p} value={p} style={{color:T.textPrimary,background:T.cardBg}}>{p}</option>)}
+          </select>
+        </div>
         <SlaPill daysLeft={fund.sla_days}/>
         
         {blockedFunds.length > 0 && (
@@ -5619,11 +5944,11 @@ function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFee
       {tab==="ai_log" && <AIDecisionLogTab />}
       {tab==="explorer"    &&<DataExplorerTab masterFeeds={masterFeeds} onUpdateFeedRecord={onUpdateFeedRecord}/>}
       {tab==="journals" && <JournalEntriesTab fund={fund} fundSeeds={fundSeeds} masterFeeds={masterFeeds} currentUser={currentUser} onPostJE={() => {}} />}
-      {tab==="workpapers"  &&<WorkpapersTab fund={fund} masterFeeds={masterFeeds} />} {/* <-- ADD THIS LINE */}
+      {tab==="workpapers"  &&<WorkpapersTab fund={fund} masterFeeds={masterFeeds} sharedTemplates={sharedTemplates} onTemplatesChange={setSharedTemplates}/>}
       {tab==="cross_checks"&&<CrossChecksTab currentUser={currentUser}/>}
       {tab==="lpa_terms" && <LpaVerificationTab />}
       {tab==="statements"  &&<FinancialStatementsTab fund={fund} fxOverrideActive={fxOverrideActive} exceptions={exceptions}/>}
-      {tab==="footnotes"   &&<FootnoteEditorTab fund={fund} />}
+      {tab==="footnotes"   &&<FootnoteEditorTab fund={fund} templates={sharedTemplates}/>}
     </div>
     {showFundPdf && <PdfModal onClose={() => setShowFundPdf(false)} fund={fund} resolvedExceptions={exceptions.filter(e=>e.status==='resolved')} />}
   </div>;
