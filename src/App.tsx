@@ -65,6 +65,7 @@ const TEAM = [
   {id:"u3",name:"Priya Nair",  role:"Accountant",       initials:"PN",color:"#d97706",isController:false},
   {id:"u4",name:"James Okafor",role:"Controller",       initials:"JO",color:"#059669",isController:true },
   {id:"u5",name:"Jennifer Liu",role:"Senior Accountant",initials:"JL",color:"#e11d48",isController:false},
+  {id:"u_ai",name:"Torrance AI",role:"AI Agent",        initials:"AI",color:"#6366f1",isController:false},
 ];
 const CURRENT_USER_ID = "u1";
 const SLA_CONFIGS = [
@@ -800,10 +801,10 @@ const pdfStyles = StyleSheet.create({
 
 const fmtPdfUSD = (n) => n == null ? "—" : n < 0 ? `($${Math.abs(n).toLocaleString("en-US",{minimumFractionDigits:2})})` : `$${n.toLocaleString("en-US",{minimumFractionDigits:2})}`;
 
-const FinancialStatementPDF = ({ fund, fsData }) => (
+const FinancialStatementPDF = ({ fund, fsData, resolvedExceptions = [] }: { fund?: any; fsData?: any; resolvedExceptions?: any[] }) => (
   <Document>
     {/* PAGE 1: Statement of Assets and Liabilities */}
-    <Page size="A4" style={pdfStyles.page}>
+    {fsData && <Page size="A4" style={pdfStyles.page}>
       <Text style={pdfStyles.header}>Statement of Assets and Liabilities</Text>
       <Text style={pdfStyles.subHeader}>{fund?.name || "Fund"} — As of December 31, 2024</Text>
 
@@ -828,10 +829,10 @@ const FinancialStatementPDF = ({ fund, fsData }) => (
       <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Net Assets — Institutional</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.net_assets_inst)}</Text></View>
       <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Net Assets — R6</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.net_assets_r6)}</Text></View>
       <View style={pdfStyles.rowDouble}><Text style={pdfStyles.label}>Total Net Assets</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.net_assets)}</Text></View>
-    </Page>
+    </Page>}
 
     {/* PAGE 2: Statement of Operations */}
-    <Page size="A4" style={pdfStyles.page}>
+    {fsData && <Page size="A4" style={pdfStyles.page}>
       <Text style={pdfStyles.header}>Statement of Operations</Text>
       <Text style={pdfStyles.subHeader}>{fund?.name || "Fund"} — For the Year Ended December 31, 2024</Text>
 
@@ -846,11 +847,46 @@ const FinancialStatementPDF = ({ fund, fsData }) => (
       <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Professional Fees</Text><Text style={pdfStyles.value}>{fmtPdfUSD(-fsData.professional_fees)}</Text></View>
       <View style={pdfStyles.rowBold}><Text style={pdfStyles.label}>Total Expenses</Text><Text style={pdfStyles.value}>{fmtPdfUSD(-fsData.total_expenses)}</Text></View>
       <View style={pdfStyles.rowBold}><Text style={pdfStyles.label}>Net Investment Income / (Loss)</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.net_investment_income)}</Text></View>
-      
+
       <Text style={pdfStyles.sectionTitle}>Realized & Unrealized Gain / (Loss)</Text>
       <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Net Realized Gain on Investments</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.realized_gain)}</Text></View>
       <View style={pdfStyles.row}><Text style={[pdfStyles.label, pdfStyles.indent]}>Net Change in Unrealized Appreciation</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.unrealized_change)}</Text></View>
       <View style={pdfStyles.rowDouble}><Text style={pdfStyles.label}>Net Increase in Net Assets from Operations</Text><Text style={pdfStyles.value}>{fmtPdfUSD(fsData.net_increase_ops)}</Text></View>
+    </Page>}
+
+    {/* PAGE 3: Exception Resolution Audit Trail */}
+    <Page size="A4" style={pdfStyles.page}>
+      <Text style={pdfStyles.header}>Exception Resolution Audit Trail</Text>
+      <Text style={pdfStyles.subHeader}>{fund?.name || "Fund"} — December 31, 2024 Close</Text>
+      <Text style={[pdfStyles.sectionTitle, {marginTop: 8}]}>Resolved Exceptions</Text>
+
+      {/* Table header */}
+      <View style={{flexDirection:'row', backgroundColor:'#0f172a', padding:'6px 4px', marginBottom:2}}>
+        <Text style={{color:'#fff', fontSize:8, fontWeight:'bold', width:60}}>Exc. ID</Text>
+        <Text style={{color:'#fff', fontSize:8, fontWeight:'bold', flex:1}}>Code</Text>
+        <Text style={{color:'#fff', fontSize:8, fontWeight:'bold', flex:2}}>Resolution</Text>
+        <Text style={{color:'#fff', fontSize:8, fontWeight:'bold', width:80}}>Override Value</Text>
+        <Text style={{color:'#fff', fontSize:8, fontWeight:'bold', width:70}}>Resolved By</Text>
+      </View>
+      {resolvedExceptions.length === 0 && (
+        <View style={{padding:'12px 4px'}}><Text style={{fontSize:10, color:'#64748b'}}>No exceptions resolved for this period.</Text></View>
+      )}
+      {resolvedExceptions.map((exc, i) => {
+        const resolver = TEAM.find(m => m.id === exc.resolvedBy);
+        return (
+          <View key={exc.id} style={{flexDirection:'row', backgroundColor: i % 2 === 0 ? '#f8fafc' : '#fff', padding:'5px 4px', borderBottom:'1px solid #e2e8f0'}}>
+            <Text style={{fontSize:8, width:60, fontFamily:'Courier'}}>{exc.id}</Text>
+            <Text style={{fontSize:8, flex:1, color:'#4f46e5'}}>{exc.code}</Text>
+            <Text style={{fontSize:8, flex:2}}>{exc.resolution || '—'}{exc.overrideValue ? `  Before: ${exc.currentValue}  →  After: ${exc.overrideValue}` : ''}</Text>
+            <Text style={{fontSize:8, width:80, fontFamily:'Courier'}}>{exc.overrideValue || '—'}</Text>
+            <Text style={{fontSize:8, width:70}}>{resolver?.name || exc.resolvedBy || '—'}</Text>
+          </View>
+        );
+      })}
+      <View style={{marginTop: 20, padding:'10px 12px', backgroundColor:'#f0fdf4', border:'1px solid #a7f3d0'}}>
+        <Text style={{fontSize:9, color:'#0f766e', fontWeight:'bold'}}>✓ Audit trail generated by Torrance AI — {new Date().toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'})}</Text>
+        <Text style={{fontSize:8, color:'#64748b', marginTop:4}}>This document represents the complete exception resolution log for the reporting period. All resolutions have been reviewed and approved per the fund's exception management policy.</Text>
+      </View>
     </Page>
   </Document>
 );
@@ -1013,8 +1049,16 @@ const GLOBAL_CSS = `
     .glow-btn { transition: all 0.2s ease-in-out; }
     .glow-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(5,150,105,0.4); }
     .pulse-border { animation: pulseBorder 2s infinite; }
-    @keyframes pulseBorder { 0% { box-shadow: 0 0 0 0 rgba(220,53,69,0.4); } 70% { box-shadow: 0 0 0 6px rgba(220,53,69,0); } 100% { box-shadow: 0 0 0 0 rgba(220,53,69,0); } }}
-`;
+    @keyframes pulseBorder { 0% { box-shadow: 0 0 0 0 rgba(220,53,69,0.4); } 70% { box-shadow: 0 0 0 6px rgba(220,53,69,0); } 100% { box-shadow: 0 0 0 0 rgba(220,53,69,0); } }
+    @keyframes flashGreen { 0%{background:rgba(16,185,129,0.35);} 100%{background:transparent;} }
+    @keyframes flashPurple { 0%{background:rgba(99,102,241,0.35);} 100%{background:transparent;} }
+    @keyframes countDown { 0%{color:#f87171;} 100%{color:#34d399;} }
+    @keyframes flashYellow { 0%{background:rgba(251,191,36,0.45);} 100%{background:rgba(251,191,36,0.15);} }
+    .flash-green { animation: flashGreen 0.8s ease forwards; }
+    .flash-purple { animation: flashPurple 0.8s ease forwards; }
+    .count-down { animation: countDown 0.6s ease forwards; }
+    .flash-yellow { animation: flashYellow 0.8s ease forwards; }
+}`;
 
 function StyleInjector() {
   useEffect(()=>{ 
@@ -1133,19 +1177,56 @@ function AiSuggestionBanner({excId,onAccept}) {
 
 
 // ─── ThreadedComments ─────────────────────────────────────────────────────────
-function ThreadedComments({thread,onAddMessage,currentUserId}) {
+function getAiReply(code: string): string {
+  switch (code) {
+    case 'CATEGORY_MISMATCH':
+      return "✦ Prior-period analysis: This account was correctly classified as 'Asset' in all 6 prior closes. Custodian ETL batch ETL-20241229-0341 introduced the misclassification. Recommend: Corrected in Source.";
+    case 'FX_MISMATCH':
+      return "✦ Bloomberg WM/Reuters 4PM fix confirms EUR/USD 1.0842. Override value $108,420.00 matches Nov 30 resolution. Confidence: 97%.";
+    case 'HOLDINGS_CROSS_CHECK':
+      return "✦ T+1 settlement lag confirmed. AAPL trade Dec 30 settles Jan 2. This variance will self-clear. Recommend: Acknowledge.";
+    default:
+      return "✦ Pattern analysis complete. No prior-period precedent found. Escalate to Controller if dollar variance exceeds SLA threshold.";
+  }
+}
+
+function ThreadedComments({thread, onAddMessage, onAddAiMessage, currentUserId, excCode, externalDraft, demoShouldSubmit}:
+  {thread:any[], onAddMessage:(t:string)=>void, onAddAiMessage?:(t:string)=>void, currentUserId:string, excCode?:string, externalDraft?:string, demoShouldSubmit?:boolean}) {
   const [draft,setDraft]=useState("");
-  const bottomRef=useRef();
+  const bottomRef=useRef(null);
   useEffect(()=>{ bottomRef.current?.scrollIntoView({behavior:"smooth"}); },[thread.length]);
-  const submit=()=>{ const txt=draft.trim();if(!txt)return;onAddMessage(txt);setDraft(""); };
+
+  // Sync external draft for demo typing simulation
+  useEffect(()=>{ if(externalDraft!==undefined) setDraft(externalDraft); },[externalDraft]);
+
+  // Auto-submit for demo sequence
+  useEffect(()=>{
+    if(demoShouldSubmit && draft.trim()) submit();
+  },[demoShouldSubmit]);
+
+  const submit=()=>{
+    const txt=draft.trim();
+    if(!txt) return;
+    onAddMessage(txt);
+    setDraft("");
+    // AI auto-reply after 1500ms
+    if(excCode && onAddAiMessage) {
+      setTimeout(()=>{ onAddAiMessage(getAiReply(excCode)); }, 1500);
+    }
+  };
+
   return <div>
     {thread.length>0?<div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:12,maxHeight:220,overflowY:"auto",padding:"2px 0"}}>
-      {thread.map(msg=>{ const user=TEAM.find(m=>m.id===msg.userId);const isMe=msg.userId===currentUserId; return(
+      {thread.map(msg=>{ const user=TEAM.find(m=>m.id===msg.userId); const isMe=msg.userId===currentUserId; const isAi=msg.userId==='u_ai'; return(
         <div key={msg.id} style={{display:"flex",gap:9,alignItems:"flex-start",flexDirection:isMe?"row-reverse":"row"}}>
           <Avatar user={user} size={26}/>
           <div style={{maxWidth:"78%"}}>
-            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3,flexDirection:isMe?"row-reverse":"row"}}><span style={{...SANS,fontSize:11,fontWeight:700}}>{user?.name}</span><span style={{...SANS,fontSize:10,color:T.textMuted}}>{msg.ts}</span></div>
-            <div style={{...SANS,fontSize:12,lineHeight:1.55,padding:"8px 11px",borderRadius:8,background:isMe?T.actionBg:T.appBg,color:T.textPrimary,border:`1px solid ${isMe?"#bfdbfe":T.border}`,borderBottomRightRadius:isMe?2:8,borderBottomLeftRadius:isMe?8:2}}>{msg.text}</div>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3,flexDirection:isMe?"row-reverse":"row"}}><span style={{...SANS,fontSize:11,fontWeight:700,color:isAi?T.aiBase:T.textPrimary}}>{user?.name}</span><span style={{...SANS,fontSize:10,color:T.textMuted}}>{msg.ts}</span></div>
+            <div style={{...SANS,fontSize:12,lineHeight:1.55,padding:"8px 11px",borderRadius:8,
+              background:isAi?T.aiBg:isMe?T.actionBg:T.appBg,
+              color:isAi?T.aiDark:T.textPrimary,
+              border:`1px solid ${isAi?T.aiBorder:isMe?"#bfdbfe":T.border}`,
+              borderBottomRightRadius:isMe?2:8,borderBottomLeftRadius:isMe?8:2}}>{msg.text}</div>
           </div>
         </div>
       );})}
@@ -1271,7 +1352,7 @@ function AiRootCauseBlock({excId}) {
 }
 
 // ─── Resolution Form (Horizontal Grid Wrap) ──────────────────────────────────
-function ResolutionForm({exc,onResolve,onUpdate,onAddThread,currentUserId}) {
+function ResolutionForm({exc,onResolve,onUpdate,onAddThread,currentUserId,demoTypingText,demoShouldSubmit}) {
   const options=RESOLUTIONS[exc.severity];
   const [resolution,setResolution]=useState("");
   const [overrideValue,setOverrideValue]=useState("");
@@ -1320,10 +1401,10 @@ function ResolutionForm({exc,onResolve,onUpdate,onAddThread,currentUserId}) {
       
       <Card title="Audit Thread" accessory={<span style={{...SANS,fontSize:11,color:T.textMuted}}>{exc.thread.length} messages</span>}>
         {isErrorAccept&&needsComment&&<div className="slide-in" style={{...SANS,fontSize:11,color:T.errorBase,background:T.errorBg,border:`1px solid ${T.errorBorder}`,borderRadius:5,padding:"7px 10px",marginBottom:10,display:"flex",alignItems:"center",gap:6}}><span>✕</span>Add a thread comment before accepting this error.</div>}
-        <ThreadedComments thread={exc.thread} onAddMessage={onAddThread} currentUserId={currentUserId}/>
+        <ThreadedComments thread={exc.thread} onAddMessage={(txt)=>onAddThread(exc.id,txt)} onAddAiMessage={(txt)=>onAddThread(exc.id,txt,'u_ai')} excCode={exc.code} currentUserId={currentUserId} externalDraft={demoTypingText} demoShouldSubmit={demoShouldSubmit}/>
       </Card>
     </div>
-    
+
     <button className="resolve-btn" disabled={isDisabled} onClick={()=>!isDisabled&&onResolve(exc.id,resolution,overrideValue,"")}
       style={{width:"100%",border:"none",borderRadius:7,padding:"14px 20px",fontSize:14,fontWeight:700,cursor:isDisabled?"not-allowed":"pointer",background:isDisabled?T.border:T.okBase,color:isDisabled?T.textMuted:"#fff",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
       {resolution===""?<><span style={{opacity:0.5}}>○</span>Select a Resolution Action</>:needsComment?<><span>!</span>Add Thread Comment First</>:<><span>✓</span>Resolve Exception</>}
@@ -1344,6 +1425,37 @@ function ResolutionAuditRecord({exc,onReopen,onAddThread,currentUserId}) {
       {assignee&&<div><div style={{...SANS,fontSize:10,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:5}}>Assigned To</div><div style={{display:"flex",alignItems:"center",gap:7}}><Avatar user={assignee} size={24}/><span style={{...SANS,fontSize:13}}>{assignee.name}</span></div></div>}
     </div>
 
+    {/* ─── Instruction 10: Before/After Value Display ─── */}
+    {exc.resolution === "override_value" && exc.overrideValue && exc.currentValue && (() => {
+      const parseVal = (v: string) => parseFloat(v.replace(/[$,]/g, '')) || 0;
+      const before = parseVal(exc.currentValue);
+      const after = parseVal(exc.overrideValue);
+      const variance = after - before;
+      const variancePct = before ? ((variance / Math.abs(before)) * 100).toFixed(1) : null;
+      return (
+        <div style={{marginBottom: 16, padding: "14px 16px", background: "linear-gradient(135deg, #fff8f8 0%, #f0fdf4 100%)", border: `1px solid ${T.border}`, borderRadius: 8}}>
+          <div style={{...SANS, fontSize: 10, fontWeight: 700, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 10}}>Value Correction</div>
+          <div style={{display: "flex", alignItems: "center", gap: 16}}>
+            <div style={{textAlign: "center"}}>
+              <div style={{...SANS, fontSize: 10, color: T.textMuted, marginBottom: 4}}>Before</div>
+              <div style={{...MONO, fontSize: 16, fontWeight: 700, color: T.errorBase, textDecoration: "line-through", opacity: 0.85}}>{exc.currentValue}</div>
+            </div>
+            <div style={{...MONO, fontSize: 14, color: T.textMuted, letterSpacing: "0.05em", flexShrink: 0}}>────────→</div>
+            <div style={{textAlign: "center"}}>
+              <div style={{...SANS, fontSize: 10, color: T.textMuted, marginBottom: 4}}>After</div>
+              <div style={{...MONO, fontSize: 16, fontWeight: 700, color: T.okBase}}>{exc.overrideValue}</div>
+            </div>
+            {variancePct !== null && (
+              <div style={{marginLeft: "auto", textAlign: "right"}}>
+                <div style={{...SANS, fontSize: 10, color: T.textMuted, marginBottom: 4}}>Variance</div>
+                <div style={{...MONO, fontSize: 13, fontWeight: 700, color: variance < 0 ? T.errorBase : T.okBase}}>{variance < 0 ? "" : "+"}{fmtUSD(variance)} ({variancePct}%)</div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    })()}
+
     {/* ─── C-10: AUTOMATED JE BANNER ─── */}
     {exc.resolution === "override_value" && (
       <div style={{marginBottom: 16, padding: "12px 16px", background: T.okBg, border: `1px solid ${T.okBorder}`, borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center"}}>
@@ -1361,7 +1473,7 @@ function ResolutionAuditRecord({exc,onReopen,onAddThread,currentUserId}) {
       </div>
     )}
 
-    <Card title="Audit Thread" accessory={<span style={{...SANS,fontSize:11,color:T.textMuted}}>{exc.thread.length} messages</span>}><ThreadedComments thread={exc.thread} onAddMessage={onAddThread} currentUserId={currentUserId}/></Card>
+    <Card title="Audit Thread" accessory={<span style={{...SANS,fontSize:11,color:T.textMuted}}>{exc.thread.length} messages</span>}><ThreadedComments thread={exc.thread} onAddMessage={(txt)=>onAddThread(exc.id,txt)} onAddAiMessage={(txt)=>onAddThread(exc.id,txt,'u_ai')} excCode={exc.code} currentUserId={currentUserId}/></Card>
     <button className="reopen-btn" onClick={()=>onReopen(exc.id)} style={{...SANS,background:T.cardBg,color:T.textMuted,border:`1px solid ${T.border}`,borderRadius:6,padding:"8px 16px",fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:7}}><span>↺</span>Reopen Exception</button>
   </Card>;
 }
@@ -1372,8 +1484,18 @@ function ExcCard({exc,active,selected,onClick,onToggleSelect}) {
   const assignee=exc.assignee?TEAM.find(m=>m.id===exc.assignee):null;
   const hasAI=!!AI_SUGGESTIONS[exc.id];
   const hasRCA=!!AI_ROOT_CAUSE[exc.id];
-  
-  return <div role="button" tabIndex={0} className="exc-card" onClick={onClick} onKeyDown={e=>e.key==="Enter"&&onClick()} style={{padding:"8px 12px 8px 0",borderBottom:`1px solid ${T.border}`,borderLeft:`3px solid ${selected||active?T.actionBase:"transparent"}`,background:selected?"#f0f4ff":active?"#f8fafc":T.cardBg,opacity:resolved?0.55:1,cursor:"pointer",display:"flex",alignItems:"center"}}>
+
+  // Fade-out animation when exception transitions to resolved (Instruction 5)
+  const [fading, setFading] = useState(false);
+  const prevStatus = useRef(exc.status);
+  useEffect(()=>{
+    if(prevStatus.current !== 'resolved' && exc.status === 'resolved') {
+      setFading(true);
+    }
+    prevStatus.current = exc.status;
+  },[exc.status]);
+
+  return <div role="button" tabIndex={0} className="exc-card" onClick={onClick} onKeyDown={e=>e.key==="Enter"&&onClick()} style={{padding:"8px 12px 8px 0",borderBottom:`1px solid ${T.border}`,borderLeft:`3px solid ${selected||active?T.actionBase:"transparent"}`,background:selected?"#f0f4ff":active?"#f8fafc":T.cardBg,opacity:fading?0:resolved?0.55:1,transition:"opacity 0.3s",cursor:"pointer",display:"flex",alignItems:"center"}}>
     <div style={{width:36,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}} onClick={e=>{e.stopPropagation();onToggleSelect(exc.id);}}>
       <input type="checkbox" checked={selected} onChange={()=>{}} style={{margin:0}}/>
     </div>
@@ -1415,7 +1537,7 @@ function BulkActionBar({selected,exceptions,onBulkResolve,onBulkAssign,onClear})
 }
 
 // ─── Detail Pane (Full Width) ────────────────────────────────────────────────
-function DetailPane({exc,onResolve,onReopen,onUpdate,onAddThread,currentUserId}) {
+function DetailPane({exc,onResolve,onReopen,onUpdate,onAddThread,currentUserId,demoTypingText,demoShouldSubmit}) {
   const [showPdf,setShowPdf]=useState(false);
   const isResolved=exc.status==="resolved";
   
@@ -1448,7 +1570,7 @@ function DetailPane({exc,onResolve,onReopen,onUpdate,onAddThread,currentUserId})
       </div>
     </Card>
     
-    {isResolved?<ResolutionAuditRecord exc={exc} onReopen={onReopen} onAddThread={onAddThread} currentUserId={currentUserId}/>:<ResolutionForm exc={exc} onResolve={onResolve} onUpdate={onUpdate} onAddThread={onAddThread} currentUserId={currentUserId}/>}
+    {isResolved?<ResolutionAuditRecord exc={exc} onReopen={onReopen} onAddThread={onAddThread} currentUserId={currentUserId}/>:<ResolutionForm exc={exc} onResolve={onResolve} onUpdate={onUpdate} onAddThread={onAddThread} currentUserId={currentUserId} demoTypingText={demoTypingText} demoShouldSubmit={demoShouldSubmit}/>}
     
     <div style={{marginTop:6}}><button onClick={()=>setShowPdf(true)} style={{...SANS,background:T.cardBg,color:T.textPrimary,border:`1px solid ${T.border}`,borderRadius:6,padding:"8px 16px",fontSize:12,fontWeight:600,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:7}}><span>↓</span>Export Reports</button></div>
     {showPdf&&<PdfModal onClose={()=>setShowPdf(false)}/>}
@@ -1653,8 +1775,9 @@ function ProvenancePanel({ trace, onClose }) {
 }
 // ─── Exceptions Tab (Updated with Inbox Zero Reward) ─────────────────────────
 // ─── SPRINT 1: Exception Queue Reframe (C-02 & C-04) ─────────────────────────
-function ExceptionsTab({exceptions,approval,onResolve,onReopen,onUpdate,onAddThread,currentUserId,onSubmit}) {
+function ExceptionsTab({exceptions,approval,onResolve,onReopen,onUpdate,onAddThread,currentUserId,onSubmit,demoActiveExcId,demoTypingText,demoShouldSubmit}) {
   const [activeId,setActiveId]=useState(exceptions[0]?.id||null);
+  useEffect(()=>{ if(demoActiveExcId) setActiveId(demoActiveExcId); },[demoActiveExcId]);
   const [selected,setSelected]=useState(new Set());
   const [forceShowResolved, setForceShowResolved]=useState(false); 
   const [showAutoResolved, setShowAutoResolved] = useState(false); // C-02 State
@@ -1746,8 +1869,8 @@ function ExceptionsTab({exceptions,approval,onResolve,onReopen,onUpdate,onAddThr
           const activeAiLog = AI_DECISION_LOG.find(l => l.id === activeId);
 
           if (activeExc) {
-            return <DetailPane exc={activeExc} onResolve={onResolve} onReopen={onReopen} onUpdate={onUpdate} onAddThread={onAddThread} currentUserId={currentUserId}/>;
-          } 
+            return <DetailPane exc={activeExc} onResolve={onResolve} onReopen={onReopen} onUpdate={onUpdate} onAddThread={onAddThread} currentUserId={currentUserId} demoTypingText={demoTypingText} demoShouldSubmit={demoShouldSubmit}/>;
+          }
           if (activeAiLog) {
             return <AiDecisionDetailPane log={activeAiLog} />;
           }
@@ -3650,7 +3773,7 @@ function JournalEntriesTab({ fund, fundSeeds, masterFeeds, currentUser, onPostJE
 // FINANCIAL STATEMENT PREVIEW TAB (Cleaned up - Checks moved to CrossChecksTab)
 // ═══════════════════════════════════════════════════════════════════════════════
 // ─── Dynamic GAAP Financial Statements ───────────────────────────────────────
-function FinancialStatementsTab({ fund }) {
+function FinancialStatementsTab({ fund, fxOverrideActive, exceptions = [] }: { fund?: any; fxOverrideActive?: boolean; exceptions?: any[] }) {
   const [activeStmt, setActiveStmt] = useState("soa");
   const [generating, setGenerating] = useState(false);
   const [generated,  setGenerated]  = useState(false);
@@ -3713,7 +3836,7 @@ function FinancialStatementsTab({ fund }) {
     const net_assets_r6 = -sumAcct(["3030"]);
 
     const div_income_domestic = -sumAcct(["4010"]);
-    const div_income_foreign = -sumAcct(["4020"]) || 108420;
+    const div_income_foreign = fxOverrideActive ? 108420 : (-sumAcct(["4020"]) || 108420);
     const interest_income = -sumAcct(["4030"]);
     const total_investment_income = div_income_domestic + div_income_foreign + interest_income;
 
@@ -3751,7 +3874,7 @@ function FinancialStatementsTab({ fund }) {
       net_investment_income, realized_gain, unrealized_change, net_increase_ops,
       subscriptions, redemptions, reinvestments, distributions, net_capital_txns, beginning_net_assets_actual
     };
-  }, []);
+  }, [fxOverrideActive]);
 
   const handleGenerate = () => {
     setGenerating(true);
@@ -4003,7 +4126,7 @@ function FinancialStatementsTab({ fund }) {
           </>)}
         </div>
       </div>
-      {showPdf && <PdfModal onClose={() => setShowPdf(false)} fund={fund} fsData={FS_DYNAMIC} tbData={TB_ROWS} />}
+      {showPdf && <PdfModal onClose={() => setShowPdf(false)} fund={fund} fsData={FS_DYNAMIC} tbData={TB_ROWS} resolvedExceptions={exceptions.filter(e=>e.status==='resolved')} />}
       {provenanceTrace && <ProvenancePanel trace={provenanceTrace} onClose={() => setProvenanceTrace(null)} />}
     </div>
   );
@@ -4150,7 +4273,7 @@ function DrilldownModal({row,onClose}) {
 }
 
 // ─── UPGRADED: PdfModal (Now with Real Excel Working Papers) ─────────────────
-function PdfModal({ onClose, fund, fsData, tbData }) {
+function PdfModal({ onClose, fund, fsData, tbData, resolvedExceptions = [] }: { onClose: () => void; fund?: any; fsData?: any; tbData?: any; resolvedExceptions?: any[] }) {
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExcelExport = async () => {
@@ -4172,7 +4295,7 @@ function PdfModal({ onClose, fund, fsData, tbData }) {
           
           {/* REAL PDF GENERATOR BUTTON */}
           {fsData && (
-            <PDFDownloadLink document={<FinancialStatementPDF fund={fund} fsData={fsData} />} fileName={`${fund?.fund_id || 'fund'}_financials.pdf`} style={{textDecoration:'none'}}>
+            <PDFDownloadLink document={<FinancialStatementPDF fund={fund} fsData={fsData} resolvedExceptions={resolvedExceptions} />} fileName={`${fund?.fund_id || 'fund'}_financials.pdf`} style={{textDecoration:'none'}}>
               {({ loading }) => (
                 <button style={{...SANS,width:"100%",textAlign:"left",border:`1px solid ${T.actionBase}`,borderRadius:8,padding:"12px 15px",marginBottom:9,cursor:loading?"wait":"pointer",background:T.actionBg,display:"flex",alignItems:"center",gap:13}}>
                   <span style={{fontSize:22}}>📄</span>
@@ -4233,13 +4356,13 @@ function PdfModal({ onClose, fund, fsData, tbData }) {
 }
 
 // ─── ApprovalWaterfallBar (Updated for Muted Slate) ──────────────────────
-function ApprovalWaterfallBar({fund,approval,exceptions,currentUser,onSubmit,onApprove}) {
+function ApprovalWaterfallBar({fund,approval,exceptions,currentUser,onSubmit,onApprove,onOpenPdf}) {
   const [showEmailConfirm,setShowEmailConfirm]=useState(false);
   const openErrors=exceptions.filter(e=>e.severity==="error"&&e.status==="open");
   const canSubmit=openErrors.length===0&&approval.status==="open";
   const isPreparer=!currentUser.isController;
   const handleApprove=()=>{ onApprove(); setShowEmailConfirm(true); setTimeout(()=>setShowEmailConfirm(false),4000); };
-  
+
   return <div style={{display:"flex",alignItems:"center",gap:12}}>
     <div style={{display:"flex",alignItems:"center",gap:4, background:"rgba(0,0,0,0.2)", padding:"4px 8px", borderRadius:6, border:"1px solid rgba(255,255,255,0.1)"}}>
       {[{key:"open",label:"Prep",done:["submitted","review_pending","approved"].includes(approval.status)},{key:"review_pending",label:"Review",done:["approved"].includes(approval.status)},{key:"approved",label:"Approved",done:approval.status==="approved"}].map((step,i)=>(
@@ -4249,6 +4372,7 @@ function ApprovalWaterfallBar({fund,approval,exceptions,currentUser,onSubmit,onA
         </React.Fragment>
       ))}
     </div>
+    {onOpenPdf&&<button onClick={onOpenPdf} style={{...SANS,border:"1px solid rgba(255,255,255,0.15)",borderRadius:5,padding:"5px 10px",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:4,background:"rgba(255,255,255,0.08)",color:"rgba(255,255,255,0.85)"}}>📄 PDF</button>}
     {isPreparer&&approval.status==="open"&&<button disabled={!canSubmit} onClick={()=>canSubmit&&onSubmit()} style={{...SANS,border:canSubmit?"none":"1px solid rgba(255,255,255,0.1)",borderRadius:5,padding:"5px 12px",fontSize:11,fontWeight:700,cursor:canSubmit?"pointer":"not-allowed",display:"flex",alignItems:"center",gap:5,background:canSubmit?T.actionBase:"rgba(255,255,255,0.05)",color:canSubmit?"#fff":"rgba(255,255,255,0.4)"}}>{canSubmit?<><span>↑</span>Submit</>:<><span>🔒</span>{openErrors.length} Errors</>}</button>}
     {currentUser.isController&&approval.status==="review_pending"&&<button onClick={handleApprove} style={{...SANS,border:"none",borderRadius:5,padding:"5px 12px",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5,background:T.okBase,color:"#fff"}}><span>✓</span>Approve</button>}
     {showEmailConfirm&&<span className="fade-in" style={{...SANS,fontSize:11,color:"#34d399",fontWeight:600}}>✉️ Sent</span>}
@@ -5437,8 +5561,9 @@ function WorkpapersTab({ fund, masterFeeds }) {
 
 // ─── FundView — Main Fund Drill-Down Container ────────────────────────
 // ─── FundView — Main Fund Drill-Down Container ────────────────────────
-function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFeeds, blockedFunds, onUpdateFeedRecord, onSelectFund, onResolve, onReopen, onUpdate, onAddThread, onSubmit, onApprove, onBack}) {
+function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFeeds, blockedFunds, onUpdateFeedRecord, onSelectFund, onResolve, onReopen, onUpdate, onAddThread, onSubmit, onApprove, onBack, demoActiveExcId, demoTypingText, demoShouldSubmit, fxOverrideActive}) {
   const [tab,setTab]=useState("exceptions");
+  const [showFundPdf, setShowFundPdf] = useState(false);
   
   const handleNextFund = () => {
     const currentIndex = blockedFunds.findIndex(f => f.fund_id === fund.fund_id);
@@ -5476,7 +5601,7 @@ function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFee
           </button>
         )}
       </div>
-      <ApprovalWaterfallBar fund={fund} approval={approval} exceptions={exceptions} currentUser={currentUser} onSubmit={onSubmit} onApprove={onApprove}/>
+      <ApprovalWaterfallBar fund={fund} approval={approval} exceptions={exceptions} currentUser={currentUser} onSubmit={onSubmit} onApprove={onApprove} onOpenPdf={() => setShowFundPdf(true)}/>
     </div>
 
     <div style={{background:T.cardBg,borderBottom:`1px solid ${T.border}`,padding:"0 24px",display:"flex",gap:0,flexShrink:0,overflowX:"auto"}}>
@@ -5490,16 +5615,17 @@ function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFee
     </div>
 
     <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>
-      {tab==="exceptions"  &&<ExceptionsTab exceptions={exceptions} approval={approval} onResolve={onResolve} onReopen={onReopen} onUpdate={onUpdate} onAddThread={onAddThread} currentUserId={currentUser.id} onSubmit={onSubmit}/>}
+      {tab==="exceptions"  &&<ExceptionsTab exceptions={exceptions} approval={approval} onResolve={onResolve} onReopen={onReopen} onUpdate={onUpdate} onAddThread={onAddThread} currentUserId={currentUser.id} onSubmit={onSubmit} demoActiveExcId={demoActiveExcId} demoTypingText={demoTypingText} demoShouldSubmit={demoShouldSubmit}/>}
       {tab==="ai_log" && <AIDecisionLogTab />}
       {tab==="explorer"    &&<DataExplorerTab masterFeeds={masterFeeds} onUpdateFeedRecord={onUpdateFeedRecord}/>}
       {tab==="journals" && <JournalEntriesTab fund={fund} fundSeeds={fundSeeds} masterFeeds={masterFeeds} currentUser={currentUser} onPostJE={() => {}} />}
       {tab==="workpapers"  &&<WorkpapersTab fund={fund} masterFeeds={masterFeeds} />} {/* <-- ADD THIS LINE */}
       {tab==="cross_checks"&&<CrossChecksTab currentUser={currentUser}/>}
       {tab==="lpa_terms" && <LpaVerificationTab />}
-      {tab==="statements"  &&<FinancialStatementsTab fund={fund} />}
+      {tab==="statements"  &&<FinancialStatementsTab fund={fund} fxOverrideActive={fxOverrideActive} exceptions={exceptions}/>}
       {tab==="footnotes"   &&<FootnoteEditorTab fund={fund} />}
     </div>
+    {showFundPdf && <PdfModal onClose={() => setShowFundPdf(false)} fund={fund} resolvedExceptions={exceptions.filter(e=>e.status==='resolved')} />}
   </div>;
 }
 
@@ -5585,37 +5711,117 @@ function AuditorPortal({onClose}) {
 // IT6: THE BOILERROOM COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 // ─── COMBINED: Autonomous Flow & Team Capacity Dashboard (With Rebalancing) ──
-function TouchlessFlowDashboard({ fundSeeds, onReassign }) {
+function TouchlessFlowDashboard({ fundSeeds, onReassign, fundState, onRunDemo, isDemoRunning, demoKey }) {
   const [rebalanceModalOpen, setRebalanceModalOpen] = useState(false);
   const [reassignments, setReassignments] = useState({});
 
-  // 1. Aggregate Data for Pipeline
-  const allExceptions = Object.values(FUND_EXCEPTIONS).flat();
-  const openExcs = allExceptions.filter(e => e.status === "open");
-  const resolvedExcs = allExceptions.filter(e => e.status === "resolved");
+  // ── Instructions 1-2: Live animation state ───────────────────────────────
+  const [liveIngestedCount, setLiveIngestedCount] = useState(0);
+  const [feedLog, setFeedLog] = useState([]);
+  const [liveAiCount, setLiveAiCount] = useState(0);
+  const [aiLog, setAiLog] = useState([]);
+  const [ingestFlash, setIngestFlash] = useState(false);
+  const [aiFlash, setAiFlash] = useState(false);
+  const feedLogRef = useRef(null);
+  const aiLogRef = useRef(null);
+  const animRef = useRef({ ingestTimer: null, aiTimer: null, aiTimeout: null });
 
-  const ingestedCount = INGESTION_FEEDS.filter(f => f.status === "success").length;
+  const startAnimation = useCallback(() => {
+    clearInterval(animRef.current.ingestTimer);
+    clearInterval(animRef.current.aiTimer);
+    clearTimeout(animRef.current.aiTimeout);
+    setLiveIngestedCount(0); setFeedLog([]); setLiveAiCount(0); setAiLog([]);
+    setIngestFlash(false); setAiFlash(false);
+
+    let ingestIdx = 0;
+    const autoLogs = AI_DECISION_LOG.filter(l => l.type === 'autonomous');
+
+    animRef.current.ingestTimer = setInterval(() => {
+      if (ingestIdx >= INGESTION_FEEDS.length) {
+        clearInterval(animRef.current.ingestTimer);
+        animRef.current.aiTimeout = setTimeout(() => {
+          let aiIdx = 0;
+          animRef.current.aiTimer = setInterval(() => {
+            if (aiIdx >= autoLogs.length) { clearInterval(animRef.current.aiTimer); return; }
+            const log = autoLogs[aiIdx];
+            setLiveAiCount(aiIdx + 1);
+            setAiFlash(true); setTimeout(() => setAiFlash(false), 700);
+            setAiLog(prev => [...prev, `[${log.timestamp}] ✦ ${log.exceptionId} — ${log.rule} — Auto-Resolved (${log.confidence}%)`]);
+            aiIdx++;
+          }, 600);
+        }, 1000);
+        return;
+      }
+      const feed = INGESTION_FEEDS[ingestIdx];
+      const ts = new Date().toLocaleTimeString('en-US', { hour12: false });
+      setLiveIngestedCount(ingestIdx + 1);
+      setIngestFlash(true); setTimeout(() => setIngestFlash(false), 700);
+      setFeedLog(prev => [...prev, `[${ts}] ✓ ${feed.payload} — ${feed.rows.toLocaleString()} rows ingested`]);
+      ingestIdx++;
+    }, 800);
+  }, []);
+
+  useEffect(() => {
+    startAnimation();
+    return () => {
+      clearInterval(animRef.current.ingestTimer);
+      clearInterval(animRef.current.aiTimer);
+      clearTimeout(animRef.current.aiTimeout);
+    };
+  }, [demoKey]); // restarts when demo key changes
+
+  useEffect(() => { feedLogRef.current?.scrollTo(0, feedLogRef.current.scrollHeight); }, [feedLog.length]);
+  useEffect(() => { aiLogRef.current?.scrollTo(0, aiLogRef.current.scrollHeight); }, [aiLog.length]);
+
+  // ── Instruction 3: Live data from fundState ──────────────────────────────
+  const liveAllExcs = useMemo(() => Object.values(fundState || {}).flat(), [fundState]);
+  const liveOpenErrors = useMemo(() => liveAllExcs.filter(e => e.severity === 'error' && e.status === 'open'), [liveAllExcs]);
+  const liveResidualCount = liveOpenErrors.length;
+  const liveResolved = useMemo(() => liveAllExcs.filter(e => e.status === 'resolved'), [liveAllExcs]);
+
+  const prevResidualRef = useRef(liveResidualCount);
+  const [residualFlash, setResidualFlash] = useState(false);
+  useEffect(() => {
+    if (prevResidualRef.current !== null && liveResidualCount < prevResidualRef.current) {
+      setResidualFlash(true);
+      setTimeout(() => setResidualFlash(false), 600);
+    }
+    prevResidualRef.current = liveResidualCount;
+  }, [liveResidualCount]);
+
+  // ── Instruction 9: STP Rate ──────────────────────────────────────────────
+  const stpRate = useMemo(() => {
+    const excs = liveAllExcs as any[];
+    if (!excs.length) return 0;
+    const touchless = excs.filter(e => e.status === 'resolved' && (e.resolvedBy === 'u_ai' || e.resolution === 'acknowledge')).length;
+    return Math.round(touchless / excs.length * 100);
+  }, [liveAllExcs]);
+  const circumference = 251; // 2π × 40
+  const stpOffset = circumference - (stpRate / 100) * circumference;
+  const stpColor = stpRate >= 80 ? T.okBase : stpRate >= 60 ? T.warnBase : T.errorBase;
+
+  // ── Static aggregates ────────────────────────────────────────────────────
   const totalFeeds = INGESTION_FEEDS.length;
-
-  const totalCaught = allExceptions.length;
-  const totalResolved = resolvedExcs.length;
-
-  const reviewPending = openExcs.length;
-  
+  const autoResolvedCount = AI_DECISION_LOG.filter(l => l.type === 'autonomous').length;
   const approvedFunds = Object.values(INITIAL_APPROVAL_STATE).filter(a => a.status === "approved").length;
   const filingsDue = BEVERLEY_FILINGS.filter(f => f.status !== "filed").length;
 
+  const ingestionDone = liveIngestedCount === totalFeeds && totalFeeds > 0;
+  const aiDone = liveAiCount === autoResolvedCount && autoResolvedCount > 0;
+  const queueClear = liveResidualCount === 0;
+
   const stages = [
-    { id: "ingest", title: "Data Ingestion", metric: `${ingestedCount} / ${totalFeeds}`, desc: "Feeds received & parsed", icon: "⛁", color: T.actionBase, bg: T.actionBg },
-    { id: "auto", title: "Touchless AI", metric: `${totalResolved} / ${totalCaught}`, desc: "Exceptions auto-resolved", icon: "✦", color: T.aiBase, bg: T.aiBg },
-    { id: "review", title: "Judgment Queue", metric: reviewPending, desc: "Pending preparer review", icon: "👤", color: T.warnBase, bg: T.warnBg },
+    { id: "ingest", title: "Data Ingestion", metric: `${liveIngestedCount} / ${totalFeeds}`, desc: "Feeds received & parsed", icon: "⛁", color: ingestionDone ? T.okBase : T.actionBase, bg: ingestionDone ? T.okBg : T.actionBg },
+    { id: "auto",   title: "Touchless AI",   metric: `${liveAiCount} / ${autoResolvedCount}`, desc: "Exceptions auto-resolved", icon: "✦", color: aiDone ? T.okBase : T.aiBase, bg: aiDone ? T.okBg : T.aiBg },
+    { id: "review", title: "Judgment Queue", metric: liveResidualCount, desc: "Pending preparer review", icon: queueClear ? "🎉" : "👤", color: queueClear ? T.okBase : T.warnBase, bg: queueClear ? T.okBg : T.warnBg },
     { id: "approve", title: "Controller Sign-Off", metric: approvedFunds, desc: "Funds certified", icon: "✓", color: T.okBase, bg: T.okBg },
-    { id: "file", title: "Regulatory Filings", metric: filingsDue, desc: "Filings due in 30 days", icon: "🏛", color: "#64748b", bg: "#f1f5f9" }
+    { id: "file",   title: "Regulatory Filings", metric: filingsDue, desc: "Filings due in 30 days", icon: "🏛", color: "#64748b", bg: "#f1f5f9" }
   ];
 
   // 2. Map Capacity Data (Supporting multiple users per fund)
+  const liveOpenExcs = liveAllExcs.filter(e => e.status === 'open');
   const capacityData = TEAM.map(user => {
-    const userExcs = openExcs.filter(e => e.assignee === user.id);
+    const userExcs = liveOpenExcs.filter(e => e.assignee === user.id);
     
     // Safely handle if assignedTo is an array (multiple users) or a string (single user)
     const userFunds = fundSeeds.filter(f => {
@@ -5648,7 +5854,7 @@ function TouchlessFlowDashboard({ fundSeeds, onReassign }) {
 
   return (
     <div className="fade-in" style={{background: T.navyHeader, borderRadius: 12, marginBottom: 24, boxShadow: "0 10px 30px rgba(0,0,0,0.2)", overflow: "hidden", display: "flex", flexDirection: "column"}}>
-      
+
       {/* ─── TOP PANE: Global Pipeline Flow ─── */}
       <div style={{padding: "24px 32px", position: "relative"}}>
         <div style={{display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 36}}>
@@ -5656,24 +5862,76 @@ function TouchlessFlowDashboard({ fundSeeds, onReassign }) {
             <h2 style={{...SANS, fontSize: 18, fontWeight: 700, color: "#fff", margin: 0}}>Autonomous Operations</h2>
             <p style={{...SANS, fontSize: 13, color: "rgba(255,255,255,0.6)", marginTop: 4}}>Live view of global STP flow and process bottlenecks.</p>
           </div>
+          {/* Instruction 9: STP Rate Gauge + Demo button 
+          <div style={{display:"flex",alignItems:"center",gap:16}}>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+              <svg width="96" height="96" viewBox="0 0 96 96">
+                <circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="8" />
+                <circle cx="48" cy="48" r="40" fill="none" stroke={stpColor} strokeWidth="8"
+                  strokeDasharray={circumference} strokeDashoffset={stpOffset}
+                  strokeLinecap="round" transform="rotate(-90 48 48)"
+                  style={{transition:"stroke-dashoffset 0.8s ease, stroke 0.5s ease"}} />
+                <text x="48" y="44" textAnchor="middle" fill="#fff" fontSize="16" fontWeight="bold" fontFamily="monospace">{stpRate}%</text>
+                <text x="48" y="58" textAnchor="middle" fill="rgba(255,255,255,0.55)" fontSize="8" fontFamily="sans-serif">STP Rate</text>
+              </svg>
+            </div>
+            {onRunDemo && (
+              <button onClick={onRunDemo} style={{...SANS, fontSize: 12, fontWeight: 700, padding: "8px 16px", borderRadius: 6, border: `1px solid ${isDemoRunning ? T.errorBorder : T.okBorder}`, background: isDemoRunning ? T.errorBg : T.okBg, color: isDemoRunning ? T.errorBase : T.okBase, cursor: "pointer", display: "flex", alignItems: "center", gap: 7, transition: "all 0.2s"}}>
+                {isDemoRunning ? "⏹ Stop Demo" : "▶ Run Touchless Demo"}
+              </button>
+            )}
+          </div>*/}
         </div>
 
-        <div style={{display: "flex", alignItems: "center", position: "relative"}}>
+        <div style={{display: "flex", alignItems: "flex-start", position: "relative"}}>
           <div style={{position: "absolute", top: 26, left: "10%", right: "10%", height: 2, background: "rgba(255,255,255,0.15)", zIndex: 0}} />
-          
-          {stages.map((stage) => (
-            <div key={stage.id} style={{flex: 1, display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 1}}>
-              <div style={{width: 52, height: 52, borderRadius: "50%", background: stage.bg, border: `2px solid ${stage.color}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: stage.color, marginBottom: 12, boxShadow: `0 0 0 6px ${T.navyHeader}`}}>
-                {stage.icon}
+
+          {stages.map((stage) => {
+            const flashCls = stage.id === "ingest" && ingestFlash ? "flash-green"
+              : stage.id === "auto" && aiFlash ? "flash-purple"
+              : stage.id === "review" && residualFlash ? "count-down"
+              : "";
+            const badge = stage.id === "ingest" && ingestionDone ? "✓ Ingestion Complete"
+              : stage.id === "auto" && aiDone ? "100% Autonomous"
+              : stage.id === "review" && queueClear ? "🎉 Queue Clear"
+              : null;
+            return (
+              <div key={stage.id} style={{flex: 1, display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 1}}>
+                <div style={{width: 52, height: 52, borderRadius: "50%", background: stage.bg, border: `2px solid ${stage.color}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: stage.color, marginBottom: 12, boxShadow: `0 0 0 6px ${T.navyHeader}`, transition: "border-color 0.4s, background 0.4s"}}>
+                  {stage.icon}
+                </div>
+                <div style={{textAlign: "center"}}>
+                  <div className={flashCls} style={{...SANS, fontSize: 22, fontWeight: 700, color: "#fff", lineHeight: 1.1, borderRadius: 6, padding: "2px 6px"}}>{stage.metric}</div>
+                  <div style={{...SANS, fontSize: 12, fontWeight: 700, color: stage.color, marginTop: 4, transition: "color 0.4s"}}>{stage.title}</div>
+                  <div style={{...SANS, fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 4, maxWidth: 130, margin: "4px auto 0", lineHeight: 1.4}}>{stage.desc}</div>
+                  {badge && <div style={{...MONO, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 10, background: T.okBg, color: T.okBase, border: `1px solid ${T.okBorder}`, marginTop: 6, display: "inline-flex", alignItems: "center", gap: 3}}>{badge}</div>}
+                </div>
               </div>
-              <div style={{textAlign: "center"}}>
-                <div style={{...SANS, fontSize: 22, fontWeight: 700, color: "#fff", lineHeight: 1.1}}>{stage.metric}</div>
-                <div style={{...SANS, fontSize: 12, fontWeight: 700, color: stage.color, marginTop: 4}}>{stage.title}</div>
-                <div style={{...SANS, fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 4, maxWidth: 130, margin: "4px auto 0", lineHeight: 1.4}}>{stage.desc}</div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
+
+        {/* Feed log + AI log rows 
+        {(feedLog.length > 0 || aiLog.length > 0) && (
+          <div style={{display: "flex", gap: 12, marginTop: 20}}>
+            {feedLog.length > 0 && (
+              <div style={{flex: 1, minWidth: 0}}>
+                <div style={{...MONO, fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4}}>Ingestion Log</div>
+                <div ref={feedLogRef} style={{height: 80, overflowY: "auto", ...MONO, fontSize: 10, background: "#0d1117", color: "#34d399", padding: 8, borderRadius: 6}}>
+                  {feedLog.map((line, i) => <div key={i}>{line}</div>)}
+                </div>
+              </div>
+            )}
+            {aiLog.length > 0 && (
+              <div style={{flex: 1, minWidth: 0}}>
+                <div style={{...MONO, fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4}}>AI Resolution Log</div>
+                <div ref={aiLogRef} style={{height: 80, overflowY: "auto", ...MONO, fontSize: 10, background: "#0d1117", color: "#a78bfa", padding: 8, borderRadius: 6}}>
+                  {aiLog.map((line, i) => <div key={i}>{line}</div>)}
+                </div>
+              </div>
+            )}
+          </div>
+        )}*/}
       </div>
 
       {/* ─── BOTTOM PANE: Human-in-the-Loop Capacity Grid ─── */}
@@ -7563,7 +7821,7 @@ function NaturalLanguageQuery() {
     </div>
   );
 }
-function Dashboard({onBulkSubmitForReview,dashSubView, fundState, fundSeeds, approvalState, currentUser, notifications, onSelectFund, onReassign, onViewClientExceptions, onBulkApprove, onGlobalResolve, onGoToAudit}) {
+function Dashboard({onBulkSubmitForReview,dashSubView, fundState, fundSeeds, approvalState, currentUser, notifications, onSelectFund, onReassign, onViewClientExceptions, onBulkApprove, onGlobalResolve, onGoToAudit, onRunDemo, isDemoRunning, demoKey}) {
   const [dashView,setDashView]=useState(currentUser?.isController ? "flow":"client");
   const [layoutStyle,setLayoutStyle]=useState("list");
   const [collapsed,setCollapsed]=useState({});
@@ -7647,6 +7905,7 @@ function Dashboard({onBulkSubmitForReview,dashSubView, fundState, fundSeeds, app
       </div>
 {/** TODO: Make {val:"flow",label:"Autonomous Flow"}, default for Controler logim, Remove view from preparer  */}
       <div style={{display:"flex",gap:8,alignItems:"center"}}>
+ 
       <div style={{display:"flex",background:T.appBg,border:`1px solid ${T.border}`,borderRadius:7,padding:3,gap:2}}>
           {/* NEW: Conditionally render Autonomous Flow for Controllers only */}
           {[
@@ -7668,6 +7927,7 @@ function Dashboard({onBulkSubmitForReview,dashSubView, fundState, fundSeeds, app
             <button onClick={()=>setLayoutStyle("grid")} title="Grid View" style={{...SANS, fontSize:12, fontWeight:600, display:"flex", alignItems:"center", gap:5, background:layoutStyle==="grid"?T.cardBg:"transparent", color:layoutStyle==="grid"?T.textPrimary:T.textMuted, border:"none", borderRadius:5, padding:"5px 10px", cursor:"pointer", boxShadow:layoutStyle==="grid"?"0 1px 3px rgba(0,0,0,0.1)":"none"}}><span style={{fontSize:14, opacity:layoutStyle==="grid"?1:0.5}}>⊞</span> Grid</button>
           </div>
       )} */}
+
         <button onClick={()=>setShowGlobalExcs(true)} style={{...SANS,fontSize:12,fontWeight:700,color:T.aiBase,padding:"7px 14px",borderRadius:7,border:`1px solid ${T.aiBorder}`,background:T.aiBg,cursor:"pointer",display:"flex",alignItems:"center",gap:6,marginLeft:12}}><span>🌍</span>Global Exceptions</button>
         <button onClick={()=>setShowClientPortal(true)} style={{...SANS,fontSize:12,fontWeight:600,color:T.textPrimary,padding:"7px 14px",borderRadius:7,border:`1px solid ${T.border}`,background:T.cardBg,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}><span>🏢</span>Client Portal</button>
         <button onClick={()=>setShowAuditorPortal(true)} style={{...SANS,fontSize:12,fontWeight:600,color:T.textPrimary,padding:"7px 14px",borderRadius:7,border:`1px solid ${T.border}`,background:T.cardBg,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}><span>🔒</span>Auditor Portal</button>
@@ -7742,11 +8002,13 @@ function Dashboard({onBulkSubmitForReview,dashSubView, fundState, fundSeeds, app
             </button>
           ))}
         </div>
+
       </div>
+      
     )}
 
 {dashView==="inbox" ? <InboxView notifications={notifications} onSelectFund={onSelectFund} /> : 
-     dashView==="flow" ? <TouchlessFlowDashboard fundSeeds={fundSeeds} approvalState={approvalState} fundState={fundState} onReassign={onReassign}/> :
+     dashView==="flow" ? <TouchlessFlowDashboard fundSeeds={fundSeeds} approvalState={approvalState} fundState={fundState} onReassign={onReassign} onRunDemo={onRunDemo} isDemoRunning={isDemoRunning} demoKey={demoKey}/> :
      dashView==="team" ? <TeamCapacityView fundState={fundState} fundSeeds={filteredAndSortedFunds} onSelectFund={onSelectFund} onReassign={onReassign}/> : 
       Object.keys(grouped).length === 0 ? (
         <div style={{textAlign:"center", padding:"60px 0", color:T.textMuted, ...SANS, fontSize:14}}>No funds match your current filters.</div>
@@ -8245,9 +8507,34 @@ function LoginScreen({ onLogin }) {
 
 {/** TODO: M  */}
 // ─── GlobalHeader (Upgraded with Fixed Radial Data Hub Menu) ─────────────────
-function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIngestion, onGoToFilings, onGoToEntities, onOpenAiSettings, onGoToDashboard, streak, notificationCount}) {
+function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIngestion, onGoToFilings, onGoToEntities, onOpenAiSettings, onGoToDashboard, streak, notificationCount, fundState, fundSeeds}) {
   const [hubOpen, setHubOpen] = useState(false);
+  const [excFlash, setExcFlash] = useState(false);
   const showDataFeedsBtn = view !== "login" && view !== "auditor_portal";
+
+  const allExcs = useMemo(() => Object.values(fundState || {}).flat(), [fundState]);
+  const fundsOpen = useMemo(() => (fundSeeds || []).filter(f => (fundState?.[f.fund_id] || []).some((e:any) => e.severity === 'error' && e.status === 'open')).length, [fundState, fundSeeds]);
+  const exceptionsOpen = useMemo(() => (allExcs as any[]).filter(e => e.severity === 'error' && e.status === 'open').length, [allExcs]);
+  const touchlessPct = useMemo(() => {
+    const excs = allExcs as any[];
+    if (!excs.length) return 0;
+    const touchless = excs.filter(e => e.status === 'resolved' && (e.resolvedBy === 'u_ai' || e.resolution === 'acknowledge')).length;
+    return Math.round(touchless / excs.length * 100);
+  }, [allExcs]);
+
+  const prevExcOpen = useRef(exceptionsOpen);
+  useEffect(() => {
+    if (prevExcOpen.current !== exceptionsOpen) {
+      setExcFlash(true);
+      const t = setTimeout(() => setExcFlash(false), 800);
+      prevExcOpen.current = exceptionsOpen;
+      return () => clearTimeout(t);
+    }
+  }, [exceptionsOpen]);
+
+  const touchColor = touchlessPct >= 80 ? T.okBase : touchlessPct >= 60 ? T.warnBase : T.errorBase;
+  const touchBg = touchlessPct >= 80 ? T.okBg : touchlessPct >= 60 ? T.warnBg : T.errorBg;
+  const touchBd = touchlessPct >= 80 ? T.okBorder : touchlessPct >= 60 ? T.warnBorder : T.errorBorder;
 
   return (
     <header style={{background:T.navyHeader,color:"#fff",padding:"0 24px",height:52,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:200,boxShadow:"0 1px 4px rgba(0,0,0,0.1)"}}>
@@ -8270,11 +8557,24 @@ function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIn
         </span>
       </div>
       </div>
-      
 
+      {/* KPI ticker chips 
+      {fundState && (
+        <div style={{display:"flex",alignItems:"center",gap:6}}>
+          <div style={{...SANS,fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:5,background:"rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.85)",border:"1px solid rgba(255,255,255,0.12)",whiteSpace:"nowrap"}}>
+            {fundsOpen} Fund{fundsOpen!==1?"s":""} Open
+          </div>
+          <div className={excFlash ? "flash-yellow" : ""} style={{...SANS,fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:5,background:exceptionsOpen>0?"rgba(251,191,36,0.15)":"rgba(255,255,255,0.08)",color:exceptionsOpen>0?T.warnBase:"rgba(255,255,255,0.6)",border:`1px solid ${exceptionsOpen>0?T.warnBorder:"rgba(255,255,255,0.1)"}`,whiteSpace:"nowrap",transition:"background 0.3s,color 0.3s"}}>
+            {exceptionsOpen} Exception{exceptionsOpen!==1?"s":""}
+          </div>
+          <div style={{...SANS,fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:5,background:touchBg,color:touchColor,border:`1px solid ${touchBd}`,whiteSpace:"nowrap"}}>
+            {touchlessPct}% Touchless
+          </div>
+        </div>
+      )}*/}
 
       <div style={{display:"flex",alignItems:"center",gap:10}}>
-        
+
       <button onClick={() => onGoToDashboard("dashboard")} style={{...SANS,fontSize:12,fontWeight:600,padding:"0 12px",height:26,borderRadius:6,cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",gap:6,marginRight:4,transition:"all 0.2s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.2)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
               <span>📊</span> Dashboard
             </button>
@@ -8478,6 +8778,18 @@ export default function App() {
 
   const currentUser = TEAM.find(m=>m.id===currentUserId) || TEAM[0];
   const [dashSubView, setDashSubView] = useState(null);
+
+  // ── FX override state (Instruction 5) ────────────────────────────────────
+  const [fxOverrideActive, setFxOverrideActive] = useState(false);
+
+  // ── Demo orchestration state (Instructions 1-6) ───────────────────────────
+  const [demoKey, setDemoKey] = useState(0);
+  const [isDemoRunning, setIsDemoRunning] = useState(false);
+  const [demoActiveExcId, setDemoActiveExcId] = useState(null);
+  const [demoTypingText, setDemoTypingText] = useState("");
+  const [demoShouldSubmit, setDemoShouldSubmit] = useState(false);
+  const [demoToast, setDemoToast] = useState(null);
+  const demoRunningRef = useRef(false);
   const handleGoToDashboard = (target = "dashboard") => { 
     setSelectedFund(null); 
     if (target === "inbox") {
@@ -8593,6 +8905,7 @@ export default function App() {
 
   const handleResolve = useCallback((fid,id,res,ov)=>{
     setStreak(s=>s+1);
+    if(id==='EXC-003' && res==='override_value') setFxOverrideActive(true);
     setFundState(prev=>{
       const realFid = getRealFid(prev, fid, id);
       if(!prev[realFid]) return prev;
@@ -8623,13 +8936,14 @@ export default function App() {
     });
   },[currentUserId]);
 
-  const handleAddThread=useCallback((fid,excId,text)=>{ 
+  const handleAddThread=useCallback((fid,excId,text,userId?)=>{
     const ts=new Date().toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
+    const uid=userId||currentUserId;
     setFundState(prev=>{
       const realFid = getRealFid(prev, fid, excId);
       if(!prev[realFid]) return prev;
-      return {...prev,[realFid]:prev[realFid].map(e=>e.id===excId?{...e,thread:[...e.thread,{id:`t${Date.now()}`,userId:currentUserId,text,ts}]}:e)}
-    }); 
+      return {...prev,[realFid]:prev[realFid].map(e=>e.id===excId?{...e,thread:[...e.thread,{id:`t${Date.now()}`,userId:uid,text,ts}]}:e)}
+    });
   },[currentUserId]);
 
   const handleSubmit=useCallback(fid=>setApprovalState(prev=>({...prev,[fid]:{status:"review_pending",submittedBy:currentUserId,submittedAt:new Date().toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}),approvedBy:null,approvedAt:null}})),[currentUserId]);
@@ -8656,7 +8970,75 @@ export default function App() {
   }),[currentUserId]);
 
   const handleReassign=useCallback((fid,newUid)=>setFundSeeds(prev=>prev.map(f=>f.fund_id===fid?{...f,assignedTo:newUid}:f)),[]);
-  
+
+  // ── Demo orchestrator (Instruction 6) ────────────────────────────────────
+  const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+  const handleRunDemo = useCallback(() => {
+    if (demoRunningRef.current) {
+      demoRunningRef.current = false;
+      setIsDemoRunning(false);
+      setDemoToast(null);
+      return;
+    }
+    demoRunningRef.current = true;
+    setIsDemoRunning(true);
+    setDemoKey(k => k + 1); // restarts TouchlessFlowDashboard animation
+
+    const run = async () => {
+      // Animation plays in TouchlessFlowDashboard for ~9.5s (7×800ms + 1000ms + 4×600ms)
+      await sleep(9600);
+      if (!demoRunningRef.current) return;
+
+      // Step 4: Navigate to Pennywise Global Diversified Fund
+      const fund = FUNDS_SEED.find(f => f.fund_id === "FND-2024-001");
+      setSelectedFund(fund); setView("fund");
+      await sleep(500);
+      if (!demoRunningRef.current) return;
+
+      // Step 5: Open EXC-H01
+      setDemoActiveExcId("EXC-H01");
+      await sleep(1000);
+      if (!demoRunningRef.current) return;
+
+      // Step 6: Type comment char-by-char
+      const comment = "Reviewing T+1 settlement lag on AAPL position.";
+      for (let i = 0; i <= comment.length; i++) {
+        if (!demoRunningRef.current) return;
+        setDemoTypingText(comment.slice(0, i));
+        await sleep(45);
+      }
+      await sleep(500);
+      if (!demoRunningRef.current) return;
+
+      // Step 7: Submit comment (AI reply auto-fires via Instruction 4)
+      setDemoShouldSubmit(true);
+      await sleep(200);
+      setDemoShouldSubmit(false);
+      setDemoTypingText("");
+
+      // Step 8: Wait for AI reply, then resolve exception
+      await sleep(2200);
+      if (!demoRunningRef.current) return;
+      handleResolve("FND-2024-001", "EXC-H01", "accept_as_is", "");
+
+      // Step 9: Navigate back to dashboard
+      await sleep(600);
+      if (!demoRunningRef.current) return;
+      setSelectedFund(null); setView("dashboard");
+      setDemoActiveExcId(null);
+
+      // Step 10: Show toast
+      await sleep(600);
+      if (!demoRunningRef.current) return;
+      setDemoToast("✓ Touchless Demo Complete — 4 auto-resolved, 1 human-assisted");
+      setTimeout(() => setDemoToast(null), 6000);
+
+      demoRunningRef.current = false;
+      setIsDemoRunning(false);
+    };
+    run();
+  }, [handleResolve]);
+
   if (view === "login") return <><StyleInjector/><LoginScreen onLogin={handleLogin} /></>;
   if (view === "auditor_portal") return <><StyleInjector/><AuditorPortal onClose={handleLogout} isModal={false} /></>; 
 
@@ -8689,7 +9071,9 @@ export default function App() {
         onOpenAiSettings={()=>setShowAiSettings(true)}
         onGoToDashboard={handleGoToDashboard} 
         streak={streak}
-        notificationCount={notifications.length} 
+        notificationCount={notifications.length}
+        fundState={fundState}
+        fundSeeds={FUNDS_SEED}
       />
       {view==="ingestion"&&!selectedFund&&<IngestionStatusWidget feeds={feeds} setFeeds={setFeeds} currentUser={currentUser} onGoToDashboard={()=>{setView("dashboard");}} onOpenMapping={session=>setMappingSession(session)} onGoToExceptions={handleGoToExceptions} setView={setView}/>}
       {view === "schemas" && <SchemaRegistryView onBack={() => setView("ingestion")} onOpenStudio={(id) => { setActiveSchema(id); setView("schema_studio"); }} />}
@@ -8704,9 +9088,10 @@ export default function App() {
       {view==="data_architecture"&&!selectedFund&&<IntegrationsAndArchitectureHub fundSeeds={fundSeeds} masterFeeds={masterFeeds} onBack={()=>setView("dashboard")} />}
       {view==="data_exchange"&&!selectedFund&&<DataExchangeView onBack={()=>setView("dashboard")} />}
       {/* Update Dashboard to receive notifications */}
-      {view==="dashboard"&&!selectedFund&&<Dashboard onBulkSubmitForReview={handleBulkSubmitForReview} dashSubView={dashSubView} fundState={fundState} fundSeeds={fundSeeds} approvalState={approvalState} currentUser={currentUser} notifications={notifications} onSelectFund={f=>{setSelectedFund(f); setView("fund");}} onReassign={handleReassign} onViewClientExceptions={handleViewClientExceptions} onBulkApprove={handleBulkApprove} onGlobalResolve={handleGlobalResolve} onGoToAudit={()=>setView("audit_logs")} />} {selectedFund&&<FundView fund={selectedFund} fundSeeds={fundSeeds} onSelectFund={f=>{setSelectedFund(f); setView("fund");}} exceptions={getExceptions(selectedFund.fund_id)} approval={approvalState[selectedFund.fund_id] || {status:"open"}} currentUser={currentUser} masterFeeds={masterFeeds} blockedFunds={blockedFundsList}
+      {demoToast && <div className="slide-in" style={{position:"fixed",top:70,right:24,background:T.navyHeader,border:`1px solid ${T.okBase}`,color:"#fff",padding:"14px 20px",borderRadius:8,boxShadow:"0 10px 25px rgba(0,0,0,0.2)",zIndex:9999,display:"flex",gap:12,alignItems:"center",...SANS,fontSize:13,fontWeight:600}}><span style={{fontSize:18}}>✓</span>{demoToast}<button onClick={()=>setDemoToast(null)} style={{background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:16,marginLeft:8}}>✕</button></div>}
+      {view==="dashboard"&&!selectedFund&&<Dashboard onBulkSubmitForReview={handleBulkSubmitForReview} dashSubView={dashSubView} fundState={fundState} fundSeeds={fundSeeds} approvalState={approvalState} currentUser={currentUser} notifications={notifications} onSelectFund={f=>{setSelectedFund(f); setView("fund");}} onReassign={handleReassign} onViewClientExceptions={handleViewClientExceptions} onBulkApprove={handleBulkApprove} onGlobalResolve={handleGlobalResolve} onGoToAudit={()=>setView("audit_logs")} onRunDemo={handleRunDemo} isDemoRunning={isDemoRunning} demoKey={demoKey}/>} {selectedFund&&<FundView fund={selectedFund} fundSeeds={fundSeeds} onSelectFund={f=>{setSelectedFund(f); setView("fund");}} exceptions={getExceptions(selectedFund.fund_id)} approval={approvalState[selectedFund.fund_id] || {status:"open"}} currentUser={currentUser} masterFeeds={masterFeeds} blockedFunds={blockedFundsList}
     onUpdateFeedRecord={handleUpdateFeedRecord} 
-    onResolve={(id,res,ov)=>handleResolve(selectedFund.fund_id,id,res,ov)} onReopen={id=>handleReopen(selectedFund.fund_id,id)} onUpdate={(id,patch)=>handleUpdate(selectedFund.fund_id,id,patch)} onAddThread={(excId,txt)=>handleAddThread(selectedFund.fund_id,excId,txt)} onSubmit={()=>handleSubmit(selectedFund.fund_id)} onApprove={()=>handleApprove(selectedFund.fund_id)} onBack={()=>{ setSelectedFund(null); setView("dashboard"); }}/>}
+    onResolve={(id,res,ov)=>handleResolve(selectedFund.fund_id,id,res,ov)} onReopen={id=>handleReopen(selectedFund.fund_id,id)} onUpdate={(id,patch)=>handleUpdate(selectedFund.fund_id,id,patch)} onAddThread={(excId,txt,uid?)=>handleAddThread(selectedFund.fund_id,excId,txt,uid)} onSubmit={()=>handleSubmit(selectedFund.fund_id)} onApprove={()=>handleApprove(selectedFund.fund_id)} onBack={()=>{ setSelectedFund(null); setView("dashboard"); }} demoActiveExcId={demoActiveExcId} demoTypingText={demoTypingText} demoShouldSubmit={demoShouldSubmit} fxOverrideActive={fxOverrideActive}/>}
     </div>
   );
 }
