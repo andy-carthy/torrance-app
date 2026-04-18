@@ -995,29 +995,15 @@ const FinancialStatementPDF = ({ fund, fsData, resolvedExceptions = [] }: { fund
   </Document>
 );
 // ═══════════════════════════════════════════════════════════════════════════════
-// EXCEL EXPORT ENGINE
-// ═══════════════════════════════════════════════════════════════════════════════
-const exportToExcel = async (data, columns, filename, sheetName = "Data") => {
-  const workbook = new ExcelJS.Workbook();
-  const sheet = workbook.addWorksheet(sheetName);
-
-  // Setup columns
-  sheet.columns = columns.map(c => ({
-    header: typeof c === 'string' ? c : c.label,
-    key: typeof c === 'string' ? c : c.field,
-    width: 20
-  }));
-  
-// ═══════════════════════════════════════════════════════════════════════════════
 // EXCEL WORKING PAPER ENGINE (Multi-Sheet Export)
 // ═══════════════════════════════════════════════════════════════════════════════
 const exportWorkingPaper = async (fund, fsData, tbData) => {
   const workbook = new ExcelJS.Workbook();
-  
+
   // --- TAB 1: Financial Statement ---
   const stmtSheet = workbook.addWorksheet('Financial Statement');
   stmtSheet.columns = [{ width: 40 }, { width: 25 }];
-  
+
   // Title Formatting
   stmtSheet.mergeCells('A1:B1');
   const titleCell = stmtSheet.getCell('A1');
@@ -1025,7 +1011,7 @@ const exportWorkingPaper = async (fund, fsData, tbData) => {
   titleCell.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } };
   titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
   titleCell.alignment = { horizontal: 'center' };
-  
+
   // Data Rows
   const rows = [
     ['Assets', ''],
@@ -1062,7 +1048,7 @@ const exportWorkingPaper = async (fund, fsData, tbData) => {
     { header: 'Debit', key: 'debit', width: 20 },
     { header: 'Credit', key: 'credit', width: 20 }
   ];
-  
+
   const headerRow = dataSheet.getRow(1);
   headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
   headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } };
@@ -1080,6 +1066,19 @@ const exportWorkingPaper = async (fund, fsData, tbData) => {
   const buffer = await workbook.xlsx.writeBuffer();
   saveAs(new Blob([buffer]), `${fund?.fund_id || 'Fund'}_WorkingPaper.xlsx`);
 };
+// ═══════════════════════════════════════════════════════════════════════════════
+// EXCEL EXPORT ENGINE
+// ═══════════════════════════════════════════════════════════════════════════════
+const exportToExcel = async (data, columns, filename, sheetName = "Data") => {
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet(sheetName);
+
+  // Setup columns
+  sheet.columns = columns.map(c => ({
+    header: typeof c === 'string' ? c : c.label,
+    key: typeof c === 'string' ? c : c.field,
+    width: 20
+  }));
 
   // Style the Header Row to match Torrance UI (Navy Blue)
   const headerRow = sheet.getRow(1);
@@ -4626,10 +4625,19 @@ function PdfModal({ onClose, fund, fsData, tbData, resolvedExceptions = [] }: { 
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExcelExport = async () => {
+    if (!fund) return;
     setIsExporting(true);
-    // Call the function we added at the top of the file
-    await exportWorkingPaper(fund, fsData, tbData);
-    setIsExporting(false);
+    try {
+      await exportWorkingPaper(
+        fund,
+        fsData || FS,
+        tbData || TB_ROWS
+      );
+    } catch (err) {
+      console.error("Excel export error:", err);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
