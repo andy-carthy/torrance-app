@@ -3830,7 +3830,83 @@ function JournalEntriesTab({ fund, fundSeeds, masterFeeds, currentUser, onPostJE
 
       {/* Right Pane: Drafting & Review */}
       <div style={{flex:1, padding:"24px 32px", overflowY:"auto", height:"100%"}}>
-        <div style={{background:T.cardBg, border:`1px solid ${T.border}`, borderRadius:10, overflow:"hidden", boxShadow:"0 4px 12px rgba(0,0,0,0.03)", width:"100%"}}>
+        {activeJe ? (
+          /* ── JE Detail View ── */
+          <div style={{background:T.cardBg, border:`1px solid ${T.border}`, borderRadius:10, overflow:"hidden", boxShadow:"0 4px 12px rgba(0,0,0,0.03)", width:"100%"}}>
+            <div style={{background:T.navyHeader, padding:"16px 24px", color:"#fff", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+              <div style={{display:"flex", alignItems:"center", gap:14}}>
+                <button onClick={()=>setActiveJe(null)} style={{...SANS, fontSize:11, fontWeight:600, padding:"4px 12px", border:"1px solid rgba(255,255,255,0.3)", borderRadius:5, background:"rgba(255,255,255,0.1)", color:"#fff", cursor:"pointer"}}>← New Entry</button>
+                <span style={{...MONO, fontSize:15, fontWeight:700}}>{activeJe.ref}</span>
+                {activeJe.mode === "exception_auto" && <span style={{...MONO, fontSize:8, fontWeight:700, padding:"2px 6px", borderRadius:3, background:T.aiBg, color:T.aiBase, border:`1px solid ${T.aiBorder}`}}>AUTO · EXC</span>}
+              </div>
+              <span style={{...SANS, fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:4, background:activeJe.status==="posted"?T.okBg:activeJe.status==="pending_review"?T.warnBg:T.appBg, color:activeJe.status==="posted"?T.okBase:activeJe.status==="pending_review"?T.warnBase:T.textMuted}}>
+                {activeJe.status === "pending_review" ? "PENDING REVIEW" : activeJe.status.toUpperCase()}
+              </span>
+            </div>
+            <div style={{padding:24}}>
+              <div style={{...SANS, fontSize:16, fontWeight:700, color:T.textPrimary, marginBottom:16}}>{activeJe.desc}</div>
+              <div style={{display:"flex", gap:32, marginBottom:24, paddingBottom:16, borderBottom:`1px solid ${T.border}`}}>
+                <div>
+                  <div style={{...SANS, fontSize:10, fontWeight:700, color:T.textMuted, textTransform:"uppercase", marginBottom:4}}>Date</div>
+                  <div style={{...MONO, fontSize:13, color:T.textPrimary}}>{activeJe.date}</div>
+                </div>
+                <div>
+                  <div style={{...SANS, fontSize:10, fontWeight:700, color:T.textMuted, textTransform:"uppercase", marginBottom:4}}>Created By</div>
+                  <div style={{...SANS, fontSize:13, color:T.textPrimary}}>{TEAM.find(m=>m.id===activeJe.createdBy)?.name || "System"}</div>
+                </div>
+                <div>
+                  <div style={{...SANS, fontSize:10, fontWeight:700, color:T.textMuted, textTransform:"uppercase", marginBottom:4}}>Mode</div>
+                  <div style={{...SANS, fontSize:13, color:T.textPrimary}}>{activeJe.mode === "exception_auto" ? "Exception Auto-Post" : activeJe.mode === "target_balance" ? "Target Balance" : "Standard"}</div>
+                </div>
+              </div>
+
+              {activeJe.mode === "exception_auto" && activeJe.currentValue && (
+                <div style={{background:T.warnBg, border:`1px solid ${T.warnBorder}`, borderRadius:8, padding:16, marginBottom:24}}>
+                  <div style={{...SANS, fontSize:11, fontWeight:700, color:T.warnBase, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:12}}>
+                    Account Impact — {activeJe.account_name || activeJe.lines[0]?.acct}
+                  </div>
+                  <div style={{display:"flex", alignItems:"center", gap:12}}>
+                    <div style={{flex:1, background:T.errorBg, border:`1px solid ${T.errorBorder}`, borderRadius:6, padding:"10px 14px"}}>
+                      <div style={{...SANS, fontSize:10, fontWeight:700, color:T.errorBase, marginBottom:4}}>BEFORE</div>
+                      <div style={{...MONO, fontSize:15, fontWeight:700, color:T.errorBase}}>{activeJe.currentValue}</div>
+                    </div>
+                    <div style={{...SANS, fontSize:20, color:T.textMuted, flexShrink:0}}>→</div>
+                    <div style={{flex:1, background:T.okBg, border:`1px solid ${T.okBorder}`, borderRadius:6, padding:"10px 14px"}}>
+                      <div style={{...SANS, fontSize:10, fontWeight:700, color:T.okBase, marginBottom:4}}>AFTER</div>
+                      <div style={{...MONO, fontSize:15, fontWeight:700, color:T.okBase}}>{activeJe.expectedValue}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10}}>Journal Lines</div>
+              <div style={{overflowX:"auto"}}>
+                <table style={{width:"100%", borderCollapse:"collapse"}}>
+                  <thead>
+                    <tr style={{borderBottom:`2px solid ${T.border}`}}>
+                      <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"left", paddingBottom:8, textTransform:"uppercase", width:"20%"}}>Fund</th>
+                      <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"left", paddingBottom:8, textTransform:"uppercase"}}>Account</th>
+                      <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"right", paddingBottom:8, textTransform:"uppercase", width:"18%"}}>Debit</th>
+                      <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"right", paddingBottom:8, textTransform:"uppercase", width:"18%"}}>Credit</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activeJe.lines.map((line, i) => (
+                      <tr key={i} style={{borderBottom:`1px solid ${T.appBg}`}}>
+                        <td style={{...MONO, fontSize:12, padding:"10px 8px 10px 0", color:T.textPrimary}}>{line.fundId}</td>
+                        <td style={{...MONO, fontSize:12, padding:"10px 8px", color:T.textPrimary}}>{line.acct}{line.name ? ` — ${line.name}` : ""}</td>
+                        <td style={{...MONO, fontSize:12, padding:"10px 0 10px 8px", textAlign:"right", color:line.debit>0?T.textPrimary:T.textMuted}}>{line.debit>0?fmtUSD(line.debit):"—"}</td>
+                        <td style={{...MONO, fontSize:12, padding:"10px 0 10px 8px", textAlign:"right", color:line.credit>0?T.textPrimary:T.textMuted}}>{line.credit>0?fmtUSD(line.credit):"—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* ── Draft New JE Form ── */
+          <div style={{background:T.cardBg, border:`1px solid ${T.border}`, borderRadius:10, overflow:"hidden", boxShadow:"0 4px 12px rgba(0,0,0,0.03)", width:"100%"}}>
           <div style={{background:T.navyHeader, padding:"16px 24px", color:"#fff", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
             <div style={{...SANS, fontWeight:700, fontSize:16}}>Draft New Journal Entry</div>
             <div style={{display:"flex", background:"rgba(255,255,255,0.1)", borderRadius:6, padding:3}}>
@@ -3937,7 +4013,8 @@ function JournalEntriesTab({ fund, fundSeeds, masterFeeds, currentUser, onPostJE
               </>
             )}
           </div>
-        </div>
+          </div>
+        )}
 
         {/* Checker Review View */}
         {activeJe && activeJe.status === "pending_review" && !isPreparer && (
@@ -9417,7 +9494,8 @@ export default function App() {
     });
     // Auto-post Journal Entry for override or corrected-source resolutions
     if (res === "override_value" || res === "corrected_source") {
-      const exc = (fundState[fid] || []).find(e => e.id === id);
+      const resolvedFid = getRealFid(fundState, fid, id);
+      const exc = (fundState[resolvedFid] || []).find(e => e.id === id);
       if (exc) {
         const newJe = {
           id: `je-exc-${id}-${Date.now()}`,
@@ -9427,13 +9505,16 @@ export default function App() {
           status: "posted",
           mode: "exception_auto",
           lines: [
-            { fundId: fid, acct: exc.account_number || "9999", debit: exc.amount || 0, credit: 0 },
-            { fundId: fid, acct: "1000",                       debit: 0,               credit: exc.amount || 0 },
+            { fundId: resolvedFid, acct: exc.account_number || "9999", name: exc.account_name || "", debit: exc.amount || 0, credit: 0 },
+            { fundId: resolvedFid, acct: "1000", name: "Clearing / Offset", debit: 0, credit: exc.amount || 0 },
           ],
           createdBy: currentUserId,
           excRef: id,
+          currentValue: exc.currentValue,
+          expectedValue: exc.expectedValue,
+          account_name: exc.account_name,
         };
-        window.dispatchEvent(new CustomEvent("je-auto-posted", { detail: { fundId: fid, je: newJe } }));
+        window.dispatchEvent(new CustomEvent("je-auto-posted", { detail: { fundId: resolvedFid, je: newJe } }));
       }
     }
   },[currentUserId, fundState]);
