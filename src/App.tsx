@@ -8711,7 +8711,7 @@ function DataExchangeView({ onBack }) {
             ⚡ External API Webhooks
           </button>
           <button onClick={()=>setActiveTab("sftp")} style={{...SANS, textAlign:"left", fontSize:13, fontWeight:600, padding:"10px 14px", borderRadius:6, border:"none", background:activeTab==="sftp"?"#eff6ff":"transparent", color:activeTab==="sftp"?T.actionBase:T.textPrimary, cursor:"pointer"}}>
-            ⏱ SFTP Transmission Schedules
+            ⏱ Scheduled Transfers
           </button>
         </div>
 
