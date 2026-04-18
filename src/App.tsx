@@ -60,12 +60,13 @@ const RESOLUTIONS = {
   ],
 };
 const TEAM = [
-  {id:"u1",name:"Sarah Chen",  role:"Senior Accountant",initials:"SC",color:"#6366f1",isController:false},
-  {id:"u2",name:"Marcus Reid", role:"Accountant",       initials:"MR",color:"#0891b2",isController:false},
-  {id:"u3",name:"Priya Nair",  role:"Accountant",       initials:"PN",color:"#d97706",isController:false},
-  {id:"u4",name:"James Okafor",role:"Controller",       initials:"JO",color:"#059669",isController:true },
-  {id:"u5",name:"Jennifer Liu",role:"Senior Accountant",initials:"JL",color:"#e11d48",isController:false},
-  {id:"u_ai",name:"Torrance AI",role:"AI Agent",        initials:"AI",color:"#6366f1",isController:false},
+  {id:"u1",      name:"Sarah Chen",   role:"Senior Accountant",      initials:"SC",color:"#6366f1",isController:false,isImplementor:false},
+  {id:"u2",      name:"Marcus Reid",  role:"Accountant",             initials:"MR",color:"#0891b2",isController:false,isImplementor:false},
+  {id:"u3",      name:"Priya Nair",   role:"Accountant",             initials:"PN",color:"#d97706",isController:false,isImplementor:false},
+  {id:"u4",      name:"James Okafor", role:"Controller",             initials:"JO",color:"#059669",isController:true, isImplementor:false},
+  {id:"u5",      name:"Jennifer Liu", role:"Senior Accountant",      initials:"JL",color:"#e11d48",isController:false,isImplementor:false},
+  {id:"u_ai",    name:"Torrance AI",  role:"AI Agent",               initials:"AI",color:"#6366f1",isController:false,isImplementor:false},
+  {id:"user-ic-001",name:"Rachel Nguyen",role:"Implementation Consultant",initials:"RN",color:"#7c3aed",isController:false,isImplementor:true,email:"r.nguyen@torrance.io",assignedClients:["Misery Capital"]},
 ];
 const CURRENT_USER_ID = "u1";
 const SLA_CONFIGS = [
@@ -87,21 +88,25 @@ const INGESTION_FEEDS = [
 // EXPANDED FUNDS SEED (Added 'fundType' and 'prior_net_assets' for Variance Scoring)
 // ═══════════════════════════════════════════════════════════════════════════════
 const FUNDS_SEED = [
-  {fund_id:"FND-2024-001",name:"Pennywise Global Diversified Fund",        series:"Series I",  client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:687400000, prior_net_assets: 654541160, sla_days:1,assignedTo:"u1", fundType:"Hedge Fund", requiredFilings:["PF"]},
-  {fund_id:"FND-2024-002",name:"Pennywise Fixed Income Opportunities Fund",series:"Series II", client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:312000000, prior_net_assets: 310500000, sla_days:3,assignedTo:"u2", fundType:"Mutual Fund", requiredFilings:["N-PORT", "N-CEN"]},
-  {fund_id:"FND-2024-007",name:"Pennywise Emerging Markets Fund",          series:"Series III",client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:450000000, prior_net_assets: 395000000, sla_days:2,assignedTo:"u1", fundType:"Mutual Fund", requiredFilings:["N-PORT", "N-CEN"]}, // High Variance!
-  {fund_id:"FND-2024-008",name:"Pennywise High Yield Fund",                series:"Series IV", client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:820000000, prior_net_assets: 818000000, sla_days:4,assignedTo:"u2", fundType:"Hedge Fund", requiredFilings:["PF"]},
-  {fund_id:"FND-2024-009",name:"Pennywise Short Duration Gov Fund",        series:"Series V",  client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:150000000, prior_net_assets: 149500000, sla_days:0,assignedTo:"u3", fundType:"Money Market", requiredFilings:["N-MFP"]},
-  {fund_id:"FND-2024-010",name:"Pennywise Municipal Bond Fund",            series:"Series VI", client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:290000000, prior_net_assets: 291000000, sla_days:1,assignedTo:"u1", fundType:"Mutual Fund", requiredFilings:["N-PORT", "N-CEN"]},
-  {fund_id:"FND-2024-011",name:"Pennywise Tech Innovators Fund",           series:"Series VII",client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:560000000, prior_net_assets: 505000000, sla_days:5,assignedTo:"u5", fundType:"ETF", requiredFilings:["N-PORT", "N-CEN"]}, // High Variance!
-  {fund_id:"FND-2024-012",name:"Pennywise Dividend Income Fund",           series:"Series I",  client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:340000000, prior_net_assets: 338000000, sla_days:2,assignedTo:"u2", fundType:"Mutual Fund", requiredFilings:["N-PORT", "N-CEN"]},
-  {fund_id:"FND-2024-013",name:"Pennywise Real Estate Equity Fund",        series:"Series II", client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:210000000, prior_net_assets: 210500000, sla_days:6,assignedTo:"u1", fundType:"Real Estate Fund", requiredFilings:["PF"]},
-  {fund_id:"FND-2024-014",name:"Pennywise ESG Leaders Fund",               series:"Series III",client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:180000000, prior_net_assets: 179000000, sla_days:3,assignedTo:"u3", fundType:"Mutual Fund", requiredFilings:["N-PORT", "N-CEN"]},
-  
-  {fund_id:"FND-2024-003",name:"Bowers Growth Equity Fund",                series:"Series I",  client:"Bowers Asset Management",   period:"December 31, 2024",net_assets:1450000000, prior_net_assets: 1445000000, sla_days:0,assignedTo:"u5", fundType:"Mutual Fund", requiredFilings:["N-PORT", "N-CEN"]},
-  {fund_id:"FND-2024-004",name:"Bowers Multi-Strategy Fund",               series:"Series III",client:"Bowers Asset Management",   period:"December 31, 2024",net_assets:890000000,  prior_net_assets: 885000000, sla_days:7,assignedTo:"u3", fundType:"Hedge Fund", requiredFilings:["PF"]},
-  {fund_id:"FND-2024-005",name:"Derry Credit Opportunities Fund",          series:"Series I",  client:"Derry Capital Partners",   period:"December 31, 2024",net_assets:220000000,  prior_net_assets: 219000000, sla_days:2,assignedTo:"u2", fundType:"Private Equity", requiredFilings:["PF"]},
-  {fund_id:"FND-2024-006",name:"Derry Real Assets Fund",                   series:"Series II", client:"Derry Capital Partners",   period:"December 31, 2024",net_assets:415000000,  prior_net_assets: 414000000, sla_days:5,assignedTo:"u1", fundType:"Real Estate Fund", requiredFilings:["ADV"]},
+  {fund_id:"FND-2024-001",name:"Pennywise Global Diversified Fund",        series:"Series I",  client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:687400000, prior_net_assets: 654541160, sla_days:1,assignedTo:"u1", fundType:"Hedge Fund", requiredFilings:["PF"], fundStatus:"LIVE"},
+  {fund_id:"FND-2024-002",name:"Pennywise Fixed Income Opportunities Fund",series:"Series II", client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:312000000, prior_net_assets: 310500000, sla_days:3,assignedTo:"u2", fundType:"Mutual Fund", requiredFilings:["N-PORT", "N-CEN"], fundStatus:"LIVE"},
+  {fund_id:"FND-2024-007",name:"Pennywise Emerging Markets Fund",          series:"Series III",client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:450000000, prior_net_assets: 395000000, sla_days:2,assignedTo:"u1", fundType:"Mutual Fund", requiredFilings:["N-PORT", "N-CEN"], fundStatus:"LIVE"},
+  {fund_id:"FND-2024-008",name:"Pennywise High Yield Fund",                series:"Series IV", client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:820000000, prior_net_assets: 818000000, sla_days:4,assignedTo:"u2", fundType:"Hedge Fund", requiredFilings:["PF"], fundStatus:"LIVE"},
+  {fund_id:"FND-2024-009",name:"Pennywise Short Duration Gov Fund",        series:"Series V",  client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:150000000, prior_net_assets: 149500000, sla_days:0,assignedTo:"u3", fundType:"Money Market", requiredFilings:["N-MFP"], fundStatus:"LIVE"},
+  {fund_id:"FND-2024-010",name:"Pennywise Municipal Bond Fund",            series:"Series VI", client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:290000000, prior_net_assets: 291000000, sla_days:1,assignedTo:"u1", fundType:"Mutual Fund", requiredFilings:["N-PORT", "N-CEN"], fundStatus:"LIVE"},
+  {fund_id:"FND-2024-011",name:"Pennywise Tech Innovators Fund",           series:"Series VII",client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:560000000, prior_net_assets: 505000000, sla_days:5,assignedTo:"u5", fundType:"ETF", requiredFilings:["N-PORT", "N-CEN"], fundStatus:"LIVE"},
+  {fund_id:"FND-2024-012",name:"Pennywise Dividend Income Fund",           series:"Series I",  client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:340000000, prior_net_assets: 338000000, sla_days:2,assignedTo:"u2", fundType:"Mutual Fund", requiredFilings:["N-PORT", "N-CEN"], fundStatus:"LIVE"},
+  {fund_id:"FND-2024-013",name:"Pennywise Real Estate Equity Fund",        series:"Series II", client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:210000000, prior_net_assets: 210500000, sla_days:6,assignedTo:"u1", fundType:"Real Estate Fund", requiredFilings:["PF"], fundStatus:"LIVE"},
+  {fund_id:"FND-2024-014",name:"Pennywise ESG Leaders Fund",               series:"Series III",client:"Pennywise Capital Advisors", period:"December 31, 2024",net_assets:180000000, prior_net_assets: 179000000, sla_days:3,assignedTo:"u3", fundType:"Mutual Fund", requiredFilings:["N-PORT", "N-CEN"], fundStatus:"LIVE"},
+
+  {fund_id:"FND-2024-003",name:"Bowers Growth Equity Fund",                series:"Series I",  client:"Bowers Asset Management",   period:"December 31, 2024",net_assets:1450000000, prior_net_assets: 1445000000, sla_days:0,assignedTo:"u5", fundType:"Mutual Fund", requiredFilings:["N-PORT", "N-CEN"], fundStatus:"LIVE"},
+  {fund_id:"FND-2024-004",name:"Bowers Multi-Strategy Fund",               series:"Series III",client:"Bowers Asset Management",   period:"December 31, 2024",net_assets:890000000,  prior_net_assets: 885000000, sla_days:7,assignedTo:"u3", fundType:"Hedge Fund", requiredFilings:["PF"], fundStatus:"LIVE"},
+  {fund_id:"FND-2024-005",name:"Derry Credit Opportunities Fund",          series:"Series I",  client:"Derry Capital Partners",   period:"December 31, 2024",net_assets:220000000,  prior_net_assets: 219000000, sla_days:2,assignedTo:"u2", fundType:"Private Equity", requiredFilings:["PF"], fundStatus:"LIVE"},
+  {fund_id:"FND-2024-006",name:"Derry Real Assets Fund",                   series:"Series II", client:"Derry Capital Partners",   period:"December 31, 2024",net_assets:415000000,  prior_net_assets: 414000000, sla_days:5,assignedTo:"u1", fundType:"Real Estate Fund", requiredFilings:["ADV"], fundStatus:"LIVE"},
+
+  {fund_id:"mc-001",name:"Misery Capital — Senior Credit Fund I",      series:"Fund I",  client:"Misery Capital", period:"December 31, 2024",net_assets:280000000, prior_net_assets:280000000, sla_days:0, assignedTo:"user-ic-001", fundType:"Private Credit",  requiredFilings:["PF"], fundStatus:"PENDING", custodian:"BNY Mellon",  fiscalYearEnd:"December 31", currency:"USD", aum:"$280M"},
+  {fund_id:"mc-002",name:"Misery Capital — Real Estate Opportunities II",series:"Fund II", client:"Misery Capital", period:"December 31, 2024",net_assets:415000000, prior_net_assets:415000000, sla_days:0, assignedTo:"user-ic-001", fundType:"Real Estate",    requiredFilings:["PF"], fundStatus:"PENDING", custodian:"State Street", fiscalYearEnd:"December 31", currency:"USD", aum:"$415M"},
+  {fund_id:"mc-003",name:"Misery Capital — Buyout Fund III",            series:"Fund III",client:"Misery Capital", period:"December 31, 2024",net_assets:620000000, prior_net_assets:620000000, sla_days:0, assignedTo:"user-ic-001", fundType:"Private Equity",  requiredFilings:["PF"], fundStatus:"PENDING", custodian:"BNY Mellon",  fiscalYearEnd:"December 31", currency:"USD", aum:"$620M"},
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -8895,6 +8900,9 @@ function Dashboard({onBulkSubmitForReview,dashSubView, fundState, fundSeeds, app
 
   const filteredAndSortedFunds = useMemo(() => {
     let result = [...fundSeeds];
+    if (!currentUser?.isImplementor) {
+      result = result.filter(f => !f.fundStatus || f.fundStatus === "LIVE" || f.fundStatus === "SUSPENDED");
+    }
     if (search.trim()) { const q = search.toLowerCase(); result = result.filter(f => f.name.toLowerCase().includes(q) || f.fund_id.toLowerCase().includes(q) || f.client.toLowerCase().includes(q)); }
     if (statusFilter !== "All") result = result.filter(f => getStats(f).status === statusFilter);
     if (stageFilter !== "All") result = result.filter(f => (approvalState[f.fund_id]?.status || "open") === stageFilter);
@@ -9084,7 +9092,7 @@ function Dashboard({onBulkSubmitForReview,dashSubView, fundState, fundSeeds, app
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))",gap:12,padding:16}}>
               {funds.map(f=>{ const stats=getStats(f);const approv=approvalState[f.fund_id];const pct=stats.total>0?Math.round((stats.resolved/stats.total)*100):100;const assignedUser=TEAM.find(m=>m.id===f.assignedTo); return(
                 <div key={f.fund_id} role="button" tabIndex={0} className="fund-card" onClick={()=>onSelectFund(f)} onKeyDown={e=>e.key==="Enter"&&onSelectFund(f)} style={{border:`1px solid ${stats.status==="BLOCKED"?T.errorBorder:T.okBorder}`,borderRadius:9,padding:"14px 16px",background:T.cardBg}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}><div style={{flex:1,minWidth:0}}><div style={{...SANS,fontWeight:700,fontSize:13,marginBottom:1,color:T.textPrimary}}>{f.name}</div><div style={{...SANS,fontSize:10,color:T.textMuted}}>{f.fund_id}</div></div><span style={{...SANS,fontSize:10,fontWeight:700,padding:"3px 9px",borderRadius:4,flexShrink:0,marginLeft:8,display:"flex",alignItems:"center",gap:4,background:stats.status==="BLOCKED"?T.errorBg:T.okBg,color:stats.status==="BLOCKED"?T.errorBase:T.okBase,border:`1px solid ${stats.status==="BLOCKED"?T.errorBorder:T.okBorder}`}}>{stats.status==="BLOCKED"?<><span>✕</span>BLOCKED</>:<><span>✓</span>READY</>}</span></div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}><div style={{flex:1,minWidth:0}}><div style={{...SANS,fontWeight:700,fontSize:13,marginBottom:1,color:T.textPrimary}}>{f.fundStatus==="LIVE"&&<span style={{color:T.okBase,fontSize:8,marginRight:4}}>●</span>}{f.name}</div><div style={{...SANS,fontSize:10,color:T.textMuted}}>{f.fund_id}</div></div><span style={{...SANS,fontSize:10,fontWeight:700,padding:"3px 9px",borderRadius:4,flexShrink:0,marginLeft:8,display:"flex",alignItems:"center",gap:4,background:stats.status==="BLOCKED"?T.errorBg:T.okBg,color:stats.status==="BLOCKED"?T.errorBase:T.okBase,border:`1px solid ${stats.status==="BLOCKED"?T.errorBorder:T.okBorder}`}}>{stats.status==="BLOCKED"?<><span>✕</span>BLOCKED</>:<><span>✓</span>READY</>}</span></div>
                   <div style={{marginBottom:10}}><div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:4}}><span style={{...SANS,color:T.textMuted}}>Workflow Progress</span><span style={{...MONO,fontWeight:700,color:stats.status==="BLOCKED"?T.warnBase:T.okBase}}>{pct}%</span></div><div style={{height:4,background:T.border,borderRadius:2}}><div style={{height:"100%",width:`${pct}%`,background:stats.status==="BLOCKED"?T.warnBase:T.okBase,borderRadius:2,transition:"width 0.4s"}}/></div></div>
                   <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",marginBottom:8}}><SlaPill daysLeft={f.sla_days}/><ApprovalPill status={approv?.status||"open"}/></div>
                   
@@ -9145,7 +9153,7 @@ function Dashboard({onBulkSubmitForReview,dashSubView, fundState, fundSeeds, app
           <input type="checkbox" checked={isSelected} onChange={()=>{}} style={{cursor:"pointer", width:15, height:15, accentColor:T.actionBase}} />
         </td>
         <td style={{padding:"10px 12px", overflow:"hidden"}}>
-          <div style={{...SANS, fontWeight:600, color:T.textPrimary, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}} title={f.name}>{f.name}</div>
+          <div style={{...SANS, fontWeight:600, color:T.textPrimary, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}} title={f.name}>{f.fundStatus === "LIVE" && <span style={{color:T.okBase,fontSize:8,marginRight:4}}>●</span>}{f.name}</div>
           <div style={{...MONO, fontSize:10, color:T.textMuted, marginTop:2}}>{f.fund_id}</div>
         </td>
         <td style={{padding:"10px 12px"}}>
