@@ -3830,7 +3830,7 @@ function JournalEntriesTab({ fund, fundSeeds, masterFeeds, currentUser, onPostJE
 
       {/* Right Pane: Drafting & Review */}
       <div style={{flex:1, padding:"24px 32px", overflowY:"auto", height:"100%"}}>
-        <div style={{background:T.cardBg, border:`1px solid ${T.border}`, borderRadius:10, overflow:"hidden", boxShadow:"0 4px 12px rgba(0,0,0,0.03)", maxWidth:1000}}>
+        <div style={{background:T.cardBg, border:`1px solid ${T.border}`, borderRadius:10, overflow:"hidden", boxShadow:"0 4px 12px rgba(0,0,0,0.03)", width:"100%"}}>
           <div style={{background:T.navyHeader, padding:"16px 24px", color:"#fff", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
             <div style={{...SANS, fontWeight:700, fontSize:16}}>Draft New Journal Entry</div>
             <div style={{display:"flex", background:"rgba(255,255,255,0.1)", borderRadius:6, padding:3}}>
