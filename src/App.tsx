@@ -4138,7 +4138,7 @@ function FinancialStatementsTab({ fund, fxOverrideActive, exceptions = [] }: { f
     rawRows: [{ id: '129', source: 'State Street GL', payload: 'PW_GL_Dec31_Final.json', originalValue: '$200,000' }],
     exception: { id: 'EXC-003', status: 'Resolved (Human-Accepted)' },
     aiDecision: 'Overridden from $200,000 to $108,420. AI suggestion accepted by Sarah Chen at 9:22 AM based on November 30 prior-period resolution and Bloomberg WM/Reuters 4PM fix (EUR/USD 1.0842).'
-})} style={{ cursor: "pointer", borderRadius: 6, transition: "background 0.2s", margin: "0 -16px", padding: "0 16px", paddingLeft: 0 }} onMouseEnter={e=>e.currentTarget.style.background=T.appBg} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+})} style={{ cursor: "pointer", borderRadius: 6, transition: "background 0.2s", margin: "0 -16px", padding: "0 16px" }} onMouseEnter={e=>e.currentTarget.style.background=T.appBg} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
 
    <FsLine label="Dividend Income — Foreign" value={108420} indent={1} />
 
