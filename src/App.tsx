@@ -5702,7 +5702,10 @@ function AddRuleModal({ onClose }) {
 function GlobalEntityManager({ fundSeeds, onBack }) {
   const [activeTab, setActiveTab] = useState("entities"); // 'entities', 'rbac', 'rules'
   const [search, setSearch] = useState("");
-  const [showAdd, setShowAdd] = useState(false);
+  const [showAddEntity, setShowAddEntity] = useState(false);
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [showAddRule, setShowAddRule] = useState(false);
+  const [customEntities, setCustomEntities] = useState([]);
   const [collapsed, setCollapsed] = useState({});
 
   // Mocking the Internal/External Users for RBAC
@@ -5741,8 +5744,9 @@ function GlobalEntityManager({ fundSeeds, onBack }) {
         });
       }
     });
+    customEntities.forEach(e => entities.push(e));
     return entities;
-  }, [fundSeeds]);
+  }, [fundSeeds, customEntities]);
 
   const grouped = useMemo(() => {
     const g = {};
@@ -5780,7 +5784,11 @@ function GlobalEntityManager({ fundSeeds, onBack }) {
             <span style={{position:"absolute",left:9,top:"50%",transform:"translateY(-50%)",color:T.textMuted,fontSize:13}}>⌕</span>
             <input type="text" placeholder={activeTab === "rules" ? "Search rules..." : activeTab === "entities" ? "Search entities, clients, IDs..." : "Search users, emails, roles..."} value={search} onChange={e=>setSearch(e.target.value)} style={{...SANS, padding:"8px 12px 8px 28px", border:`1px solid ${T.border}`, borderRadius:6, fontSize:12, width:300, outline:"none"}} />
           </div>
-          <button onClick={()=> activeTab === "rules" ? {} : setShowAdd(true)} style={{...SANS,fontSize:12,fontWeight:600,padding:"8px 16px",borderRadius:6,border:"none",background:T.actionBase, color:"#fff",cursor:"pointer"}}>
+          <button onClick={() => {
+            if (activeTab === "entities") setShowAddEntity(true);
+            else if (activeTab === "rbac") setShowAddUser(true);
+            else if (activeTab === "rules") setShowAddRule(true);
+          }} style={{...SANS,fontSize:12,fontWeight:600,padding:"8px 16px",borderRadius:6,border:"none",background:T.actionBase, color:"#fff",cursor:"pointer"}}>
             {activeTab === "rules" ? "+ Build Rule" : activeTab === "entities" ? "+ Setup New Entity" : "+ Invite User"}
           </button>
         </div>
@@ -5918,7 +5926,17 @@ function GlobalEntityManager({ fundSeeds, onBack }) {
         )}
 
       </div>
-      {showAdd && <GlobalAddEntityModal onClose={()=>setShowAdd(false)} />}
+      {showAddEntity && (
+        <GlobalAddEntityModal
+          onClose={() => setShowAddEntity(false)}
+          onSave={(entity) => {
+            setCustomEntities(p => [...p, entity]);
+            setShowAddEntity(false);
+          }}
+        />
+      )}
+      {showAddUser && <InviteUserModal onClose={() => setShowAddUser(false)} />}
+      {showAddRule && <AddRuleModal onClose={() => setShowAddRule(false)} />}
     </div>
   );
 }
