@@ -3725,12 +3725,14 @@ function JournalEntriesTab({ fund, fundSeeds, masterFeeds, currentUser, onPostJE
   ]);
   
   const [activeJe, setActiveJe] = useState(null);
-  const [entryMode, setEntryMode] = useState("standard"); // 'standard' or 'target_balance'
-  const [inputMethod, setInputMethod] = useState("manual"); // 'manual' or 'batch'
-  
-  const [newLines, setNewLines] = useState([{ id: 1, fundId: fund.fund_id, acct: "", debit: "", credit: "", target: "", current: 0 }, { id: 2, fundId: fund.fund_id, acct: "", debit: "", credit: "", target: "", current: 0 }]);
+
+  const [newLines, setNewLines] = useState([
+    { id: 1, fundId: fund.fund_id, acct: "", name: "", debit: "", credit: "", ending: "", current: 0 },
+    { id: 2, fundId: fund.fund_id, acct: "", name: "", debit: "", credit: "", ending: "", current: 0 },
+  ]);
   const [jeDesc, setJeDesc] = useState("");
   const [jeRef, setJeRef] = useState("");
+  const [jeUnbalancedMemo, setJeUnbalancedMemo] = useState("");
 
   useEffect(() => {
     const handler = (e) => {
@@ -3750,48 +3752,72 @@ function JournalEntriesTab({ fund, fundSeeds, masterFeeds, currentUser, onPostJE
     return Array.from(accts.values()).sort((a,b) => a.acct.localeCompare(b.acct));
   }, [masterFeeds]);
 
-  const totalDebit = newLines.reduce((sum, l) => sum + (Number(l.debit) || 0), 0);
-  const totalCredit = newLines.reduce((sum, l) => sum + (Number(l.credit) || 0), 0);
-  const isBalanced = totalDebit > 0 && Math.abs(totalDebit - totalCredit) < 0.01;
-  const isPreparer = !currentUser.isController;
+  const totalDebit  = newLines.reduce((s, l) => s + (Number(l.debit)  || 0), 0);
+  const totalCredit = newLines.reduce((s, l) => s + (Number(l.credit) || 0), 0);
+  const isBalanced  = (totalDebit > 0 || totalCredit > 0) && Math.abs(totalDebit - totalCredit) < 0.01;
+  const hasLines    = newLines.some(l => l.acct);
+  const canSubmit   = hasLines && (isBalanced || jeUnbalancedMemo.trim() !== "");
+  const isPreparer  = !currentUser.isController;
 
-  const handleAddLine = () => setNewLines([...newLines, { id: Date.now(), fundId: fund.fund_id, acct: "", debit: "", credit: "", target: "", current: 0 }]);
-  
-  const updateLine = (id, field, val) => {
+  const handleAddLine = () => setNewLines(prev => [
+    ...prev,
+    { id: Date.now(), fundId: fund.fund_id, acct: "", name: "", debit: "", credit: "", ending: "", current: 0 },
+  ]);
+
+  const updateLine = (lineId, field, val) => {
     setNewLines(prev => prev.map(l => {
-      if (l.id !== id) return l;
-      let updated = { ...l, [field]: val };
-      
-      // Auto-lookup current balance if account changes
+      if (l.id !== lineId) return l;
+      let u = { ...l, [field]: val };
+
       if (field === "acct") {
         const found = availableAccounts.find(a => a.acct === val);
-        if (found) {
-          updated.name = found.name;
-          updated.current = found.bal;
+        u.name    = found ? found.name : "";
+        u.current = found ? found.bal  : 0;
+        const dr = Number(u.debit) || 0;
+        const cr = Number(u.credit) || 0;
+        if (dr || cr) u.ending = String((u.current + dr - cr).toFixed(2));
+      }
+
+      if (field === "debit" || field === "credit") {
+        const dr = Number(field === "debit"   ? val : u.debit)  || 0;
+        const cr = Number(field === "credit"  ? val : u.credit) || 0;
+        u.ending = String(((Number(u.current) || 0) + dr - cr).toFixed(2));
+      }
+
+      if (field === "ending") {
+        const endVal = Number(val);
+        if (!isNaN(endVal) && val !== "") {
+          const diff = endVal - (Number(u.current) || 0);
+          if (diff > 0)       { u.debit = String(diff.toFixed(2));            u.credit = ""; }
+          else if (diff < 0)  { u.credit = String(Math.abs(diff).toFixed(2)); u.debit  = ""; }
+          else                { u.debit  = ""; u.credit = ""; }
         }
       }
-      
-      // Target Balance Math Magic
-      if (entryMode === "target_balance" && (field === "target" || field === "acct")) {
-        const targetVal = Number(updated.target) || 0;
-        const diff = targetVal - updated.current;
-        if (diff > 0) { updated.debit = diff; updated.credit = 0; }
-        else { updated.credit = Math.abs(diff); updated.debit = 0; }
-      }
-      return updated;
+
+      return u;
     }));
   };
 
   const handleSubmitJE = () => {
-    if (!isBalanced && entryMode !== "target_balance") return;
+    if (!canSubmit) return;
     const newJe = {
-      id: `je-${Date.now()}`, date: "2024-12-31", ref: jeRef || `JE-${Math.floor(Math.random()*1000)}`,
-      desc: jeDesc, status: "pending_review", mode: entryMode,
-      lines: newLines.filter(l => l.acct), createdBy: currentUser.id
+      id: `je-${Date.now()}`, date: "2024-12-31",
+      ref: jeRef || `JE-${Math.floor(Math.random()*1000)}`,
+      desc: jeDesc, status: "pending_review", mode: "standard",
+      lines: newLines.filter(l => l.acct).map(l => ({
+        fundId: l.fundId, acct: l.acct, name: l.name,
+        debit: Number(l.debit) || 0, credit: Number(l.credit) || 0,
+        current: Number(l.current) || 0,
+      })),
+      createdBy: currentUser.id,
+      unbalancedMemo: isBalanced ? "" : jeUnbalancedMemo.trim(),
     };
     setEntries([newJe, ...entries]);
-    setNewLines([{ id: 1, fundId: fund.fund_id, acct: "", debit: "", credit: "", target: "", current: 0 }, { id: 2, fundId: fund.fund_id, acct: "", debit: "", credit: "", target: "", current: 0 }]);
-    setJeDesc(""); setJeRef("");
+    setNewLines([
+      { id: 1, fundId: fund.fund_id, acct: "", name: "", debit: "", credit: "", ending: "", current: 0 },
+      { id: 2, fundId: fund.fund_id, acct: "", name: "", debit: "", credit: "", ending: "", current: 0 },
+    ]);
+    setJeDesc(""); setJeRef(""); setJeUnbalancedMemo("");
   };
 
   return (
@@ -3884,134 +3910,136 @@ function JournalEntriesTab({ fund, fundSeeds, masterFeeds, currentUser, onPostJE
                 <table style={{width:"100%", borderCollapse:"collapse"}}>
                   <thead>
                     <tr style={{borderBottom:`2px solid ${T.border}`}}>
-                      <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"left", paddingBottom:8, textTransform:"uppercase", width:"20%"}}>Fund</th>
-                      <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"left", paddingBottom:8, textTransform:"uppercase"}}>Account</th>
-                      <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"right", paddingBottom:8, textTransform:"uppercase", width:"18%"}}>Debit</th>
-                      <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"right", paddingBottom:8, textTransform:"uppercase", width:"18%"}}>Credit</th>
+                      <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"left",  paddingBottom:8, textTransform:"uppercase", width:"16%"}}>Fund</th>
+                      <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"left",  paddingBottom:8, textTransform:"uppercase"}}>Account</th>
+                      <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"right", paddingBottom:8, textTransform:"uppercase", width:"14%"}}>Current Bal</th>
+                      <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"right", paddingBottom:8, textTransform:"uppercase", width:"13%"}}>Debit</th>
+                      <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"right", paddingBottom:8, textTransform:"uppercase", width:"13%"}}>Credit</th>
+                      <th style={{...SANS, fontSize:11, fontWeight:700, color:T.actionBase, textAlign:"right", paddingBottom:8, textTransform:"uppercase", width:"14%"}}>Ending Bal</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {activeJe.lines.map((line, i) => (
-                      <tr key={i} style={{borderBottom:`1px solid ${T.appBg}`}}>
-                        <td style={{...MONO, fontSize:12, padding:"10px 8px 10px 0", color:T.textPrimary}}>{line.fundId}</td>
-                        <td style={{...MONO, fontSize:12, padding:"10px 8px", color:T.textPrimary}}>{line.acct}{line.name ? ` — ${line.name}` : ""}</td>
-                        <td style={{...MONO, fontSize:12, padding:"10px 0 10px 8px", textAlign:"right", color:line.debit>0?T.textPrimary:T.textMuted}}>{line.debit>0?fmtUSD(line.debit):"—"}</td>
-                        <td style={{...MONO, fontSize:12, padding:"10px 0 10px 8px", textAlign:"right", color:line.credit>0?T.textPrimary:T.textMuted}}>{line.credit>0?fmtUSD(line.credit):"—"}</td>
-                      </tr>
-                    ))}
+                    {activeJe.lines.map((line, i) => {
+                      const cur = Number(line.current) || null;
+                      const ending = cur != null ? cur + (Number(line.debit)||0) - (Number(line.credit)||0) : null;
+                      return (
+                        <tr key={i} style={{borderBottom:`1px solid ${T.appBg}`}}>
+                          <td style={{...MONO, fontSize:12, padding:"10px 8px 10px 0", color:T.textPrimary}}>{line.fundId}</td>
+                          <td style={{...MONO, fontSize:12, padding:"10px 8px", color:T.textPrimary}}>{line.acct}{line.name ? ` — ${line.name}` : ""}</td>
+                          <td style={{...MONO, fontSize:12, padding:"10px 8px", textAlign:"right", color:T.textMuted}}>{cur != null ? fmtUSD(cur) : "—"}</td>
+                          <td style={{...MONO, fontSize:12, padding:"10px 8px", textAlign:"right", color:line.debit>0?T.textPrimary:T.textMuted}}>{line.debit>0?fmtUSD(line.debit):"—"}</td>
+                          <td style={{...MONO, fontSize:12, padding:"10px 8px", textAlign:"right", color:line.credit>0?T.textPrimary:T.textMuted}}>{line.credit>0?fmtUSD(line.credit):"—"}</td>
+                          <td style={{...MONO, fontSize:12, padding:"10px 0 10px 8px", textAlign:"right", fontWeight:700, color:ending==null?T.textMuted:ending<0?T.errorBase:T.okBase}}>{ending!=null?fmtUSD(ending):"—"}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
+              {activeJe.unbalancedMemo && (
+                <div style={{marginTop:16, padding:"12px 16px", background:T.warnBg, border:`1px solid ${T.warnBorder}`, borderRadius:6}}>
+                  <div style={{...SANS, fontSize:10, fontWeight:700, color:T.warnBase, textTransform:"uppercase", marginBottom:4}}>Unbalanced Entry — Reason</div>
+                  <div style={{...SANS, fontSize:13, color:T.warnBase}}>{activeJe.unbalancedMemo}</div>
+                </div>
+              )}
             </div>
           </div>
         ) : (
           /* ── Draft New JE Form ── */
           <div style={{background:T.cardBg, border:`1px solid ${T.border}`, borderRadius:10, overflow:"hidden", boxShadow:"0 4px 12px rgba(0,0,0,0.03)", width:"100%"}}>
-          <div style={{background:T.navyHeader, padding:"16px 24px", color:"#fff", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
-            <div style={{...SANS, fontWeight:700, fontSize:16}}>Draft New Journal Entry</div>
-            <div style={{display:"flex", background:"rgba(255,255,255,0.1)", borderRadius:6, padding:3}}>
-              <button onClick={()=>setInputMethod("manual")} style={{...SANS, fontSize:11, fontWeight:600, padding:"4px 12px", border:"none", borderRadius:4, background:inputMethod==="manual"?"#fff":"transparent", color:inputMethod==="manual"?T.navyHeader:"#fff", cursor:"pointer"}}>Manual</button>
-              <button onClick={()=>setInputMethod("batch")} style={{...SANS, fontSize:11, fontWeight:600, padding:"4px 12px", border:"none", borderRadius:4, background:inputMethod==="batch"?"#fff":"transparent", color:inputMethod==="batch"?T.navyHeader:"#fff", cursor:"pointer"}}>Batch Upload</button>
-            </div>
+          <div style={{background:T.navyHeader, padding:"16px 24px", color:"#fff"}}>
+            <div style={{...SANS, fontWeight:700, fontSize:16}}>New Journal Entry</div>
+            <div style={{...SANS, fontSize:11, color:"rgba(255,255,255,0.6)", marginTop:3}}>Enter DR/CR or type an ending balance — the other side fills automatically</div>
           </div>
-          
+
           <div style={{padding:24}}>
-            {inputMethod === "batch" ? (
-               <div style={{border:`2px dashed ${T.border}`,borderRadius:10,padding:"60px 32px",textAlign:"center",background:T.appBg}}>
-                 <div style={{fontSize:32, marginBottom:16}}>📤</div>
-                 <div style={{...SANS, fontSize:16, fontWeight:600, color:T.textPrimary, marginBottom:8}}>Upload Mass JE File</div>
-                 <div style={{...SANS, fontSize:13, color:T.textMuted}}>Drop your multi-fund Excel or CSV mapping file here.</div>
-                 <button style={{marginTop:24, ...SANS, fontSize:13, fontWeight:600, padding:"10px 20px", borderRadius:6, border:`1px solid ${T.border}`, background:"#fff", cursor:"pointer", color:T.textPrimary, boxShadow:"0 1px 2px rgba(0,0,0,0.05)"}}>Browse Files</button>
-               </div>
-            ) : (
-              <>
-                <div style={{display:"flex", gap:20, marginBottom:24}}>
-                  <div style={{flex:2}}>
-                    <FieldLabel>Description</FieldLabel>
-                    <input type="text" value={jeDesc} onChange={e=>setJeDesc(e.target.value)} placeholder="e.g., Cross-fund year-end fee true-up" style={{...SANS, width:"100%", padding:"10px 14px", borderRadius:6, border:`1px solid ${T.border}`, fontSize:13}} />
-                  </div>
-                  <div style={{flex:1}}>
-                    <FieldLabel>Reference (Optional)</FieldLabel>
-                    <input type="text" value={jeRef} onChange={e=>setJeRef(e.target.value)} placeholder="JE-XXX" style={{...SANS, width:"100%", padding:"10px 14px", borderRadius:6, border:`1px solid ${T.border}`, fontSize:13}} />
-                  </div>
-                  <div style={{flex:1}}>
-                    <FieldLabel>Entry Mode</FieldLabel>
-                    <select value={entryMode} onChange={e=>setEntryMode(e.target.value)} style={{...SANS, width:"100%", padding:"10px 14px", borderRadius:6, border:`1px solid ${T.border}`, fontSize:13, background:"#fff", cursor:"pointer"}}>
-                      <option value="standard">Standard (DR/CR)</option>
-                      <option value="target_balance">Target Balance Mode</option>
-                    </select>
-                  </div>
-                </div>
+            <div style={{display:"flex", gap:20, marginBottom:24}}>
+              <div style={{flex:2}}>
+                <FieldLabel>Description</FieldLabel>
+                <input type="text" value={jeDesc} onChange={e=>setJeDesc(e.target.value)} placeholder="e.g., Cross-fund year-end fee true-up" style={{...SANS, width:"100%", padding:"10px 14px", borderRadius:6, border:`1px solid ${T.border}`, fontSize:13}} />
+              </div>
+              <div style={{flex:1}}>
+                <FieldLabel>Reference (Optional)</FieldLabel>
+                <input type="text" value={jeRef} onChange={e=>setJeRef(e.target.value)} placeholder="JE-XXX" style={{...SANS, width:"100%", padding:"10px 14px", borderRadius:6, border:`1px solid ${T.border}`, fontSize:13}} />
+              </div>
+            </div>
 
-                <div style={{overflowX:"auto", width:"100%"}}>
-                  <table style={{width:"100%", borderCollapse:"collapse", marginBottom:20, minWidth:800}}>
-                    <thead>
-                      <tr style={{borderBottom:`2px solid ${T.border}`}}>
-                        <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"left", paddingBottom:10, textTransform:"uppercase", width:"20%"}}>Fund</th>
-                        <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"left", paddingBottom:10, textTransform:"uppercase", width:"30%"}}>Account</th>
-                        {entryMode === "target_balance" && <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"right", paddingBottom:10, textTransform:"uppercase", width:"15%"}}>Current Bal</th>}
-                        {entryMode === "target_balance" && <th style={{...SANS, fontSize:11, fontWeight:700, color:T.aiBase, textAlign:"right", paddingBottom:10, textTransform:"uppercase", width:"15%"}}>Target Bal</th>}
-                        <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"right", paddingBottom:10, textTransform:"uppercase", width:entryMode==="target_balance"?"10%":"25%"}}>Debit</th>
-                        <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"right", paddingBottom:10, textTransform:"uppercase", width:entryMode==="target_balance"?"10%":"25%"}}>Credit</th>
+            <div style={{overflowX:"auto", width:"100%"}}>
+              <table style={{width:"100%", borderCollapse:"collapse", marginBottom:8, minWidth:900}}>
+                <thead>
+                  <tr style={{borderBottom:`2px solid ${T.border}`}}>
+                    <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"left",  paddingBottom:10, textTransform:"uppercase", width:"15%"}}>Fund</th>
+                    <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"left",  paddingBottom:10, textTransform:"uppercase", width:"28%"}}>Account</th>
+                    <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"right", paddingBottom:10, textTransform:"uppercase", width:"13%"}}>Current Bal</th>
+                    <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"right", paddingBottom:10, textTransform:"uppercase", width:"13%"}}>Debit</th>
+                    <th style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textAlign:"right", paddingBottom:10, textTransform:"uppercase", width:"13%"}}>Credit</th>
+                    <th style={{...SANS, fontSize:11, fontWeight:700, color:T.actionBase, textAlign:"right", paddingBottom:10, textTransform:"uppercase", width:"13%"}}>Ending Bal</th>
+                    <th style={{width:"5%"}}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {newLines.map(line => {
+                    const endingNum = Number(line.ending);
+                    const endingColor = line.ending === "" ? T.textMuted : endingNum < 0 ? T.errorBase : T.okBase;
+                    return (
+                      <tr key={line.id} style={{borderBottom:`1px solid ${T.appBg}`}}>
+                        <td style={{padding:"6px 4px 6px 0"}}>
+                          <select value={line.fundId} onChange={e=>updateLine(line.id,"fundId",e.target.value)} style={{...SANS, width:"100%", padding:"7px 6px", border:`1px solid ${T.border}`, borderRadius:4, fontSize:12, background:"#fff"}}>
+                            {fundSeeds.map(f => <option key={f.fund_id} value={f.fund_id}>{f.fund_id}</option>)}
+                          </select>
+                        </td>
+                        <td style={{padding:"6px 4px"}}>
+                          <select value={line.acct} onChange={e=>updateLine(line.id,"acct",e.target.value)} style={{...MONO, width:"100%", padding:"7px 6px", border:`1px solid ${T.border}`, borderRadius:4, fontSize:11, background:"#fff"}}>
+                            <option value="">-- Select Account --</option>
+                            {availableAccounts.map(a => <option key={a.acct} value={a.acct}>{a.acct} — {a.name}</option>)}
+                          </select>
+                        </td>
+                        <td style={{padding:"6px 4px", textAlign:"right"}}>
+                          <span style={{...MONO, fontSize:12, color:T.textMuted}}>{line.acct ? fmtUSD(line.current) : "—"}</span>
+                        </td>
+                        <td style={{padding:"6px 4px"}}>
+                          <input type="number" value={line.debit} onChange={e=>updateLine(line.id,"debit",e.target.value)} placeholder="0.00" style={{...MONO, width:"100%", padding:"7px 6px", border:`1px solid ${T.border}`, borderRadius:4, fontSize:12, textAlign:"right", background:"#fff"}} />
+                        </td>
+                        <td style={{padding:"6px 4px"}}>
+                          <input type="number" value={line.credit} onChange={e=>updateLine(line.id,"credit",e.target.value)} placeholder="0.00" style={{...MONO, width:"100%", padding:"7px 6px", border:`1px solid ${T.border}`, borderRadius:4, fontSize:12, textAlign:"right", background:"#fff"}} />
+                        </td>
+                        <td style={{padding:"6px 4px"}}>
+                          <input type="number" value={line.ending} onChange={e=>updateLine(line.id,"ending",e.target.value)} placeholder="—" style={{...MONO, width:"100%", padding:"7px 6px", border:`1px solid ${T.actionBase}`, borderRadius:4, fontSize:12, textAlign:"right", background:T.actionBg, color:endingColor, fontWeight:line.ending !== "" ? 700 : 400}} />
+                        </td>
+                        <td style={{padding:"6px 0 6px 4px", textAlign:"center"}}>
+                          {newLines.length > 2 && (
+                            <button onClick={()=>setNewLines(p=>p.filter(x=>x.id!==line.id))} style={{background:"none", border:"none", color:T.textMuted, cursor:"pointer", fontSize:16, lineHeight:1, padding:"2px 4px"}} title="Remove line">×</button>
+                          )}
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {newLines.map(line => (
-                        <tr key={line.id} style={{borderBottom:`1px solid ${T.appBg}`}}>
-                          <td style={{padding:"8px 4px 8px 0"}}>
-                            <select value={line.fundId} onChange={e=>updateLine(line.id, "fundId", e.target.value)} style={{...SANS, width:"100%", padding:"8px", border:`1px solid ${T.border}`, borderRadius:4, fontSize:12, background:"#fff"}}>
-                              {fundSeeds.map(f => <option key={f.fund_id} value={f.fund_id}>{f.fund_id}</option>)}
-                            </select>
-                          </td>
-                          <td style={{padding:"8px 4px"}}>
-                            <select value={line.acct} onChange={e=>updateLine(line.id, "acct", e.target.value)} style={{...MONO, width:"100%", padding:"8px", border:`1px solid ${T.border}`, borderRadius:4, fontSize:11, background:"#fff"}}>
-                              <option value="">-- Select Account --</option>
-                              {availableAccounts.map(a => <option key={a.acct} value={a.acct}>{a.acct} - {a.name}</option>)}
-                            </select>
-                          </td>
-                          {entryMode === "target_balance" && (
-                            <td style={{padding:"8px 4px", textAlign:"right"}}>
-                              <span style={{...MONO, fontSize:12, color:T.textMuted}}>{fmtUSD(line.current)}</span>
-                            </td>
-                          )}
-                          {entryMode === "target_balance" && (
-                            <td style={{padding:"8px 4px"}}>
-                              <input type="number" value={line.target} onChange={e=>updateLine(line.id, "target", e.target.value)} placeholder="0.00" style={{...MONO, width:"100%", padding:"8px", border:`1px solid ${T.aiBorder}`, background:T.aiBg, color:T.aiDark, borderRadius:4, fontSize:12, textAlign:"right"}} />
-                            </td>
-                          )}
-                          <td style={{padding:"8px 4px"}}>
-                            <input type="number" value={line.debit} onChange={e=>updateLine(line.id, "debit", e.target.value)} placeholder="0.00" disabled={!!line.credit || entryMode==="target_balance"} style={{...MONO, width:"100%", padding:"8px", border:`1px solid ${T.border}`, borderRadius:4, fontSize:12, textAlign:"right", background:line.credit || entryMode==="target_balance" ? "#f8fafc" : "#fff", color:entryMode==="target_balance"&&line.debit>0?T.okBase:T.textPrimary, fontWeight:entryMode==="target_balance"?700:400}} />
-                          </td>
-                          <td style={{padding:"8px 0 8px 4px"}}>
-                            <input type="number" value={line.credit} onChange={e=>updateLine(line.id, "credit", e.target.value)} placeholder="0.00" disabled={!!line.debit || entryMode==="target_balance"} style={{...MONO, width:"100%", padding:"8px", border:`1px solid ${T.border}`, borderRadius:4, fontSize:12, textAlign:"right", background:line.debit || entryMode==="target_balance" ? "#f8fafc" : "#fff", color:entryMode==="target_balance"&&line.credit>0?T.errorBase:T.textPrimary, fontWeight:entryMode==="target_balance"?700:400}} />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                
-                <button onClick={handleAddLine} style={{...SANS, fontSize:12, fontWeight:600, color:T.actionBase, background:"none", border:"none", cursor:"pointer", marginBottom:24, padding:"4px 8px", borderRadius:4, transition:"background 0.2s"}} onMouseEnter={e=>e.currentTarget.style.background=T.actionBg} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                  + Add Line
-                </button>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-                <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"20px", background: isBalanced ? T.okBg : T.appBg, border:`1px solid ${isBalanced ? T.okBorder : T.border}`, borderRadius:8, transition:"all 0.3s"}}>
-                  <div>
-                    <div style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, letterSpacing:"0.05em"}}>TOTALS</div>
-                    <div style={{display:"flex", gap:32, marginTop:6}}>
-                      <div style={{...MONO, fontSize:18, fontWeight:700, color:T.textPrimary}}>DR: {fmtUSD(totalDebit)}</div>
-                      <div style={{...MONO, fontSize:18, fontWeight:700, color:T.textPrimary}}>CR: {fmtUSD(totalCredit)}</div>
-                    </div>
-                  </div>
-                  <div style={{display:"flex", alignItems:"center", gap:16}}>
-                    {!isBalanced && totalDebit > 0 && <span style={{...SANS, fontSize:13, fontWeight:700, color:T.errorBase}}>Out of balance by {fmtUSD(Math.abs(totalDebit - totalCredit))}</span>}
-                    <button disabled={!isBalanced} onClick={handleSubmitJE} style={{...SANS, fontSize:14, fontWeight:700, padding:"12px 24px", borderRadius:6, border:"none", background: isBalanced ? T.actionBase : T.border, color: isBalanced ? "#fff" : T.textMuted, cursor: isBalanced ? "pointer" : "not-allowed", transition:"all 0.2s", boxShadow: isBalanced ? "0 4px 12px rgba(79,70,229,0.3)" : "none"}}>
-                      Submit for Review
-                    </button>
-                  </div>
+            <button onClick={handleAddLine} style={{...SANS, fontSize:12, fontWeight:600, color:T.actionBase, background:"none", border:"none", cursor:"pointer", marginBottom:20, padding:"4px 8px", borderRadius:4}} onMouseEnter={e=>e.currentTarget.style.background=T.actionBg} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+              + Add Line
+            </button>
+
+            {hasLines && !isBalanced && (
+              <div style={{marginBottom:16}}>
+                <div style={{...SANS, fontSize:11, fontWeight:700, color:T.warnBase, marginBottom:6}}>
+                  OUT OF BALANCE BY {fmtUSD(Math.abs(totalDebit - totalCredit))} — provide a reason to post anyway
                 </div>
-              </>
+                <textarea value={jeUnbalancedMemo} onChange={e=>setJeUnbalancedMemo(e.target.value)} placeholder="Reason for posting an unbalanced entry…" rows={2} style={{...SANS, width:"100%", padding:"10px 12px", borderRadius:6, border:`1px solid ${T.warnBorder}`, background:T.warnBg, fontSize:13, color:T.warnBase, resize:"vertical", boxSizing:"border-box"}} />
+              </div>
             )}
+
+            <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"16px 20px", background:isBalanced?T.okBg:canSubmit?T.warnBg:T.appBg, border:`1px solid ${isBalanced?T.okBorder:canSubmit?T.warnBorder:T.border}`, borderRadius:8, transition:"all 0.3s"}}>
+              <div style={{display:"flex", gap:32}}>
+                <div style={{...MONO, fontSize:16, fontWeight:700, color:T.textPrimary}}>DR: {fmtUSD(totalDebit)}</div>
+                <div style={{...MONO, fontSize:16, fontWeight:700, color:T.textPrimary}}>CR: {fmtUSD(totalCredit)}</div>
+              </div>
+              <button disabled={!canSubmit} onClick={handleSubmitJE} style={{...SANS, fontSize:14, fontWeight:700, padding:"12px 24px", borderRadius:6, border:"none", background:canSubmit?(isBalanced?T.actionBase:T.warnBase):T.border, color:canSubmit?"#fff":T.textMuted, cursor:canSubmit?"pointer":"not-allowed", transition:"all 0.2s", boxShadow:canSubmit?"0 4px 12px rgba(79,70,229,0.2)":"none"}}>
+                {isBalanced ? "Submit for Review" : "Post Unbalanced Entry"}
+              </button>
+            </div>
           </div>
           </div>
         )}
