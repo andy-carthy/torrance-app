@@ -5446,7 +5446,11 @@ function AiDataMappingScreen({session, onBack, onComplete}) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // NEW: GLOBAL ENTITY MANAGER (Master Data Setup)
 // ═══════════════════════════════════════════════════════════════════════════════
-function GlobalAddEntityModal({ onClose }) {
+function GlobalAddEntityModal({ onClose, onSave }) {
+  const [form, setForm] = useState({
+    name: "", type: "Master Fund", currency: "USD - US Dollar",
+    jurisdiction: "", gaapFormat: "Mutual Fund (Retail)", filings: [],
+  });
   return (
     <div className="modal-overlay" role="dialog" style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.85)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
       <div onClick={e=>e.stopPropagation()} className="slide-in" style={{background:T.cardBg,borderRadius:12,width:600,overflow:"hidden",boxShadow:"0 25px 50px -12px rgba(0,0,0,0.5)"}}>
@@ -5460,12 +5464,12 @@ function GlobalAddEntityModal({ onClose }) {
         <div style={{padding:"24px", display:"flex", flexDirection:"column", gap:16}}>
           <div>
             <FieldLabel required>Legal Entity Name</FieldLabel>
-            <input type="text" placeholder="e.g., Red Balloon Offshore Feeder Ltd." style={{...SANS,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13}}/>
+            <input type="text" value={form.name} onChange={e => setForm(p => ({...p, name: e.target.value}))} placeholder="e.g., Red Balloon Offshore Feeder Ltd." style={{...SANS,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13}}/>
           </div>
           <div style={{display:"flex", gap:16}}>
             <div style={{flex:1}}>
               <FieldLabel required>Entity Type</FieldLabel>
-              <select style={{...SANS,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13}}>
+              <select value={form.type} onChange={e => setForm(p => ({...p, type: e.target.value}))} style={{...SANS,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13}}>
                 <option>Master Fund</option>
                 <option>Feeder Fund</option>
                 <option>SPV / Blocker</option>
@@ -5474,7 +5478,7 @@ function GlobalAddEntityModal({ onClose }) {
             </div>
             <div style={{flex:1}}>
               <FieldLabel required>GAAP Reporting Format</FieldLabel>
-              <select style={{...SANS,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13}}>
+              <select value={form.gaapFormat} onChange={e => setForm(p => ({...p, gaapFormat: e.target.value}))} style={{...SANS,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13}}>
                 <option>Mutual Fund (Retail)</option>
                 <option>Hedge Fund (Alt)</option>
                 <option>Private Equity (Alt)</option>
@@ -5486,7 +5490,7 @@ function GlobalAddEntityModal({ onClose }) {
           <div style={{display:"flex", gap:16}}>
             <div style={{flex:1}}>
               <FieldLabel required>Base Currency</FieldLabel>
-              <select style={{...SANS,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13}}>
+              <select value={form.currency} onChange={e => setForm(p => ({...p, currency: e.target.value}))} style={{...SANS,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13}}>
                 <option>USD - US Dollar</option>
                 <option>EUR - Euro</option>
                 <option>GBP - British Pound</option>
@@ -5494,16 +5498,16 @@ function GlobalAddEntityModal({ onClose }) {
             </div>
             <div style={{flex:1}}>
               <FieldLabel required>Jurisdiction</FieldLabel>
-              <input type="text" placeholder="e.g., Cayman Islands" style={{...SANS,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13}}/>
+              <input type="text" value={form.jurisdiction} onChange={e => setForm(p => ({...p, jurisdiction: e.target.value}))} placeholder="e.g., Cayman Islands" style={{...SANS,width:"100%",padding:"10px 12px",borderRadius:6,border:`1px solid ${T.border}`,fontSize:13}}/>
             </div>
           </div>
-          
+
           <div style={{borderTop:`1px solid ${T.border}`, paddingTop:16}}>
             <FieldLabel>Required Regulatory Filings</FieldLabel>
             <div style={{display:"flex", gap:16, marginTop:8}}>
               {["N-PORT", "N-CEN", "N-MFP", "PF", "ADV"].map(f => (
                 <label key={f} style={{...SANS, fontSize:12, display:"flex", alignItems:"center", gap:6, cursor:"pointer"}}>
-                  <input type="checkbox" style={{accentColor:T.actionBase}} /> {f}
+                  <input type="checkbox" checked={form.filings.includes(f)} onChange={e => setForm(p => ({...p, filings: e.target.checked ? [...p.filings, f] : p.filings.filter(x => x !== f)}))} style={{accentColor:T.actionBase}} /> {f}
                 </label>
               ))}
             </div>
@@ -5512,7 +5516,180 @@ function GlobalAddEntityModal({ onClose }) {
         </div>
         <div style={{padding:"16px 24px",background:"#f8fafc",borderTop:`1px solid ${T.border}`,display:"flex",justifyContent:"flex-end",gap:12}}>
           <button onClick={onClose} style={{...SANS,fontSize:13,fontWeight:600,padding:"8px 16px",borderRadius:6,border:`1px solid ${T.border}`,background:"#fff",color:T.textPrimary,cursor:"pointer"}}>Cancel</button>
-          <button onClick={onClose} style={{...SANS,fontSize:13,fontWeight:700,padding:"8px 20px",borderRadius:6,border:"none",background:T.actionBase,color:"#fff",cursor:"pointer"}}>Initialize Entity</button>
+          <button
+            disabled={!form.name.trim()}
+            onClick={() => {
+              if (!form.name.trim()) return;
+              if (onSave) onSave({
+                id: `FND-NEW-${Date.now()}`,
+                name: form.name,
+                type: form.type,
+                client: "New Client",
+                jurisdiction: form.jurisdiction || "Delaware, USA",
+                nav: 0,
+                fundType: form.gaapFormat,
+                parent: "—",
+                filings: form.filings,
+              });
+              onClose();
+            }}
+            style={{ ...SANS, fontSize:13, fontWeight:700, padding:"8px 20px", borderRadius:6, border:"none",
+              background: form.name.trim() ? T.actionBase : T.border,
+              color: form.name.trim() ? "#fff" : T.textMuted,
+              cursor: form.name.trim() ? "pointer" : "not-allowed" }}
+          >
+            Initialize Entity
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InviteUserModal({ onClose }) {
+  const [form, setForm] = useState({ name:"", email:"", role:"Preparer", funds:"All Funds" });
+  const [saved, setSaved] = useState(false);
+
+  const roles = ["Preparer", "Controller", "Auditor (Read-Only)", "Client / LP"];
+
+  const handleSave = () => {
+    if (!form.name.trim() || !form.email.trim()) return;
+    setSaved(true);
+    setTimeout(onClose, 1000);
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(15,23,42,0.75)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center" }}
+      onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ background:T.cardBg, borderRadius:12, width:500, overflow:"hidden", boxShadow:"0 25px 50px rgba(0,0,0,0.4)" }}>
+        <div style={{ background:T.navyHeader, padding:"16px 24px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+          <div style={{ ...SANS, fontWeight:700, fontSize:15, color:"#fff" }}>Invite User</div>
+          <button onClick={onClose} style={{ background:"none", border:"none", color:"#9ca3af", cursor:"pointer", fontSize:20 }}>✕</button>
+        </div>
+        <div style={{ padding:24, display:"flex", flexDirection:"column", gap:14 }}>
+          {[
+            { label:"Full Name", field:"name", placeholder:"e.g., Jane Smith" },
+            { label:"Email Address", field:"email", placeholder:"jane@firm.com" },
+          ].map(f => (
+            <div key={f.field}>
+              <div style={{ ...SANS, fontSize:10, fontWeight:700, color:T.textMuted, textTransform:"uppercase", marginBottom:6 }}>{f.label} *</div>
+              <input type={f.field === "email" ? "email" : "text"} value={form[f.field]}
+                onChange={e => setForm(p => ({ ...p, [f.field]: e.target.value }))}
+                placeholder={f.placeholder}
+                style={{ ...SANS, width:"100%", padding:"10px 12px", borderRadius:6, border:`1px solid ${T.border}`, fontSize:13, boxSizing:"border-box" }} />
+            </div>
+          ))}
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
+            <div>
+              <div style={{ ...SANS, fontSize:10, fontWeight:700, color:T.textMuted, textTransform:"uppercase", marginBottom:6 }}>Access Role</div>
+              <select value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))}
+                style={{ ...SANS, width:"100%", padding:"10px 12px", borderRadius:6, border:`1px solid ${T.border}`, fontSize:13, cursor:"pointer" }}>
+                {roles.map(r => <option key={r}>{r}</option>)}
+              </select>
+            </div>
+            <div>
+              <div style={{ ...SANS, fontSize:10, fontWeight:700, color:T.textMuted, textTransform:"uppercase", marginBottom:6 }}>Fund Assignment</div>
+              <select value={form.funds} onChange={e => setForm(p => ({ ...p, funds: e.target.value }))}
+                style={{ ...SANS, width:"100%", padding:"10px 12px", borderRadius:6, border:`1px solid ${T.border}`, fontSize:13, cursor:"pointer" }}>
+                <option>All Funds</option>
+                <option>Pennywise Capital (All)</option>
+                <option>Bowers Asset Management (All)</option>
+                <option>Derry Capital Partners (All)</option>
+                <option>Custom Selection…</option>
+              </select>
+            </div>
+          </div>
+          <div style={{ background:T.aiBg, border:`1px solid ${T.aiBorder}`, borderRadius:6, padding:"10px 14px", ...SANS, fontSize:12, color:T.aiDark }}>
+            An invitation email with MFA setup instructions will be sent to <strong>{form.email || "the user's email"}</strong>. Access is provisioned immediately upon acceptance.
+          </div>
+        </div>
+        <div style={{ padding:"14px 24px", borderTop:`1px solid ${T.border}`, background:T.appBg, display:"flex", justifyContent:"flex-end", gap:12 }}>
+          <button onClick={onClose}
+            style={{ ...SANS, fontSize:13, fontWeight:600, padding:"8px 16px", borderRadius:6, border:`1px solid ${T.border}`, background:T.cardBg, cursor:"pointer" }}>Cancel</button>
+          <button onClick={handleSave}
+            disabled={!form.name.trim() || !form.email.trim()}
+            style={{ ...SANS, fontSize:13, fontWeight:700, padding:"8px 20px", borderRadius:6, border:"none",
+              background: saved ? T.okBase : (!form.name.trim() ? T.border : T.actionBase),
+              color: !form.name.trim() ? T.textMuted : "#fff",
+              cursor: !form.name.trim() ? "not-allowed" : "pointer",
+              display:"flex", alignItems:"center", gap:7 }}>
+            {saved ? <><span>✓</span> Invited!</> : "Send Invitation"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AddRuleModal({ onClose }) {
+  const [form, setForm] = useState({ condition:"", action:"", active:true });
+  const [saved, setSaved] = useState(false);
+
+  const conditionTemplates = [
+    "IF Exception Code == 'NAV_MISMATCH'",
+    "IF Dollar Variance > $500,000",
+    "IF Fund Type == 'Private Equity'",
+    "IF SLA Days Remaining <= 1",
+    "IF Exception Severity == 'error'",
+  ];
+
+  const actionTemplates = [
+    "ASSIGN TO James Okafor (Controller)",
+    "ASSIGN TO Sarah Chen (Senior)",
+    "ASSIGN TO Marcus Reid (Accountant)",
+    "SEND ALERT to ops-alerts@torrance.com",
+    "AUTO-ACKNOWLEDGE if prior period match >= 3",
+  ];
+
+  const handleSave = () => {
+    if (!form.condition || !form.action) return;
+    setSaved(true);
+    setTimeout(onClose, 800);
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(15,23,42,0.75)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center" }}
+      onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ background:T.cardBg, borderRadius:12, width:540, overflow:"hidden", boxShadow:"0 25px 50px rgba(0,0,0,0.4)" }}>
+        <div style={{ background:T.navyHeader, padding:"16px 24px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+          <div style={{ ...SANS, fontWeight:700, fontSize:15, color:"#fff" }}>Build Assignment Rule</div>
+          <button onClick={onClose} style={{ background:"none", border:"none", color:"#9ca3af", cursor:"pointer", fontSize:20 }}>✕</button>
+        </div>
+        <div style={{ padding:24, display:"flex", flexDirection:"column", gap:14 }}>
+          <div>
+            <div style={{ ...SANS, fontSize:10, fontWeight:700, color:T.textMuted, textTransform:"uppercase", marginBottom:6 }}>Condition</div>
+            <select value={form.condition} onChange={e => setForm(p => ({ ...p, condition: e.target.value }))}
+              style={{ ...SANS, width:"100%", padding:"10px 12px", borderRadius:6, border:`1px solid ${T.border}`, fontSize:13, cursor:"pointer" }}>
+              <option value="">Select condition…</option>
+              {conditionTemplates.map(c => <option key={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <div style={{ ...SANS, fontSize:10, fontWeight:700, color:T.textMuted, textTransform:"uppercase", marginBottom:6 }}>Action</div>
+            <select value={form.action} onChange={e => setForm(p => ({ ...p, action: e.target.value }))}
+              style={{ ...SANS, width:"100%", padding:"10px 12px", borderRadius:6, border:`1px solid ${T.border}`, fontSize:13, cursor:"pointer" }}>
+              <option value="">Select action…</option>
+              {actionTemplates.map(a => <option key={a}>{a}</option>)}
+            </select>
+          </div>
+          {form.condition && form.action && (
+            <div style={{ background:T.okBg, border:`1px solid ${T.okBorder}`, borderRadius:6, padding:"10px 14px", ...MONO, fontSize:11, color:T.okBase }}>
+              {form.condition} → {form.action}
+            </div>
+          )}
+        </div>
+        <div style={{ padding:"14px 24px", borderTop:`1px solid ${T.border}`, background:T.appBg, display:"flex", justifyContent:"flex-end", gap:12 }}>
+          <button onClick={onClose}
+            style={{ ...SANS, fontSize:13, fontWeight:600, padding:"8px 16px", borderRadius:6, border:`1px solid ${T.border}`, background:T.cardBg, cursor:"pointer" }}>Cancel</button>
+          <button onClick={handleSave}
+            disabled={!form.condition || !form.action}
+            style={{ ...SANS, fontSize:13, fontWeight:700, padding:"8px 20px", borderRadius:6, border:"none",
+              background: saved ? T.okBase : (!form.condition ? T.border : T.actionBase),
+              color: !form.condition ? T.textMuted : "#fff",
+              cursor: !form.condition ? "not-allowed" : "pointer",
+              display:"flex", alignItems:"center", gap:7 }}>
+            {saved ? <><span>✓</span> Rule Saved!</> : "Save Rule"}
+          </button>
         </div>
       </div>
     </div>
@@ -5525,7 +5702,10 @@ function GlobalAddEntityModal({ onClose }) {
 function GlobalEntityManager({ fundSeeds, onBack }) {
   const [activeTab, setActiveTab] = useState("entities"); // 'entities', 'rbac', 'rules'
   const [search, setSearch] = useState("");
-  const [showAdd, setShowAdd] = useState(false);
+  const [showAddEntity, setShowAddEntity] = useState(false);
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [showAddRule, setShowAddRule] = useState(false);
+  const [customEntities, setCustomEntities] = useState([]);
   const [collapsed, setCollapsed] = useState({});
 
   // Mocking the Internal/External Users for RBAC
@@ -5564,8 +5744,9 @@ function GlobalEntityManager({ fundSeeds, onBack }) {
         });
       }
     });
+    customEntities.forEach(e => entities.push(e));
     return entities;
-  }, [fundSeeds]);
+  }, [fundSeeds, customEntities]);
 
   const grouped = useMemo(() => {
     const g = {};
@@ -5603,7 +5784,11 @@ function GlobalEntityManager({ fundSeeds, onBack }) {
             <span style={{position:"absolute",left:9,top:"50%",transform:"translateY(-50%)",color:T.textMuted,fontSize:13}}>⌕</span>
             <input type="text" placeholder={activeTab === "rules" ? "Search rules..." : activeTab === "entities" ? "Search entities, clients, IDs..." : "Search users, emails, roles..."} value={search} onChange={e=>setSearch(e.target.value)} style={{...SANS, padding:"8px 12px 8px 28px", border:`1px solid ${T.border}`, borderRadius:6, fontSize:12, width:300, outline:"none"}} />
           </div>
-          <button onClick={()=> activeTab === "rules" ? {} : setShowAdd(true)} style={{...SANS,fontSize:12,fontWeight:600,padding:"8px 16px",borderRadius:6,border:"none",background:T.actionBase, color:"#fff",cursor:"pointer"}}>
+          <button onClick={() => {
+            if (activeTab === "entities") setShowAddEntity(true);
+            else if (activeTab === "rbac") setShowAddUser(true);
+            else if (activeTab === "rules") setShowAddRule(true);
+          }} style={{...SANS,fontSize:12,fontWeight:600,padding:"8px 16px",borderRadius:6,border:"none",background:T.actionBase, color:"#fff",cursor:"pointer"}}>
             {activeTab === "rules" ? "+ Build Rule" : activeTab === "entities" ? "+ Setup New Entity" : "+ Invite User"}
           </button>
         </div>
@@ -5741,7 +5926,17 @@ function GlobalEntityManager({ fundSeeds, onBack }) {
         )}
 
       </div>
-      {showAdd && <GlobalAddEntityModal onClose={()=>setShowAdd(false)} />}
+      {showAddEntity && (
+        <GlobalAddEntityModal
+          onClose={() => setShowAddEntity(false)}
+          onSave={(entity) => {
+            setCustomEntities(p => [...p, entity]);
+            setShowAddEntity(false);
+          }}
+        />
+      )}
+      {showAddUser && <InviteUserModal onClose={() => setShowAddUser(false)} />}
+      {showAddRule && <AddRuleModal onClose={() => setShowAddRule(false)} />}
     </div>
   );
 }
