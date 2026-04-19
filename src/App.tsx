@@ -9847,7 +9847,7 @@ function LoginScreen({ onLogin }) {
 
 {/** TODO: M  */}
 // ─── GlobalHeader (Upgraded with Fixed Radial Data Hub Menu) ─────────────────
-function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIngestion, onGoToFilings, onGoToEntities, onOpenAiSettings, onGoToDashboard, streak, notificationCount, fundState, fundSeeds}) {
+function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIngestion, onGoToFilings, onGoToEntities, onOpenAiSettings, onGoToDashboard, streak, notificationCount, fundState, fundSeeds, onStartOnboarding}) {
   const [hubOpen, setHubOpen] = useState(false);
   const [excFlash, setExcFlash] = useState(false);
   const showDataFeedsBtn = view !== "login" && view !== "auditor_portal";
@@ -9969,8 +9969,13 @@ function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIn
             <span>✦</span>AI Settings
           </button>
         )}
-        <button onClick={onToggleRole} title="Toggle role (demo)" style={{...SANS,fontSize:12,fontWeight:600,padding:"0 8px",height:26,borderRadius:6,cursor:"pointer",background:currentUser.isController?T.controllerBg:T.preparerBg,color:currentUser.isController?T.controllerAccent:T.preparerAccent,border:`1px solid ${currentUser.isController?T.controllerBd:T.preparerBd}`,display:"flex",alignItems:"center",gap:6}}>
-          <Avatar user={currentUser} size={20}/>{currentUser.name} · {currentUser.isController?"Controller":"Preparer"}<span style={{fontSize:10,opacity:0.7,marginLeft:4}}>⇄</span>
+        {currentUser.isImplementor&&(
+          <button onClick={onStartOnboarding} style={{...SANS,fontSize:11,fontWeight:600,padding:"4px 10px",height:26,borderRadius:6,cursor:"pointer",background:"#7c3aed",color:"#fff",border:"1px solid #6d28d9",display:"flex",alignItems:"center",gap:5,marginRight:4}}>
+            <span>＋</span>Onboard Client
+          </button>
+        )}
+        <button onClick={onToggleRole} title="Toggle role (demo)" style={{...SANS,fontSize:12,fontWeight:600,padding:"0 8px",height:26,borderRadius:6,cursor:"pointer",background:currentUser.isImplementor?"rgba(124,58,237,0.15)":currentUser.isController?T.controllerBg:T.preparerBg,color:currentUser.isImplementor?"#c4b5fd":currentUser.isController?T.controllerAccent:T.preparerAccent,border:`1px solid ${currentUser.isImplementor?"rgba(124,58,237,0.4)":currentUser.isController?T.controllerBd:T.preparerBd}`,display:"flex",alignItems:"center",gap:6}}>
+          <Avatar user={currentUser} size={20}/>{currentUser.name} · {currentUser.isImplementor?"Implementor":currentUser.isController?"Controller":"Preparer"}<span style={{fontSize:10,opacity:0.7,marginLeft:4}}>⇄</span>
         </button>
         {/** TODO: Fix Bug: When the user clicks on the bell icon they should be brough to their indox  */}
         <button onClick={() => onGoToDashboard("inbox")} style={{position:"relative", background:"none", border:"none", color:"rgba(255,255,255,0.7)", cursor:"pointer", fontSize:18, marginRight:8, transition:"color 0.2s"}} onMouseEnter={e=>e.currentTarget.style.color="#fff"} onMouseLeave={e=>e.currentTarget.style.color="rgba(255,255,255,0.7)"}>
@@ -10221,7 +10226,11 @@ export default function App() {
     setMappingSession(null);
   };
 
-  const handleToggleRole = useCallback(()=>setCurrentUserId(prev=>prev==="u4"?"u1":"u4"),[]);
+  const handleToggleRole = useCallback(()=>setCurrentUserId(prev=>{
+    if(prev==="u1") return "u4";
+    if(prev==="u4") return "user-ic-001";
+    return "u1";
+  }),[]);
   
   const getExceptions = fid => {
     if (!fid) return [];
