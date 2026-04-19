@@ -4,6 +4,7 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink } from '@react-pdf/renderer';
 
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // DESIGN TOKENS (Muted Slate UI for High-Density Data)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -10101,9 +10102,8 @@ function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIn
       )}*/}
 
       <div style={{display:"flex",alignItems:"center",gap:10}}>
-
       <button onClick={() => onGoToDashboard("dashboard")} style={{...SANS,fontSize:12,fontWeight:600,padding:"0 12px",height:26,borderRadius:6,cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",gap:6,marginRight:4,transition:"all 0.2s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.2)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
-              <span>📊</span> Dashboard
+              Dashboard
             </button>
 
         {/* RADIAL DATA HUB MENU (FIXED: Removed onMouseLeave, added invisible click-away overlay) */}
@@ -10114,8 +10114,8 @@ function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIn
             {/* Invisible overlay catches clicks outside the menu to close it */}
             {hubOpen && <div style={{position:"fixed", inset:0, zIndex:299}} onClick={() => setHubOpen(false)} />}
               {/** TODO: Add a button called dashboard before Daat Hub which brings user back to default dashboard view  */}
-            <button onClick={() => setHubOpen(!hubOpen)} style={{...SANS,fontSize:12,fontWeight:600,padding:"0 12px",height:26,borderRadius:6,cursor:"pointer",background:hubOpen?"rgba(255,255,255,0.2)":"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",gap:6,marginRight:4,transition:"all 0.2s", position:"relative", zIndex:300}}>
-              <span>🗄</span> Data Hub {hubOpen ? "▲" : "▼"}
+              <button onClick={() => setHubOpen(!hubOpen)} style={{...SANS,fontSize:12,fontWeight:600,padding:"0 12px",height:26,borderRadius:6,cursor:"pointer",background:hubOpen?"rgba(255,255,255,0.2)":"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",gap:6,marginRight:4,transition:"all 0.2s", position:"relative", zIndex:300}}>
+              Data Hub {hubOpen ? "▲" : "▼"}
             </button>
             
             {/* The Spiral / Radial Options */}
@@ -10123,32 +10123,32 @@ function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIn
               
               {/* Option 1: Data Feeds (Left Down) */}
               <button onClick={() => { setHubOpen(false); onGoToIngestion(); }} 
-                style={{position:"absolute", transform: hubOpen ? "translate(-80px, 10px)" : "translate(-50%, -20px) scale(0.5)", opacity: hubOpen ? 1 : 0, transition:"all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)", ...SANS, fontSize:11, fontWeight:600, padding:"6px 12px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:T.navyHeader, color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap", boxShadow:"0 4px 12px rgba(0,0,0,0.3)"}}>
-                <span>⛁</span> Ingestion
+                style={{position:"absolute", fontWeight:700,height:26,transform: hubOpen ? "translate(-120px, 0.5px)" : "translate(-50%, -20px) scale(0.5)", opacity: hubOpen ? 1 : 0, transition:"all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)", ...SANS, fontSize:12, fontWeight:600, padding:"6px 12px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:T.navyHeader, color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap", boxShadow:"0 4px 12px rgba(0,0,0,0.3)"}}>
+                Ingestion
               </button>
 
               {/* Option 2: Data Exchange (Straight Down) */}
               <button onClick={() => { setHubOpen(false); onGoToDashboard("data_exchange"); }} 
-                style={{position:"absolute", transform: hubOpen ? "translate(-50%, 40px)" : "translate(-50%, -20px) scale(0.5)", opacity: hubOpen ? 1 : 0, transition:"all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.05s", ...SANS, fontSize:11, fontWeight:600, padding:"6px 12px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:T.actionBase, color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap", boxShadow:"0 4px 12px rgba(0,0,0,0.3)"}}>
-                <span>🔄</span> Exchange
+                style={{position:"absolute", fontWeight:700,height:26,transform: hubOpen ? "translate(-50%, 5px)" : "translate(-50%, -20px) scale(0.5)", opacity: hubOpen ? 1 : 0, transition:"all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.05s", ...SANS, fontSize:12, fontWeight:600, padding:"6px 12px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:T.navyHeader, color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap", boxShadow:"0 4px 12px rgba(0,0,0,0.3)"}}>
+                Exchange
               </button>
 
               {/* Option 3: Data Architecture (Right Down) */}
               <button onClick={() => { setHubOpen(false); onGoToDashboard("data_architecture"); }} 
-                style={{position:"absolute", transform: hubOpen ? "translate(30px, 10px)" : "translate(-50%, -20px) scale(0.5)", opacity: hubOpen ? 1 : 0, transition:"all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.1s", ...SANS, fontSize:11, fontWeight:600, padding:"6px 12px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:T.navyHeader, color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap", boxShadow:"0 4px 12px rgba(0,0,0,0.3)"}}>
-                <span>⚙</span> Architecture
+                style={{position:"absolute", fontWeight:700,height:26,transform: hubOpen ? "translate(50px, 0.5px)" : "translate(-50%, -20px) scale(0.5)", opacity: hubOpen ? 1 : 0, transition:"all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.1s", ...SANS, fontSize:12, fontWeight:600, padding:"6px 12px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:T.navyHeader, color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap", boxShadow:"0 4px 12px rgba(0,0,0,0.3)"}}>
+                Pipeline
               </button>
             </div>
           </div>
         )}
 
-        <button onClick={onGoToFilings} style={{...SANS,fontSize:11,fontWeight:600,padding:"5px 12px",height:26,borderRadius:6,cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",gap:6,marginRight:8,transition:"background 0.15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.15)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
-          <span style={{fontSize:13}}>📋</span> Filings
+  <button onClick={onGoToFilings} style={{...SANS,fontSize:12,fontWeight:600,padding:"5px 12px",height:26,borderRadius:6,cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",gap:6,marginRight:8,transition:"background 0.15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.15)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
+          Filings
         </button>
-        <button onClick={onGoToEntities} style={{...SANS,fontSize:11,fontWeight:600,padding:"5px 12px",height:26,borderRadius:6,cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",gap:6,marginRight:8,transition:"background 0.15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.15)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
-          <span style={{fontSize:13}}>🏢</span> Entities
+        <button onClick={onGoToEntities} style={{...SANS,fontSize:12,fontWeight:600,padding:"5px 12px",height:26,borderRadius:6,cursor:"pointer",background:"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",gap:6,marginRight:8,transition:"background 0.15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.15)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}>
+          Entities
         </button>
-        <span style={{...MONO,fontSize:12,fontWeight:700,padding:"0 10px",height:26,borderRadius:6,background:T.aiBase,color:"#fff",display:"flex",alignItems:"center",gap:6,marginRight:8,boxShadow:"0 1px 2px rgba(0,0,0,0.1)"}}>
+        <span style={{...MONO,fontSize:12,fontWeight:600,padding:"0 10px",height:26,borderRadius:6,background:T.aiBase,color:"#fff",display:"flex",alignItems:"center",gap:6,marginRight:8,boxShadow:"0 1px 2px rgba(0,0,0,0.1)"}}>
           <span>✦</span>AI Active
         </span>
         {currentUser.isController&&(
