@@ -41,7 +41,28 @@ const CAT = {
   Income:   {color:T.catIncome,bg:T.catIncomeBg,border:T.catIncomeBd},
   Expense:  {color:T.catExp,   bg:T.catExpBg,   border:T.catExpBd  },
 };
+// Add these to src/App.tsx
+interface AIPromptTemplate {
+  id: string;
+  name: string;
+  promptText: string;
+  isFavorite: boolean;
+  createdAt: string;
+}
 
+interface AIDocumentSchema {
+  globalStyles: {
+    fontFamily: string;
+    baseFontSize: number;
+    themeColor: string;
+  };
+  content: DocumentElement[];
+}
+
+type DocumentElement = 
+  | { type: 'heading'; text: string; level: 1 | 2 | 3 }
+  | { type: 'paragraph'; text: string }
+  | { type: 'table'; headers: string[]; rows: string[][]; headerColor: string; textColor: string; };
 // ═══════════════════════════════════════════════════════════════════════════════
 // STATIC DATA
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -966,6 +987,164 @@ const FinancialStatementPDF = ({ fund, fsData, resolvedExceptions = [] }: { fund
     </Page>
   </Document>
 );
+// Add inside src/App.tsx (near your other PDF components)
+import { Font } from '@react-pdf/renderer';
+
+// Register a web font so the AI can dynamically switch fonts
+Font.register({ family: 'Open Sans', src: 'https://fonts.gstatic.com/s/opensans/v18/mem8YaGs126MiZpBA-UFVZ0e.ttf' });
+
+const DynamicAIDocument = ({ schema }: { schema: AIDocumentSchema }) => {
+  const styles = StyleSheet.create({
+    page: {
+      padding: 40,
+      fontFamily: schema.globalStyles.fontFamily || 'Helvetica',
+      fontSize: schema.globalStyles.baseFontSize || 10,
+      color: '#334155' // Using your T.textPrimary equivalent
+    },
+    h1: { fontSize: 20, fontWeight: 'bold', marginBottom: 12, color: schema.globalStyles.themeColor },
+    h2: { fontSize: 16, fontWeight: 'bold', marginBottom: 8, marginTop: 12 },
+    p: { marginBottom: 8, lineHeight: 1.5 },
+    table: { display: 'flex', flexDirection: 'column', marginTop: 10, marginBottom: 10 },
+    tableRow: { flexDirection: 'row', borderBottom: '1px solid #e2e8f0' },
+    tableHeader: { flexDirection: 'row', backgroundColor: schema.globalStyles.themeColor, color: '#ffffff' },
+    cell: { flex: 1, padding: 6, fontSize: 9 }
+  });
+
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {schema.content.map((block, idx) => {
+          if (block.type === 'heading') return <Text key={idx} style={block.level === 1 ? styles.h1 : styles.h2}>{block.text}</Text>;
+          if (block.type === 'paragraph') return <Text key={idx} style={styles.p}>{block.text}</Text>;
+          if (block.type === 'table') return (
+            <View key={idx} style={styles.table}>
+              <View style={[styles.tableHeader, { backgroundColor: block.headerColor || schema.globalStyles.themeColor }]}>
+                {block.headers.map((h, i) => (
+                  <Text key={`th-${i}`} style={[styles.cell, { color: block.textColor || '#fff', fontWeight: 'bold' }]}>{h}</Text>
+                ))}
+              </View>
+              {block.rows.map((row, rIdx) => (
+                <View key={`tr-${rIdx}`} style={styles.tableRow}>
+                  {row.map((cell, cIdx) => <Text key={`td-${cIdx}`} style={styles.cell}>{cell}</Text>)}
+                </View>
+              ))}
+            </View>
+          );
+          return null;
+        })}
+      </Page>
+    </Document>
+  );
+};
+// Add at the top of src/App.tsx, near your imports
+import { Document as WordDoc, Packer, Paragraph, TextRun, Table, TableRow, TableCell, ShadingType } from "docx";
+// (Note: ensure 'saveAs' from 'file-saver' is imported, which you already have)
+
+const generateWordFromSchema = async (schema: AIDocumentSchema) => {
+  const children: any[] = schema.content.map(block => {
+    if (block.type === 'heading') {
+      return new Paragraph({
+        children: [new TextRun({ text: block.text, bold: true, size: block.level === 1 ? 32 : 24, font: schema.globalStyles.fontFamily, color: schema.globalStyles.themeColor.replace('#', '') })]
+      });
+    }
+    if (block.type === 'paragraph') {
+      return new Paragraph({ children: [new TextRun({ text: block.text, size: 20, font: schema.globalStyles.fontFamily })] });
+    }
+    if (block.type === 'table') {
+      return new Table({
+        rows: [
+          new TableRow({
+            children: block.headers.map(h => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, color: block.textColor.replace('#', '') })] })], shading: { fill: block.headerColor.replace('#', ''), type: ShadingType.CLEAR } }))
+          }),
+          ...block.rows.map(row => new TableRow({
+            children: row.map(cell => new TableCell({ children: [new Paragraph(cell)] }))
+          }))
+        ]
+      });
+    }
+    return new Paragraph({});
+  });
+
+  const doc = new WordDoc({ sections: [{ properties: {}, children }] });
+  const blob = await Packer.toBlob(doc);
+  saveAs(blob, "AI_Generated_Report.docx");
+};
+// Add inside src/App.tsx
+const AIPromptBuilder = ({ fund, fsData }: { fund: any; fsData: any }) => {
+  const [promptText, setPromptText] = useState("Generate a summary of the Trial Balance. Use Helvetica. Include a 3-column table showing Assets, Liabilities, and Net Assets with a navy blue header.");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [schema, setSchema] = useState<AIDocumentSchema | null>(null);
+
+  const handleGenerate = () => {
+    setIsGenerating(true);
+    // MOCK AI CALL: Here you will eventually pass `promptText` + `fsData` to your LLM backend
+    setTimeout(() => {
+      setSchema({
+        globalStyles: { fontFamily: 'Helvetica', baseFontSize: 10, themeColor: T.navyHeader },
+        content: [
+          { type: 'heading', text: `${fund?.name || 'Fund'} Financial Close`, level: 1 },
+          { type: 'paragraph', text: `Generated summary for period ending Dec 31, 2024.` },
+          { 
+            type: 'table', 
+            headers: ['Category', 'Amount'], 
+            rows: [
+              ['Total Assets', `$${fsData.total_assets.toLocaleString()}`], 
+              ['Total Liabilities', `$${Math.abs(fsData.total_liabilities).toLocaleString()}`],
+              ['Net Assets', `$${fsData.net_assets.toLocaleString()}`]
+            ],
+            headerColor: T.navyHeader,
+            textColor: '#ffffff'
+          }
+        ]
+      });
+      setIsGenerating(false);
+    }, 1500);
+  };
+
+  return (
+    <div style={{ padding: "20px 24px", background: T.appBg, height: "100%", overflowY: "auto" }}>
+      <div style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: 10, padding: 24 }}>
+        <h2 style={{ ...SANS, fontSize: 18, fontWeight: 700, color: T.textPrimary, marginBottom: 16 }}>
+          ✨ AI Document Generator
+        </h2>
+        
+        <textarea 
+          style={{ width: "100%", minHeight: 120, padding: 12, borderRadius: 6, border: `1px solid ${T.border}`, ...SANS, fontSize: 13, outline: "none", resize: "vertical", marginBottom: 16 }}
+          value={promptText}
+          onChange={(e) => setPromptText(e.target.value)}
+          placeholder="Describe the layout, tables, columns, colors, and font..."
+        />
+
+        <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+          <button onClick={handleGenerate} style={{ ...SANS, fontSize: 13, fontWeight: 700, padding: "10px 16px", borderRadius: 6, border: "none", background: T.actionBase, color: "#fff", cursor: "pointer" }}>
+            {isGenerating ? "AI is Generating..." : "Generate Template"}
+          </button>
+          <button style={{ ...SANS, fontSize: 13, fontWeight: 600, padding: "10px 16px", borderRadius: 6, border: `1px solid ${T.border}`, background: T.cardBg, color: T.textPrimary, cursor: "pointer" }}>
+            Save Prompt
+          </button>
+        </div>
+
+        {schema && (
+          <div style={{ background: T.aiBg, border: `1px solid ${T.aiBorder}`, borderRadius: 8, padding: 16 }}>
+            <h3 style={{ ...SANS, fontSize: 14, fontWeight: 700, color: T.aiDark, marginBottom: 12 }}>Document Ready</h3>
+            <div style={{ display: "flex", gap: 12 }}>
+              <PDFDownloadLink document={<DynamicAIDocument schema={schema} />} fileName="AI_Report.pdf" style={{ textDecoration: 'none' }}>
+                {({ loading }) => (
+                  <button style={{ ...SANS, fontSize: 12, fontWeight: 600, padding: "8px 14px", borderRadius: 6, background: T.okBase, color: "#fff", border: "none", cursor: "pointer" }}>
+                    {loading ? 'Preparing PDF...' : 'Download PDF'}
+                  </button>
+                )}
+              </PDFDownloadLink>
+              <button onClick={() => generateWordFromSchema(schema)} style={{ ...SANS, fontSize: 12, fontWeight: 600, padding: "8px 14px", borderRadius: 6, background: T.controllerAccent, color: "#fff", border: "none", cursor: "pointer" }}>
+                Download Word (.docx)
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 // ═══════════════════════════════════════════════════════════════════════════════
 // EXCEL WORKING PAPER ENGINE (Multi-Sheet Export)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -4033,7 +4212,8 @@ function JournalEntriesTab({ fund, fundSeeds, masterFeeds, currentUser, onPostJE
 // FINANCIAL STATEMENT PREVIEW TAB (Cleaned up - Checks moved to CrossChecksTab)
 // ═══════════════════════════════════════════════════════════════════════════════
 // ─── Dynamic GAAP Financial Statements ───────────────────────────────────────
-function FinancialStatementsTab({ fund, fxOverrideActive, exceptions = [] }: { fund?: any; fxOverrideActive?: boolean; exceptions?: any[] }) {
+function FinancialStatementsTab({ fund, fxOverrideActive, exceptions = [], fsData }: { fund?: any; fxOverrideActive?: boolean; exceptions?: any[]; fsData?: any }) {
+  const FS_DYNAMIC = fsData; // Map it back to the internal variable so the JSX still works
   const [activeStmt, setActiveStmt] = useState("soa");
   const [generating, setGenerating] = useState(false);
   const [generated,  setGenerated]  = useState(false);
@@ -4070,71 +4250,7 @@ function FinancialStatementsTab({ fund, fxOverrideActive, exceptions = [] }: { f
     return base;
   }, [fund]);
 
-  // (Keeping FS_DYNAMIC the exact same as previously written)
-  const FS_DYNAMIC = useMemo(() => {
-    const sumAcct = (accts) => TB_ROWS.filter(r => accts.includes(r.acct)).reduce((s, r) => s + (r.debit - r.credit), 0);
 
-    const investments_at_value = sumAcct(["1010", "1020", "1300"]);
-    const cash_domestic = sumAcct(["1100"]);
-    const cash_foreign = sumAcct(["1110"]);
-    const dividends_receivable = sumAcct(["1200"]);
-    const interest_receivable = sumAcct(["1210"]) || 410000; 
-    const recv_securities_sold = sumAcct(["1220"]) || 2300000;
-    const prepaid_other = 162535;
-
-    const total_assets = investments_at_value + cash_domestic + cash_foreign + dividends_receivable + interest_receivable + recv_securities_sold + prepaid_other;
-
-    const pay_securities = -sumAcct(["2010"]);
-    const pay_shares_redeemed = -sumAcct(["2020"]);
-    const advisory_fee_payable = -sumAcct(["2030"]);
-    const admin_fee_payable = -sumAcct(["2040"]);
-    const total_liabilities = pay_securities + pay_shares_redeemed + advisory_fee_payable + admin_fee_payable;
-
-    const net_assets = total_assets - total_liabilities;
-    const net_assets_classA = -sumAcct(["3010"]);
-    const net_assets_inst = -sumAcct(["3020"]);
-    const net_assets_r6 = -sumAcct(["3030"]);
-
-    const div_income_domestic = -sumAcct(["4010"]);
-    const div_income_foreign = fxOverrideActive ? 108420 : (-sumAcct(["4020"]) || 108420);
-    const interest_income = -sumAcct(["4030"]);
-    const total_investment_income = div_income_domestic + div_income_foreign + interest_income;
-
-    const advisory_fees = sumAcct(["5010"]);
-    const admin_fees = sumAcct(["5020"]);
-    const custodian_fees = sumAcct(["5040"]);
-    const professional_fees = sumAcct(["5060"]);
-    const other_expenses = sumAcct(["5130"]) || 18000;
-    const total_expenses = advisory_fees + admin_fees + custodian_fees + professional_fees + other_expenses;
-
-    const net_investment_income = total_investment_income - total_expenses;
-    const realized_gain = -sumAcct(["4100"]);
-    const unrealized_change = -sumAcct(["4200"]);
-    const net_increase_ops = net_investment_income + realized_gain + unrealized_change;
-
-    const subscriptions = CAPITAL_ACTIVITY.filter(r=>r.type==="Subscription").reduce((s,r)=>s+r.grossAmount,0);
-    const redemptions = -CAPITAL_ACTIVITY.filter(r=>r.type==="Redemption").reduce((s,r)=>s+r.grossAmount,0);
-    const reinvestments = CAPITAL_ACTIVITY.filter(r=>r.type==="Reinvestment").reduce((s,r)=>s+r.grossAmount,0);
-    const distributions = -CAPITAL_ACTIVITY.filter(r=>r.type==="Dividend").reduce((s,r)=>s+r.grossAmount,0);
-    const net_capital_txns = subscriptions + redemptions + reinvestments + distributions;
-    const beginning_net_assets_actual = net_assets - net_increase_ops - net_capital_txns;
-
-    // --- Cash Flow Statement Bridges ---
-    const net_cash_operating = net_increase_ops - unrealized_change - realized_gain - 1270000 + 4520000 - 215000000 + 180500000; // Simplified bridging items
-    const cash_bop = 16140109; // Prior year ending cash
-    const cash_eop = cash_domestic + cash_foreign;
-    const net_change_cash = cash_eop - cash_bop;
-
-    return {
-      investments_at_value, cash_domestic, cash_foreign, dividends_receivable, interest_receivable, recv_securities_sold, prepaid_other,
-      total_assets, pay_securities, pay_shares_redeemed, advisory_fee_payable, admin_fee_payable, total_liabilities,
-      net_assets, net_assets_classA, net_assets_inst, net_assets_r6,
-      div_income_domestic, div_income_foreign, interest_income, total_investment_income,
-      advisory_fees, admin_fees, custodian_fees, professional_fees, other_expenses, total_expenses,
-      net_investment_income, realized_gain, unrealized_change, net_increase_ops,
-      subscriptions, redemptions, reinvestments, distributions, net_capital_txns, beginning_net_assets_actual
-    };
-  }, [fxOverrideActive]);
 
   const handleGenerate = () => {
     setGenerating(true);
@@ -6444,7 +6560,72 @@ function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFee
   const [sharedTemplates, setSharedTemplates] = useState(WORKPAPER_TEMPLATES);
   const [activePeriod, setActivePeriod] = useState(fund.period || "December 31, 2024");
   const AVAILABLE_PERIODS = ["December 31, 2024","September 30, 2024","June 30, 2024","March 31, 2024","December 31, 2023","September 30, 2023"];
+    // (Keeping FS_DYNAMIC the exact same as previously written)
+    const FS_DYNAMIC = useMemo(() => {
+      const sumAcct = (accts) => TB_ROWS.filter(r => accts.includes(r.acct)).reduce((s, r) => s + (r.debit - r.credit), 0);
   
+      const investments_at_value = sumAcct(["1010", "1020", "1300"]);
+      const cash_domestic = sumAcct(["1100"]);
+      const cash_foreign = sumAcct(["1110"]);
+      const dividends_receivable = sumAcct(["1200"]);
+      const interest_receivable = sumAcct(["1210"]) || 410000; 
+      const recv_securities_sold = sumAcct(["1220"]) || 2300000;
+      const prepaid_other = 162535;
+  
+      const total_assets = investments_at_value + cash_domestic + cash_foreign + dividends_receivable + interest_receivable + recv_securities_sold + prepaid_other;
+  
+      const pay_securities = -sumAcct(["2010"]);
+      const pay_shares_redeemed = -sumAcct(["2020"]);
+      const advisory_fee_payable = -sumAcct(["2030"]);
+      const admin_fee_payable = -sumAcct(["2040"]);
+      const total_liabilities = pay_securities + pay_shares_redeemed + advisory_fee_payable + admin_fee_payable;
+  
+      const net_assets = total_assets - total_liabilities;
+      const net_assets_classA = -sumAcct(["3010"]);
+      const net_assets_inst = -sumAcct(["3020"]);
+      const net_assets_r6 = -sumAcct(["3030"]);
+  
+      const div_income_domestic = -sumAcct(["4010"]);
+      const div_income_foreign = fxOverrideActive ? 108420 : (-sumAcct(["4020"]) || 108420);
+      const interest_income = -sumAcct(["4030"]);
+      const total_investment_income = div_income_domestic + div_income_foreign + interest_income;
+  
+      const advisory_fees = sumAcct(["5010"]);
+      const admin_fees = sumAcct(["5020"]);
+      const custodian_fees = sumAcct(["5040"]);
+      const professional_fees = sumAcct(["5060"]);
+      const other_expenses = sumAcct(["5130"]) || 18000;
+      const total_expenses = advisory_fees + admin_fees + custodian_fees + professional_fees + other_expenses;
+  
+      const net_investment_income = total_investment_income - total_expenses;
+      const realized_gain = -sumAcct(["4100"]);
+      const unrealized_change = -sumAcct(["4200"]);
+      const net_increase_ops = net_investment_income + realized_gain + unrealized_change;
+  
+      const subscriptions = CAPITAL_ACTIVITY.filter(r=>r.type==="Subscription").reduce((s,r)=>s+r.grossAmount,0);
+      const redemptions = -CAPITAL_ACTIVITY.filter(r=>r.type==="Redemption").reduce((s,r)=>s+r.grossAmount,0);
+      const reinvestments = CAPITAL_ACTIVITY.filter(r=>r.type==="Reinvestment").reduce((s,r)=>s+r.grossAmount,0);
+      const distributions = -CAPITAL_ACTIVITY.filter(r=>r.type==="Dividend").reduce((s,r)=>s+r.grossAmount,0);
+      const net_capital_txns = subscriptions + redemptions + reinvestments + distributions;
+      const beginning_net_assets_actual = net_assets - net_increase_ops - net_capital_txns;
+  
+      // --- Cash Flow Statement Bridges ---
+      const net_cash_operating = net_increase_ops - unrealized_change - realized_gain - 1270000 + 4520000 - 215000000 + 180500000; // Simplified bridging items
+      const cash_bop = 16140109; // Prior year ending cash
+      const cash_eop = cash_domestic + cash_foreign;
+      const net_change_cash = cash_eop - cash_bop;
+  
+      return {
+        investments_at_value, cash_domestic, cash_foreign, dividends_receivable, interest_receivable, recv_securities_sold, prepaid_other,
+        total_assets, pay_securities, pay_shares_redeemed, advisory_fee_payable, admin_fee_payable, total_liabilities,
+        net_assets, net_assets_classA, net_assets_inst, net_assets_r6,
+        div_income_domestic, div_income_foreign, interest_income, total_investment_income,
+        advisory_fees, admin_fees, custodian_fees, professional_fees, other_expenses, total_expenses,
+        net_investment_income, realized_gain, unrealized_change, net_increase_ops,
+        subscriptions, redemptions, reinvestments, distributions, net_capital_txns, beginning_net_assets_actual
+      };
+    }, [fxOverrideActive]);
+
   const handleNextFund = () => {
     const currentIndex = blockedFunds.findIndex(f => f.fund_id === fund.fund_id);
     if (currentIndex !== -1 && currentIndex < blockedFunds.length - 1) {
@@ -6466,6 +6647,7 @@ function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFee
     {key:"lpa_terms", label:"Key Economic Terms"},
     {key:"statements",   label:"Financial Statements"},
     {key:"footnotes",    label:"Footnote Editor"},
+    {key: "ai_reports", label: "AI Reports"},
   ]; 
   useEffect(() => { const handle = () => setTab("journals"); window.addEventListener("open-journal", handle); return () => window.removeEventListener("open-journal", handle); }, []);
   return <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 52px)"}}>
@@ -6512,8 +6694,9 @@ function FundView({fund, fundSeeds, exceptions, approval, currentUser, masterFee
       {tab==="workpapers"  &&<WorkpapersTab fund={fund} masterFeeds={masterFeeds} sharedTemplates={sharedTemplates} onTemplatesChange={setSharedTemplates}/>}
       {tab==="cross_checks"&&<CrossChecksTab currentUser={currentUser}/>}
       {tab==="lpa_terms" && <LpaVerificationTab />}
-      {tab==="statements"  &&<FinancialStatementsTab fund={fund} fxOverrideActive={fxOverrideActive} exceptions={exceptions}/>}
-      {tab==="footnotes"   &&<FootnoteEditorTab fund={fund} templates={sharedTemplates}/>}
+      {tab==="statements"  &&<FinancialStatementsTab fund={fund} fxOverrideActive={fxOverrideActive} exceptions={exceptions} fsData={FS_DYNAMIC}/>}
+      {tab==="footnotes"   &&<FootnoteEditorTab fund={fund} templates={sharedTemplates} fsData={FS_DYNAMIC}/>}
+      {tab === "ai_reports" && <AIPromptBuilder fund={fund} fsData={FS_DYNAMIC} />}
     </div>
     {showFundPdf && <PdfModal onClose={() => setShowFundPdf(false)} fund={fund} resolvedExceptions={exceptions.filter(e=>e.status==='resolved')} />}
   </div>;
