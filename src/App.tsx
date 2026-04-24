@@ -4,6 +4,36 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink } from '@react-pdf/renderer';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// AI DOCUMENT GENERATION DATA
+// ═══════════════════════════════════════════════════════════════════════════════
+const GLOBAL_DEFAULT_PROMPT = `Generate financial statements in a clean, professional format.
+Use Times New Roman 11pt for body text and 13pt bold for section headers.
+All monetary values in USD, formatted with commas and two decimal places.
+Tables: single-line borders, white background, alternating row shading in light grey (#F5F5F5).
+Cover page: fund legal name centered, period end date below, adviser name bottom-left, auditor name bottom-right.
+Include: Statement of Assets and Liabilities, Statement of Operations, Statement of Changes in Net Assets, Schedule of Investments.
+Exclude: financial highlights unless explicitly requested.
+Page numbers bottom-center. Margins: 1 inch all sides.`;
+
+const INITIAL_CLIENT_STYLES = {
+  "Pennywise Capital Advisors": {
+    activePrompt: "override",
+    clientOverride: {
+      prompt: `Generate financial statements using Pennywise Capital Advisors house style.\nFont: Gill Sans 10.5pt body, 12pt bold headers. Brand color: #1B3A6B (navy).\nUse navy for all table header rows with white text.\nCover page: Pennywise logo placeholder top-left, fund name in navy 18pt, 'For the period ended [DATE]' in grey below.\nTables: no alternating shading. Use a single navy top border on each table, light grey (#EEEEEE) bottom border per row.\nInclude all four core statements plus Financial Highlights.\nInsert a custom executive summary table on page 2 with columns:\nNet Assets | NAV per Share | Total Return | Expense Ratio | Inception Date.\nPopulate from fund data. Bold the Net Assets row.\nFootnotes: 9pt Gill Sans, italicized. Start footnotes on a new page.\nDo not include the Schedule of Investments in LP-facing reports.\nPage numbers top-right.`,
+      label: "Pennywise House Style",
+      lastUpdated: "Apr 12 2025",
+      updatedBy: "James Okafor",
+      version: 4
+    },
+    history: [
+      { version: 4, label: "Pennywise House Style", savedAt: "Apr 12 2025", savedBy: "James Okafor", prompt: "..." },
+      { version: 3, label: "Pennywise House Style", savedAt: "Mar 28 2025", savedBy: "Sarah Chen", prompt: "..." },
+      { version: 2, label: "Pennywise House Style", savedAt: "Feb 14 2025", savedBy: "James Okafor", prompt: "..." },
+      { version: 1, label: "Pennywise House Style", savedAt: "Jan 30 2025", savedBy: "Sarah Chen", prompt: "..." }
+    ]
+  }
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DESIGN TOKENS (Muted Slate UI for High-Density Data)
@@ -2388,7 +2418,7 @@ function TrialBalanceTab({ tbRows }) {
           <span style={{...MONO,fontSize:12,fontWeight:700,color:T.textPrimary}}>{fmtUSD(totalCredit)}</span>
           <span style={{...SANS,fontSize:12,fontWeight:700,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.03em"}}>Credits</span>
         </div>
-        <div style={{background:balanced?T.okBg:T.errorBg,border:`1px solid ${balanced?T.okBorder:T.errorBorder}`,borderRadius:6,padding:"0 12px",height:34,display:"flex",alignItems:"center",gap:8}}>
+        <div style={{background:balanced?T.okBg:T.cardBg,border:`1px solid ${balanced?T.okBorder:T.errorBorder}`,borderRadius:6,padding:"0 12px",height:34,display:"flex",alignItems:"center",gap:8}}>
           <span style={{fontSize:12, color:balanced?T.okBase:T.errorBase}}>{balanced?"✓":"✕"}</span>
           <span style={{...SANS,fontSize:12,fontWeight:700,color:balanced?T.okBase:T.errorBase,textTransform:"uppercase",letterSpacing:"0.03em"}}>{balanced?"Balanced":"Out of Balance"}</span>
         </div>
@@ -2825,7 +2855,7 @@ function CapitalActivityGrid({ activity }) { // <-- ADDED PROP
 
   const CLASSES = ["All", "Class A", "Institutional", "R6"];
   const TYPES = ["All", "Subscription", "Redemption", "Reinvestment", "Dividend"];
-  const TYPE_CFG = { Subscription:{color:T.okBase,bg:T.okBg,bd:T.okBorder}, Redemption:{color:T.errorBase,bg:T.errorBg,bd:T.errorBorder}, Reinvestment:{color:T.actionBase,bg:T.actionBg,bd:"#bfdbfe"}, Dividend:{color:T.warnBase,bg:T.warnBg,bd:T.warnBorder} };
+  const TYPE_CFG = { Subscription:{color:T.cardBase,bg:T.cardBg,bd:"#bfdbfe"}, Redemption:{color:T.cardBase,bg:T.cardBg,bd:"#bfdbfe"}, Reinvestment:{color:T.cardBase,bg:T.cardBg,bd:"#bfdbfe"}, Dividend:{color:T.cardBase,bg:T.cardBg,bd:"#bfdbfe"} };
 
   const filteredAndSorted = useMemo(() => {
     let result = [...activity]; // REPLACED CAPITAL_ACTIVITY with activity
@@ -10161,7 +10191,7 @@ function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, onGoToIn
         </button>
         {/** TODO: Fix Bug: When the user clicks on the bell icon they should be brough to their indox  */}
         <button onClick={() => onGoToDashboard("inbox")} style={{position:"relative", background:"none", border:"none", color:"rgba(255,255,255,0.7)", cursor:"pointer", fontSize:18, marginRight:8, transition:"color 0.2s"}} onMouseEnter={e=>e.currentTarget.style.color="#fff"} onMouseLeave={e=>e.currentTarget.style.color="rgba(255,255,255,0.7)"}>
-          🔔
+          ✉️
           {notificationCount > 0 && (
             <span style={{position:"absolute", top:-4, right:-6, background:T.errorBase, color:"#fff", fontSize:9, fontWeight:700, padding:"2px 5px", borderRadius:10, border:"2px solid #0f172a", lineHeight:1}}>
               {notificationCount}
@@ -10198,7 +10228,341 @@ function AILearningToast({ onClose }) {
     </div>
   );
 }
-// ─── Main Application Container ───────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// NEW: AI DOCUMENT STYLE EDITOR (Client Level)
+// ═══════════════════════════════════════════════════════════════════════════════
+function DocumentStyleView({ clientName, styleData, onSave, onBack, currentUser }) {
+  const [active, setActive] = useState(styleData?.activePrompt || "default");
+  const [draftPrompt, setDraftPrompt] = useState(styleData?.clientOverride?.prompt || "");
+  const [historyExpanded, setHistoryExpanded] = useState(false);
+  const [toast, setToast] = useState("");
+  const textareaRef = useRef(null);
+
+  const [previewOpts, setPreviewOpts] = useState({});
+
+  // Shallow parsing for live preview
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const p = (active === "override" ? draftPrompt : GLOBAL_DEFAULT_PROMPT).toLowerCase();
+      const colorMatch = p.match(/#([a-f0-9]{6}|[a-f0-9]{3})\b/i);
+      setPreviewOpts({
+        color: colorMatch ? colorMatch[0] : "#0f172a",
+        font: p.includes("gill sans") ? "Gill Sans, sans-serif" : p.includes("times new roman") ? "Times New Roman, serif" : "sans-serif",
+        fontSize: p.includes("10.5pt") ? "14px" : "13px",
+        shading: !p.includes("no alternating") && (p.includes("alternating") || p.includes("shading")),
+        coverPage: p.includes("cover page"),
+        excludeSOI: p.includes("do not include the schedule of investments") || p.includes("exclude")
+      });
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [draftPrompt, active]);
+
+  const handleInsertSnippet = (e) => {
+    const val = e.target.value;
+    if (!val || !textareaRef.current) return;
+    const start = textareaRef.current.selectionStart;
+    const end = textareaRef.current.selectionEnd;
+    const text = draftPrompt;
+    setDraftPrompt(text.substring(0, start) + "\n" + val + text.substring(end));
+    e.target.value = ""; // reset dropdown
+    setTimeout(() => { textareaRef.current.focus(); textareaRef.current.selectionStart = start + val.length + 1; }, 0);
+  };
+
+  const handleSave = () => {
+    const v = (styleData?.clientOverride?.version || 0) + 1;
+    const label = styleData?.clientOverride?.label || `${clientName.split(" ")[0]} House Style`;
+    onSave({
+      activePrompt: "override",
+      clientOverride: {
+        prompt: draftPrompt,
+        label,
+        lastUpdated: "Just now",
+        updatedBy: currentUser.name,
+        version: v
+      },
+      history: [{ version: v, label, savedAt: "Just now", savedBy: currentUser.name, prompt: draftPrompt }, ...(styleData?.history || [])].slice(0, 10)
+    });
+    setActive("override");
+    setToast(`✓ Style saved — v${v} · ${label}`);
+    setTimeout(() => setToast(""), 3000);
+  };
+
+  const handleRevert = () => {
+    if (window.confirm("This will remove your client override and use Torrance's default style for all future documents. Continue?")) {
+      onSave({ ...styleData, activePrompt: "default" });
+      setActive("default");
+    }
+  };
+
+  const isActiveOverride = active === "override";
+  const displayedPrompt = isActiveOverride ? draftPrompt : GLOBAL_DEFAULT_PROMPT;
+
+  return (
+    <div className="fade-in" style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 52px)", background: T.appBg }}>
+      <div style={{ padding: "20px 32px", background: T.navyHeader, display: "flex", alignItems: "center", gap: 20 }}>
+        <button onClick={onBack} style={{ ...SANS, background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 6, padding: "8px 14px", fontSize: 12, cursor: "pointer", fontWeight: 600, color: "#fff" }}>← Back</button>
+        <div>
+          <h2 style={{ ...SANS, fontWeight: 700, fontSize: 20, color: "#fff", margin: 0 }}>Document Style — {clientName}</h2>
+          <div style={{ ...SANS, fontSize: 12, color: "rgba(255,255,255,0.6)", marginTop: 4 }}>Configure AI document generation prompts for this client.</div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        {/* LEFT COLUMN: Editor */}
+        <div style={{ flex: 0.55, borderRight: `1px solid ${T.border}`, display: "flex", flexDirection: "column", background: T.cardBg }}>
+          <div style={{ padding: "24px 32px" }}>
+            <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+              <button onClick={() => setActive("default")} style={{ ...SANS, fontSize: 13, fontWeight: 600, padding: "8px 16px", borderRadius: 6, border: `1px solid ${active === "default" ? T.actionBase : T.border}`, background: active === "default" ? T.actionBg : "#fff", color: active === "default" ? T.actionBase : T.textMuted, cursor: "pointer" }}>
+                Torrance Default {active === "default" && "✓"}
+              </button>
+              <button onClick={() => setActive("override")} style={{ ...SANS, fontSize: 13, fontWeight: 600, padding: "8px 16px", borderRadius: 6, border: `1px solid ${active === "override" ? T.actionBase : T.border}`, background: active === "override" ? T.actionBg : "#fff", color: active === "override" ? T.actionBase : T.textMuted, cursor: "pointer" }}>
+                Client Override {active === "override" && "✓"}
+              </button>
+            </div>
+            
+            <div style={{ ...SANS, fontSize: 12, color: T.textMuted, marginBottom: 20 }}>
+              {active === "override" ? 
+                `Using: Client Override · "${styleData?.clientOverride?.label || "New Style"}" · v${styleData?.clientOverride?.version || 1} · Last updated ${styleData?.clientOverride?.lastUpdated || "Never"}` : 
+                `Using: Torrance Default · No client override active`}
+            </div>
+
+            <div style={{ position: "relative" }}>
+              {!isActiveOverride && (
+                <div style={{ position: "absolute", top: 16, right: 16, color: T.textMuted, fontSize: 16 }} title="Read-only default prompt">🔒</div>
+              )}
+              <textarea
+                ref={textareaRef}
+                value={displayedPrompt}
+                onChange={e => setDraftPrompt(e.target.value)}
+                readOnly={!isActiveOverride}
+                placeholder="Describe your document style. Include fonts, colors, table formatting, cover page layout, which sections to include..."
+                style={{ ...MONO, width: "100%", height: 400, padding: "20px", borderRadius: 8, border: `1px solid ${isActiveOverride ? T.actionBase : T.border}`, background: isActiveOverride ? "#fff" : T.appBg, color: isActiveOverride ? T.textPrimary : T.textMuted, fontSize: 14, lineHeight: 1.6, resize: "vertical" }}
+              />
+              <div style={{ position: "absolute", bottom: 12, right: 16, ...SANS, fontSize: 11, color: T.textMuted }}>
+                {displayedPrompt.length} characters
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16 }}>
+              <select disabled={!isActiveOverride} onChange={handleInsertSnippet} style={{ ...SANS, fontSize: 13, padding: "8px 12px", borderRadius: 6, border: `1px solid ${T.border}`, background: isActiveOverride ? "#fff" : T.appBg, color: isActiveOverride ? T.textPrimary : T.textMuted, cursor: isActiveOverride ? "pointer" : "not-allowed" }}>
+                <option value="">+ Insert snippet...</option>
+                <option value="Include cover page with [FUND NAME] and [PERIOD END DATE]">Cover Page</option>
+                <option value="Insert executive summary table: [COLUMNS]">Executive Summary Table</option>
+                <option value="Use [COLOR] for table headers">Table Header Color</option>
+                <option value="Exclude [SECTION] from LP-facing output">Exclude Section</option>
+                <option value="Set body font to [FONT] [SIZE]pt">Set Font</option>
+              </select>
+
+              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                {toast && <span style={{ ...SANS, fontSize: 12, fontWeight: 700, color: T.okBase }}>{toast}</span>}
+                <button onClick={handleRevert} disabled={!styleData?.clientOverride} style={{ ...SANS, fontSize: 13, fontWeight: 600, padding: "8px 16px", borderRadius: 6, border: "none", background: "transparent", color: T.textMuted, cursor: styleData?.clientOverride ? "pointer" : "not-allowed", textDecoration: "underline" }}>Revert to Default</button>
+                <button onClick={handleSave} disabled={!isActiveOverride} style={{ ...SANS, fontSize: 13, fontWeight: 700, padding: "8px 24px", borderRadius: 6, border: "none", background: isActiveOverride ? T.actionBase : T.border, color: "#fff", cursor: isActiveOverride ? "pointer" : "not-allowed", boxShadow: isActiveOverride ? "0 2px 4px rgba(79,70,229,0.2)" : "none" }}>Save Override</button>
+              </div>
+            </div>
+
+            {/* History */}
+            <div style={{ marginTop: 32, borderTop: `1px solid ${T.border}`, paddingTop: 16 }}>
+              <div onClick={() => setHistoryExpanded(!historyExpanded)} style={{ ...SANS, fontSize: 13, fontWeight: 700, color: T.textPrimary, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                {historyExpanded ? "▼" : "▶"} Version history ({styleData?.history?.length || 0} saved versions)
+              </div>
+              {historyExpanded && (
+                <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+                  {(styleData?.history || []).map((h, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 16px", background: T.appBg, border: `1px solid ${T.border}`, borderRadius: 6 }}>
+                      <div>
+                        <div style={{ ...MONO, fontSize: 12, fontWeight: 700, color: T.textPrimary }}>v{h.version} · {h.savedAt}</div>
+                        <div style={{ ...SANS, fontSize: 11, color: T.textMuted, marginTop: 2 }}>By {h.savedBy}</div>
+                      </div>
+                      <button onClick={() => { setActive("override"); setDraftPrompt(h.prompt); }} style={{ ...SANS, fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 4, border: `1px solid ${T.border}`, background: "#fff", cursor: "pointer" }}>Restore</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: Live Preview */}
+        <div style={{ flex: 0.45, background: T.appBg, display: "flex", flexDirection: "column" }}>
+          <div style={{ padding: "24px 32px", borderBottom: `1px solid ${T.border}`, background: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ ...SANS, fontWeight: 700, fontSize: 14 }}>Style Preview — {isActiveOverride ? (styleData?.clientOverride?.label || "New Style") : "Torrance Default"}</div>
+            <div style={{ ...SANS, fontSize: 11, color: T.textMuted, background: T.appBg, padding: "4px 8px", borderRadius: 4, border: `1px solid ${T.border}` }}>Showing: PDF output</div>
+          </div>
+          
+          <div style={{ flex: 1, padding: 32, overflowY: "auto", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ width: "100%", maxWidth: 600, background: "#fff", boxShadow: "0 10px 30px rgba(0,0,0,0.1)", minHeight: 600, padding: 40, fontFamily: previewOpts.font, color: "#111827", transition: "all 0.3s" }}>
+              
+              {/* Mock Cover Page */}
+              {previewOpts.coverPage && (
+                <div style={{ textAlign: "center", borderBottom: `2px solid ${T.border}`, paddingBottom: 60, marginBottom: 40 }}>
+                  <div style={{ width: 80, height: 80, background: T.border, margin: "0 auto 40px" }} />
+                  <h1 style={{ color: previewOpts.color, fontSize: 24, marginBottom: 12 }}>Pennywise Global Diversified Fund</h1>
+                  <h2 style={{ color: "#6b7280", fontSize: 16, fontWeight: 400 }}>For the period ended December 31, 2024</h2>
+                </div>
+              )}
+
+              {/* Mock Content */}
+              <h3 style={{ color: previewOpts.color, fontSize: 16, borderBottom: `1px solid ${previewOpts.color}`, paddingBottom: 8, marginBottom: 20 }}>Statement of Assets and Liabilities</h3>
+              
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: previewOpts.fontSize }}>
+                <thead>
+                  <tr style={{ background: previewOpts.color, color: "#fff" }}>
+                    <th style={{ padding: "10px", textAlign: "left" }}>Description</th>
+                    <th style={{ padding: "10px", textAlign: "right" }}>Value</th>
+                    <th style={{ padding: "10px", textAlign: "right" }}>% of Net Assets</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ background: previewOpts.shading ? "#f3f4f6" : "#fff", borderBottom: "1px solid #e5e7eb" }}>
+                    <td style={{ padding: "10px" }}>Investments at Value</td>
+                    <td style={{ padding: "10px", textAlign: "right" }}>$462,698,500</td>
+                    <td style={{ padding: "10px", textAlign: "right" }}>67.3%</td>
+                  </tr>
+                  <tr style={{ background: "#fff", borderBottom: "1px solid #e5e7eb" }}>
+                    <td style={{ padding: "10px" }}>Cash - Domestic</td>
+                    <td style={{ padding: "10px", textAlign: "right" }}>$16,700,000</td>
+                    <td style={{ padding: "10px", textAlign: "right" }}>2.4%</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div style={{ marginTop: 40 }}>
+                <h3 style={{ color: previewOpts.color, fontSize: 16, borderBottom: `1px solid ${previewOpts.color}`, paddingBottom: 8, marginBottom: 20 }}>Table of Contents</h3>
+                <ul style={{ listStyle: "none", padding: 0, fontSize: previewOpts.fontSize, lineHeight: 2 }}>
+                  <li>1. Statement of Assets and Liabilities</li>
+                  <li>2. Statement of Operations</li>
+                  <li>3. Statement of Changes in Net Assets</li>
+                  {previewOpts.excludeSOI ? (
+                    <li style={{ textDecoration: "line-through", color: "#9ca3af" }}>4. Schedule of Investments (Excluded)</li>
+                  ) : (
+                    <li>4. Schedule of Investments</li>
+                  )}
+                  <li>5. Notes to Financial Statements</li>
+                </ul>
+              </div>
+
+            </div>
+            <div style={{ ...SANS, fontSize: 11, color: T.textMuted, marginTop: 16 }}>This preview approximates your style settings. Final output may vary.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+// ═══════════════════════════════════════════════════════════════════════════════
+// NEW: GENERATE DOCUMENT MODAL (Fund Level)
+// ═══════════════════════════════════════════════════════════════════════════════
+function GenerateDocumentModal({ fund, clientStyleData, onClose, onEditStyle }) {
+  const [stage, setStage] = useState('config'); // config, processing, done
+  const [progress, setProgress] = useState(0);
+  const [logs, setLogs] = useState([]);
+  const [outputType, setOutputType] = useState(null);
+
+  const activeStyleLabel = clientStyleData?.activePrompt === "override" 
+    ? `${clientStyleData.clientOverride.label} (v${clientStyleData.clientOverride.version})`
+    : "Torrance Default";
+
+  const startGeneration = (type) => {
+    setOutputType(type);
+    setStage('processing');
+    
+    // Simulate generation pipeline
+    setTimeout(() => { setProgress(20); setLogs(p => [...p, "✓ Applying style settings..."]); }, 400);
+    setTimeout(() => { setProgress(40); setLogs(p => [...p, "✓ Cover page rendered"]); }, 1000);
+    setTimeout(() => { setProgress(60); setLogs(p => [...p, "✓ Statement of Operations — 1 page"]); }, 1400);
+    setTimeout(() => { setProgress(85); setLogs(p => [...p, "✓ Footnotes — 2 pages"]); }, 1800);
+    setTimeout(() => { setProgress(100); setLogs(p => [...p, `✓ Style applied: ${activeStyleLabel}`]); setStage('done'); }, 2400);
+  };
+
+  return (
+    <div className="modal-overlay" style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.8)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} className="slide-in" style={{background:T.cardBg, borderRadius:12, width:600, overflow:"hidden", boxShadow:"0 25px 50px -12px rgba(0,0,0,0.5)"}}>
+        
+        <div style={{background:T.navyHeader, padding:"16px 24px", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+          <div style={{...SANS, fontWeight:700, fontSize:16, color:"#fff"}}>Generate Document — {fund?.name}</div>
+          <button onClick={onClose} style={{background:"none", border:"none", color:"#9ca3af", cursor:"pointer", fontSize:20}}>✕</button>
+        </div>
+
+        <div style={{padding:"24px 32px"}}>
+          {stage === 'config' && (
+            <>
+              {/* Section 1: Style Summary */}
+              <div style={{marginBottom:32}}>
+                <div style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:12}}>Document Style</div>
+                <div style={{background:T.appBg, border:`1px solid ${T.border}`, borderRadius:8, padding:16, display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+                  <div>
+                    <div style={{...SANS, fontSize:13, color:T.textMuted, marginBottom:4}}>Active Style: <strong style={{color:T.textPrimary}}>{activeStyleLabel}</strong></div>
+                    {clientStyleData?.activePrompt === "override" && <div style={{...SANS, fontSize:11, color:T.textMuted}}>Last updated {clientStyleData.clientOverride.lastUpdated}</div>}
+                  </div>
+                  <button onClick={onEditStyle} style={{...SANS, fontSize:12, fontWeight:600, color:T.actionBase, background:"none", border:"none", cursor:"pointer", textDecoration:"underline"}}>Edit style →</button>
+                </div>
+              </div>
+
+              {/* Section 2: Output Selection */}
+              <div>
+                <div style={{...SANS, fontSize:11, fontWeight:700, color:T.textMuted, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:12}}>Generate</div>
+                
+                <div style={{display:"flex", gap:16, marginBottom:24}}>
+                  <button onClick={() => startGeneration("PDF")} style={{flex:1, padding:"16px", borderRadius:8, border:`1px solid ${T.actionBase}`, background:T.actionBg, color:T.actionBase, cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", gap:8, transition:"all 0.15s"}} onMouseEnter={e=>e.currentTarget.style.background="#dbeafe"} onMouseLeave={e=>e.currentTarget.style.background=T.actionBg}>
+                    <span style={{fontSize:28}}>📄</span>
+                    <span style={{...SANS, fontSize:14, fontWeight:700}}>PDF Output</span>
+                  </button>
+                  <button onClick={() => startGeneration("Word")} style={{flex:1, padding:"16px", borderRadius:8, border:`1px solid ${T.border}`, background:"#fff", color:T.textPrimary, cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", gap:8, transition:"all 0.15s"}} onMouseEnter={e=>e.currentTarget.style.background=T.appBg} onMouseLeave={e=>e.currentTarget.style.background="#fff"}>
+                    <span style={{fontSize:28}}>📝</span>
+                    <span style={{...SANS, fontSize:14, fontWeight:700}}>Word Document</span>
+                  </button>
+                </div>
+
+                <div style={{display:"flex", flexDirection:"column", gap:10, marginBottom:24, paddingBottom:24, borderBottom:`1px solid ${T.border}`}}>
+                  <label style={{...SANS, fontSize:13, display:"flex", alignItems:"center", gap:8}}><input type="checkbox" defaultChecked /> Include Financial Highlights</label>
+                  <label style={{...SANS, fontSize:13, display:"flex", alignItems:"center", gap:8}}><input type="checkbox" defaultChecked /> Include cover page</label>
+                  <label style={{...SANS, fontSize:13, display:"flex", alignItems:"center", gap:8}}><input type="checkbox" /> Include Schedule of Investments</label>
+                </div>
+
+                <FieldLabel>Additional instructions for this run only (optional)</FieldLabel>
+                <input type="text" placeholder="e.g. 'Add a draft watermark' or 'Use Q1 2025 in the header'" style={{...SANS, width:"100%", padding:"10px 14px", borderRadius:6, border:`1px solid ${T.border}`, fontSize:13, background:"#fff"}} />
+              </div>
+            </>
+          )}
+
+          {stage === 'processing' && (
+            <div style={{padding:"40px 20px", textAlign:"center"}}>
+              <div style={{fontSize:32, marginBottom:16, animation:"pulse 1s infinite"}}>⚙️</div>
+              <div style={{...SANS, fontSize:16, fontWeight:700, color:T.textPrimary, marginBottom:16}}>Generating {outputType}...</div>
+              
+              <div style={{width:"100%", height:8, background:T.appBg, borderRadius:4, overflow:"hidden", marginBottom:24}}>
+                <div style={{height:"100%", width:`${progress}%`, background:T.actionBase, transition:"width 0.3s ease"}} />
+              </div>
+
+              <div style={{textAlign:"left", ...MONO, fontSize:11, color:T.textMuted, height:120, overflowY:"auto", background:"#f8fafc", padding:16, borderRadius:8, border:`1px solid ${T.border}`}}>
+                {logs.map((log, i) => <div key={i} style={{marginBottom:6}}>{log}</div>)}
+              </div>
+            </div>
+          )}
+
+          {stage === 'done' && (
+            <div style={{padding:"40px 20px", textAlign:"center"}}>
+              <div style={{fontSize:48, marginBottom:16, color:T.okBase}}>✓</div>
+              <div style={{...SANS, fontSize:18, fontWeight:700, color:T.textPrimary, marginBottom:8}}>Document Ready</div>
+              <div style={{...SANS, fontSize:13, color:T.textMuted, marginBottom:32}}>
+                {fund?.name} · Dec 31 2024 · {outputType}
+              </div>
+
+              <div style={{display:"flex", gap:12, justifyContent:"center"}}>
+                <button onClick={() => { alert(`Download started — ${fund?.name.split(" ")[0]}_FS_Dec2024.${outputType==='Word'?'docx':'pdf'}`); onClose(); }} style={{...SANS, fontSize:13, fontWeight:700, padding:"10px 24px", borderRadius:6, border:"none", background:T.okBase, color:"#fff", cursor:"pointer"}}>
+                  Download {outputType}
+                </button>
+                <button onClick={() => { alert("Link copied to clipboard."); onClose(); }} style={{...SANS, fontSize:13, fontWeight:600, padding:"10px 24px", borderRadius:6, border:`1px solid ${T.border}`, background:"#fff", color:T.textPrimary, cursor:"pointer"}}>
+                  Copy Link
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 // ─── Main Application Container ───────────────────────────────────────────────
 export default function App() {
   const [view, setView] = useState("login");
@@ -10206,7 +10570,7 @@ export default function App() {
   const [showAIToast, setShowAIToast] = useState(false); 
   const [showAiSettings, setShowAiSettings] = useState(false); 
   const [currentUserId, setCurrentUserId] = useState(null);
-  
+  const [clientStyles, setClientStyles] = useState(INITIAL_CLIENT_STYLES);
   const [fundState, setFundState] = useState(()=>{ const s={};Object.entries(FUND_EXCEPTIONS).forEach(([id,excs])=>{s[id]=[...excs];});return s; });
   const [approvalState, setApprovalState] = useState(INITIAL_APPROVAL_STATE);
   const [fundSeeds, setFundSeeds] = useState(FUNDS_SEED);
@@ -10218,6 +10582,7 @@ export default function App() {
   // NEW: Hoisted Filings State for STP
   const [filings, setFilings] = useState(BEVERLEY_FILINGS);
 
+  
   const [masterFeeds, setMasterFeeds] = useState({
     gl_001: TB_ROWS,
     hd_001: HOLDINGS,
@@ -10646,5 +11011,6 @@ export default function App() {
     onUpdateFeedRecord={handleUpdateFeedRecord}
     onResolve={(id,res,ov)=>handleResolve(selectedFund.fund_id,id,res,ov)} onReopen={id=>handleReopen(selectedFund.fund_id,id)} onUpdate={(id,patch)=>handleUpdate(selectedFund.fund_id,id,patch)} onAddThread={(excId,txt,uid?)=>handleAddThread(selectedFund.fund_id,excId,txt,uid)} onSubmit={()=>handleSubmit(selectedFund.fund_id)} onApprove={()=>handleApprove(selectedFund.fund_id)} onBack={()=>{ setSelectedFund(null); setView("dashboard"); }} demoActiveExcId={demoActiveExcId} demoTypingText={demoTypingText} demoShouldSubmit={demoShouldSubmit} fxOverrideActive={fxOverrideActive} returnToGlobal={showGlobalExcs ? ()=>{ setSelectedFund(null); setView("dashboard"); } : null}/>}
     </div>
+
   );
 }
