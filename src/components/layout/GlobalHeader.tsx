@@ -131,7 +131,7 @@ export function GlobalHeader({view, fund, currentUser, onToggleRole, onLogout, o
         </button>
         {/** TODO: Fix Bug: When the user clicks on the bell icon they should be brough to their indox  */}
         <button onClick={() => onGoToDashboard("inbox")} style={{position:"relative", background:"none", border:"none", color:"rgba(255,255,255,0.7)", cursor:"pointer", fontSize:18, marginRight:8, transition:"color 0.2s"}} onMouseEnter={e=>e.currentTarget.style.color="#fff"} onMouseLeave={e=>e.currentTarget.style.color="rgba(255,255,255,0.7)"}>
-          🔔
+          ✉️
           {notificationCount > 0 && (
             <span style={{position:"absolute", top:-4, right:-6, background:T.errorBase, color:"#fff", fontSize:9, fontWeight:700, padding:"2px 5px", borderRadius:10, border:"2px solid #0f172a", lineHeight:1}}>
               {notificationCount}
