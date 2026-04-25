@@ -21,7 +21,7 @@ export function FinancialStatementsTab({ fund, fxOverrideActive, exceptions = []
 
   // Dynamic GAAP Statement Routing based on Fund Type
   const isAlt = ["Hedge Fund", "Private Equity", "Real Estate Fund"].includes(fund?.fundType);
-    const isRetail = ["Mutual Fund", "ETF", "Closed-End Fund"].includes(fund?.fundType);
+    const isRetail = ["Mutual Fund", "ETF", "Closed-End Fund", "Interval Fund", "Tender Offer Fund"].includes(fund?.fundType);
     const isMoneyMarket = fund?.fundType === "Money Market";
 
   const STMTS = useMemo(() => {
