@@ -451,7 +451,7 @@ export default function App() {
       {view==="ingestion"&&!selectedFund&&<IngestionStatusWidget feeds={feeds} setFeeds={setFeeds} currentUser={currentUser} onGoToDashboard={()=>{setView("dashboard");}} onOpenMapping={session=>setMappingSession(session)} onGoToExceptions={handleGoToExceptions} setView={setView}/>}
       {view === "schemas" && <SchemaRegistryView onBack={() => setView("ingestion")} onOpenStudio={(id) => { setActiveSchema(id); setView("schema_studio"); }} />}
       {view === "schema_studio" && <SchemaStudioView schemaId={activeSchema} onBack={() => setView("schemas")} />}
-      {view==="filings"&&!selectedFund&&<BeverleyFilingTracker filings={filings} onGoToDashboard={()=>{setView("dashboard");}} />}
+      {view==="filings"&&!selectedFund&&<BeverleyFilingTracker filings={filings} setFilings={setFilings} onGoToDashboard={()=>{setView("dashboard");}} />}
       {view==="audit_logs"&&!selectedFund&&<GlobalAuditLogView onBack={()=>setView("dashboard")} />}
       {view==="entities"&&!selectedFund&&<GlobalEntityManager fundSeeds={fundSeeds} />}
       {view==="data_architecture"&&!selectedFund&&<IntegrationsAndArchitectureHub fundSeeds={fundSeeds} masterFeeds={masterFeeds} onBack={()=>setView("dashboard")} />}
