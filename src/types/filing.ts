@@ -93,3 +93,100 @@ export interface SubmissionResponse {
   warnings: string[];
   accepted_payload_hash: string;
 }
+
+// Form PF types
+
+export type FilerCategory =
+  | "small"
+  | "large_hedge_fund_adviser"
+  | "large_liquidity_fund_adviser"
+  | "large_private_equity_fund_adviser"
+  | "other";
+
+export interface AdviserProfile {
+  legal_name: string;
+  cik: string;
+  lei: string;
+  file_number: string;
+  firm_type: "RIA" | "dually_registered" | "CPO" | "CTA";
+  private_fund_assets_aum: number;
+  regulatory_aum: number;
+  eligibility_status: "eligible" | "not_eligible";
+  filer_category: FilerCategory;
+  fiscal_year_end: string;
+}
+
+export interface PFFund {
+  fund_id: string;
+  fund_name: string;
+  fund_type:
+    | "hedge"
+    | "liquidity"
+    | "private_equity"
+    | "venture"
+    | "real_estate"
+    | "securitized_asset"
+    | "other";
+  domicile: string;
+  cik: string;
+  lei: string;
+  gross_asset_value: number;
+  net_asset_value: number;
+  investor_count: number;
+}
+
+export interface Counterparty {
+  counterparty_id: string;
+  name: string;
+  type: "prime_broker" | "swap_dealer" | "custodian" | "lender" | "other";
+  exposure_amount: number;
+  secured: boolean;
+}
+
+export interface RiskBlock {
+  risk_block_id: string;
+  risk_type:
+    | "liquidity"
+    | "leverage"
+    | "market"
+    | "counterparty"
+    | "concentration"
+    | "financing";
+  metric_name: string;
+  metric_value: number;
+  unit: string;
+  period_end: string;
+}
+
+export interface PFSection {
+  section_id: string;
+  section_name: string;
+  applicability: "always" | "conditional";
+  applicable_to: FilerCategory[];
+  items: FieldValue[];
+  section_status: "complete" | "incomplete" | "not_applicable";
+}
+
+export interface FormPF {
+  adviser_profile: AdviserProfile;
+  sections: PFSection[];
+  funds: PFFund[];
+  counterparties: Counterparty[];
+  risk_blocks: RiskBlock[];
+  derived_metrics: {
+    aggregate_private_fund_aum: number;
+    hedge_fund_aum: number;
+    liquidity_fund_aum: number;
+    private_equity_fund_aum: number;
+    net_exposure: number;
+    gross_exposure: number;
+    counterparty_concentration: number;
+  };
+  attestations: {
+    prepared_by: string;
+    approved_by: string;
+    date_approved: string;
+    attestation_text: string;
+    signed_off: boolean;
+  };
+}
