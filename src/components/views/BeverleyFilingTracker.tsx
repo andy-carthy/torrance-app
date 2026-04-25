@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { T, MONO, SANS } from '../../theme/tokens';
 import { FilingPreviewModal } from '../modals/FilingPreviewModal';
 import type { Filing } from '../../types';
@@ -24,21 +24,18 @@ function blockerCount(f: Filing): number {
 
 const COL_HEADERS = ["ID", "FUND", "CLIENT", "DUE", "VALIDATION", "AI CONF.", "STATUS", "Action"];
 
-export function BeverleyFilingTracker({ filings, onGoToDashboard }) {
+export function BeverleyFilingTracker({ filings, setFilings, onGoToDashboard }) {
   const [search, setSearch]           = useState("");
   const [sortBy, setSortBy]           = useState("due_asc");
   const [hideFiled, setHideFiled]     = useState(true);
   const [period, setPeriod]           = useState("Dec 31, 2024");
-  const [localFilings, setLocalFilings] = useState(filings);
   const [activeFiling, setActiveFiling] = useState(null);
   const [collapsedForms, setCollapsedForms] = useState({});
   const [batchState, setBatchState]   = useState(null);
 
-  useEffect(() => { setLocalFilings(filings); }, [filings]);
-
   const PERIODS = ["Dec 31, 2024", "Nov 30, 2024"];
 
-  const periodFilings = localFilings.filter(f => f.period === period);
+  const periodFilings = filings.filter(f => f.period === period);
   const readyCount     = periodFilings.filter(f => f.status === "ready").length;
   const blockedCount   = periodFilings.filter(f => f.status === "blocked").length;
   const inReviewCount  = periodFilings.filter(f => f.status === "not_started").length;
@@ -47,7 +44,7 @@ export function BeverleyFilingTracker({ filings, onGoToDashboard }) {
   const activeCount    = total - submittedCount;
 
   const groupedData = useMemo(() => {
-    let rows = localFilings.filter(f => f.period === period);
+    let rows = filings.filter(f => f.period === period);
     if (search.trim()) {
       const q = search.toLowerCase();
       rows = rows.filter(f =>
@@ -68,10 +65,10 @@ export function BeverleyFilingTracker({ filings, onGoToDashboard }) {
       groups[f.form].push(f);
     });
     return groups;
-  }, [localFilings, search, period, sortBy, hideFiled]);
+  }, [filings, search, period, sortBy, hideFiled]);
 
   const handleMarkFiled = (id: string) => {
-    setLocalFilings(prev => prev.map(f =>
+    setFilings(prev => prev.map(f =>
       f.id === id ? { ...f, status: "filed", notes: "SEC EDGAR Confirmed." } : f
     ));
   };
@@ -80,7 +77,7 @@ export function BeverleyFilingTracker({ filings, onGoToDashboard }) {
     setBatchState(action);
     setTimeout(() => {
       if (action === "transmit") {
-        setLocalFilings(prev => prev.map(f =>
+        setFilings(prev => prev.map(f =>
           f.status === "ready" ? { ...f, status: "filed", notes: "Batch SEC Transmit Success" } : f
         ));
       }
