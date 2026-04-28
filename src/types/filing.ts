@@ -6,6 +6,8 @@ export interface FilingEnvelope {
   filing_version: string;
   amendment_indicator: boolean;
   final_filing_indicator: boolean;
+  filing_trigger?: 'periodic' | 'adhoc';
+  adhoc_type?: string;
   reporting_period: {
     start_date: string;
     end_date: string;

@@ -112,6 +112,7 @@ export function SubmissionPanel({ filing, validationResults, onSubmit }: Props) 
   );
 
   const allPass = schemaPass && fieldPass && crossFieldPass && attestPass && packagePass;
+  const blockingErrorCount = validationResults.filter(r => !r.resolved && r.severity === "error" && r.blocked).length;
   const channel = filing.filing_type === "FORM_PF" ? "PFRD" : "EDGAR";
   const channelDesc = filing.filing_type === "FORM_PF"
     ? "Form PF via Private Fund Reporting Depot"
@@ -233,14 +234,14 @@ export function SubmissionPanel({ filing, validationResults, onSubmit }: Props) 
               transition: "all 0.15s",
             }}
           >
-            {submitting ? (
-              <>
-                <span style={{ display: "inline-block", animation: "pulse 1s infinite" }}>⏳</span>
-                Submitting…
-              </>
-            ) : (
-              "Submit Filing →"
-            )}
+            {submitting
+              ? <><span style={{ display: "inline-block", animation: "pulse 1s infinite" }}>⏳</span>Submitting…</>
+              : blockingErrorCount > 0
+              ? `Submit filing — resolve ${blockingErrorCount} blocker${blockingErrorCount !== 1 ? 's' : ''} first`
+              : allPass
+              ? "Submit filing →"
+              : "Submit filing — checklist incomplete"
+            }
           </button>
           {!allPass && (
             <div style={{
