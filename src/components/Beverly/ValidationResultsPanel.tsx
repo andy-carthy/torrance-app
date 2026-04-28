@@ -5,6 +5,7 @@ import type { ValidationResult } from '../../validation/engine';
 interface Props {
   results: ValidationResult[];
   onResolve: (ruleId: string) => void;
+  initialFilter?: 'errors' | 'all';
 }
 
 type FilterTab = 'all' | 'errors' | 'warnings' | 'info' | 'passed';
@@ -182,8 +183,8 @@ function ResultItem({
   );
 }
 
-export function ValidationResultsPanel({ results, onResolve }: Props) {
-  const [filter, setFilter] = useState<FilterTab>("errors");
+export function ValidationResultsPanel({ results, onResolve, initialFilter }: Props) {
+  const [filter, setFilter] = useState<FilterTab>(initialFilter === 'all' ? 'all' : 'errors');
 
   const errCount  = results.filter(r => !r.resolved && r.severity === "error").length;
   const warnCount = results.filter(r => !r.resolved && r.severity === "warning").length;
