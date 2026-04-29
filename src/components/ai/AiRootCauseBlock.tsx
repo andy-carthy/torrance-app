@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { T, MONO, SANS } from '../../theme/tokens';
-import { AI_ROOT_CAUSE } from '../../data/aiData';
 
-export function AiRootCauseBlock({excId}) {
-  const data = AI_ROOT_CAUSE[excId];
+export function AiRootCauseBlock({data}) {
   const [expanded, setExpanded] = useState(false);
+  
   if (!data) return null;
 
   return (
@@ -103,4 +102,3 @@ export function AiRootCauseBlock({excId}) {
     </div>
   );
 }
-

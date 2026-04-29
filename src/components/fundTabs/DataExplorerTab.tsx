@@ -221,7 +221,7 @@ export function DataExplorerTab({ masterFeeds, onUpdateFeedRecord }) {
       <div style={{ flex:1, overflow:"hidden", display:"flex", flexDirection:"column", background:T.appBg, padding:"12px 16px" }}>
         
         {subTab==="gl_001" && <TrialBalanceTab tbRows={masterFeeds.gl_001} />}
-        {subTab==="hd_001" && <HoldingsGrid holdings={masterFeeds.hd_001} />}
+        {subTab==="hd_001" && <HoldingsGrid holdings={masterFeeds.hd_001} onUpdateFeedRecord={onUpdateFeedRecord} />}
         {subTab==="ca_001" && <CapitalActivityGrid activity={masterFeeds.ca_001} />}
         
         {subTab==="pr_001" && <EditableGrid data={masterFeeds.pr_001} columns={PR_COLS} feedId="pr_001" onUpdateRecord={onUpdateFeedRecord} />}
