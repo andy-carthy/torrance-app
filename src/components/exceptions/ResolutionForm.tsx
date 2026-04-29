@@ -2,19 +2,24 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { T, MONO, SANS } from '../../theme/tokens';
 import { Card, FieldLabel } from '../primitives/Card';
 import { RESOLUTIONS } from '../../data/exceptions';
-import { PRIOR_PERIOD_FLAGS } from '../../data/aiData';
 import { TEAM } from '../../data/team';
 import { AiRootCauseBlock } from '../ai/AiRootCauseBlock';
 import { AiSuggestionBanner } from '../ai/AiSuggestionBanner';
 import { PriorPeriodFlag } from '../primitives/Pills';
 import { ThreadedComments } from './ThreadedComments';
 import { Avatar } from '../primitives/Avatar';
+import { evaluateExceptionForAI } from '../../validation/engine';
 
 export function ResolutionForm({exc,onResolve,onUpdate,onAddThread,currentUserId,demoTypingText,demoShouldSubmit}) {
   const options=RESOLUTIONS[exc.severity];
   const [resolution,setResolution]=useState("");
   const [overrideValue,setOverrideValue]=useState("");
+  
   useEffect(()=>{ setResolution(""); setOverrideValue(""); },[exc.id]);
+  
+  // Evaluate the current exception dynamically through the rules engine
+  const aiContext = evaluateExceptionForAI(exc);
+
   const isOverride=resolution==="override_value";
   const isErrorAccept=exc.severity==="error"&&resolution==="accept_as_is";
   const needsComment=isErrorAccept&&exc.thread.length===0;
@@ -22,9 +27,9 @@ export function ResolutionForm({exc,onResolve,onUpdate,onAddThread,currentUserId
   const handleAiAccept=useCallback(s=>onResolve(exc.id,s.resolution,s.overrideValue,`AI Suggestion: ${s.summary}`),[exc.id,onResolve]);
   
   return <div>
-    <PriorPeriodFlag flag={PRIOR_PERIOD_FLAGS[exc.id]}/>
-    <AiRootCauseBlock excId={exc.id}/>
-    <AiSuggestionBanner excId={exc.id} onAccept={handleAiAccept}/>
+    <PriorPeriodFlag flag={aiContext.priorPeriodFlag}/>
+    <AiRootCauseBlock data={aiContext.rootCause}/>
+    <AiSuggestionBanner suggestion={aiContext.suggestion} onAccept={handleAiAccept}/>
     
     <Card title="Resolution Action" accessory={<span style={{...SANS,fontSize:11,color:T.textMuted}}>{options.length} options</span>}>
       {/* Horizontal Grid for radio buttons */}

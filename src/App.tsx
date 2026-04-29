@@ -122,6 +122,27 @@ export default function App() {
       });
       setStreak(s => s + 1);
     }
+
+   // 3. FIXED STP RULE: Holdings Cross-Check (Apple Inc)
+    // Strip commas in case the grid passes "284,500" instead of 284500
+    const parsedValue = Number(String(newValue).replace(/,/g, ''));
+    
+    if (field === "shares" && parsedValue === 284500) {
+      setFundState(prev => {
+        const next = { ...prev };
+        Object.keys(next).forEach(fid => {
+          next[fid] = next[fid].map(e =>
+            // Fix: Target the specific exception ID since "Apple Inc" is in the message, not the title
+            (e.code === "HOLDINGS_CROSS_CHECK" && e.status === "open")
+              ? { ...e, status: "resolved" as const, resolution: "corrected_source", resolvedBy: "system", thread: [...e.thread, {id:`t${Date.now()}`, userId:"system", text:`Auto-resolved via inline data grid correction. Shares updated to 284,500.`, ts:"Just now"}]}
+              : e
+          );
+        });
+        return next;
+      });
+      setStreak(s => s + 1); 
+    }
+
   };
 
   const getStats = useCallback((fund: FundSeed) => {

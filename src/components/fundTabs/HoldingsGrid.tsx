@@ -15,7 +15,7 @@ export function FvBadge({ level }) {
 
 
 
-export function HoldingsGrid({ holdings }) { 
+export function HoldingsGrid({ holdings, onUpdateFeedRecord }) {
   const [search, setSearch] = useState("");
   const [levelFilter, setLevelFilter] = useState("All");
   const [groupBy, setGroupBy] = useState(true);
@@ -157,16 +157,24 @@ export function HoldingsGrid({ holdings }) {
   };
 
   const commitHdEdit = (posId, field) => {
+    let v: string | number = editValue;
+    if (field !== "fvLevel" && field !== "assetClass") {
+      v = editValue !== "" && !isNaN(Number(editValue)) ? Number(editValue) : editValue;
+    } else if (field === "fvLevel") {
+      v = Number(editValue);
+    }
+    
+    // 1. Update local state for immediate visual feedback
     setHoldingsData(prev => prev.map(h => {
       if (h.position_id !== posId) return h;
-      let v: string | number = editValue;
-      if (field !== "fvLevel" && field !== "assetClass") {
-        v = editValue !== "" && !isNaN(Number(editValue)) ? Number(editValue) : editValue;
-      } else if (field === "fvLevel") {
-        v = Number(editValue);
-      }
       return { ...h, [field]: v };
     }));
+
+    // 2. NEW: Fire the global STP engine callback
+    if (onUpdateFeedRecord) {
+      onUpdateFeedRecord("hd_001", posId, field, v);
+    }
+
     setEditingCell(null);
   };
 

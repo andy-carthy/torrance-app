@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { T, MONO, SANS } from '../../theme/tokens';
-import { AI_SUGGESTIONS } from '../../data/aiData';
 import { AiConfidenceBadge } from '../primitives/Pills';
 
-export function AiSuggestionBanner({excId,onAccept}) {
-  const suggestion=AI_SUGGESTIONS[excId];
+export function AiSuggestionBanner({suggestion, onAccept}) {
   const [dismissed,setDismissed]=useState(false);
   const [accepting,setAccepting]=useState(false);
-  if(!suggestion||dismissed)return null;
+  
+  if(!suggestion||dismissed) return null;
+  
   const handleAccept=()=>{ setAccepting(true); setTimeout(()=>{ onAccept(suggestion); setAccepting(false); },600); };
+  
   return <div className="slide-in" style={{background:T.aiBg, border:`1px solid ${T.aiBorder}`, borderRadius:8, padding:"14px 16px", marginBottom:14, position:"relative", overflow:"hidden"}}>
     <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12}}>
       <div style={{flex:1}}>
@@ -32,6 +33,3 @@ export function AiSuggestionBanner({excId,onAccept}) {
     </div>
   </div>;
 }
-
-
-
