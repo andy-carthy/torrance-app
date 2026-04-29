@@ -284,7 +284,7 @@ export function GlobalExceptionsModal({ fundState, fundSeeds, onClose, onGlobalR
       zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center",
     }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} className="slide-in" style={{
-        background:T.appBg, borderRadius:12, width:"min(1400px, 95vw)",
+        background:T.appBg, borderRadius:12, width:"min(2000px, 95vw)",
         height:"88vh", display:"flex", flexDirection:"column", overflow:"hidden",
         boxShadow:"0 25px 50px -12px rgba(0,0,0,0.5)",
       }}>

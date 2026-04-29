@@ -16,6 +16,7 @@ interface Props {
 
 const AD_HOC_FORM_TYPES = [
   "Schedule TO",
+  "Form N-23c-2",
   "Form N-23c-3",
   "Form 3 / Form 4 / Form 5",
   "Form D",
@@ -42,7 +43,7 @@ export function AdHocFilingForm({ funds, onContinue, onCancel }: Props) {
 
     const envelope: FilingEnvelope = {
       filing_id: `ADHOC-${Date.now()}`,
-      filing_type: "FORM_PF",
+      filing_type: "ADHOC",
       filing_version: "1",
       amendment_indicator: false,
       final_filing_indicator: false,

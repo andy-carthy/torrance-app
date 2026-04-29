@@ -388,16 +388,17 @@ export function BeverleyFilingTracker({ filings, setFilings, onGoToDashboard }) 
                 <option value="fund_asc">Sort: Fund Name (A–Z)</option>
                 <option value="status">Sort: Status</option>
               </select>
-              <button
-                onClick={() => setViewMode('adhoc')}
-                style={{ ...SANS, fontSize: 12, fontWeight: 700, padding: '8px 16px', borderRadius: 6, border: `1px solid ${T.actionBase}`, background: T.actionBg, color: T.actionBase, cursor: 'pointer' }}
-              >
-                + New Filing
-              </button>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', marginLeft: 'auto' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
                 <input type="checkbox" checked={hideFiled} onChange={e => setHideFiled(e.target.checked)} style={{ accentColor: T.actionBase }} />
                 <span style={{ ...SANS, fontSize: 12, color: T.textPrimary, fontWeight: 600 }}>Hide Completed</span>
               </label>
+              <button
+                onClick={() => setViewMode('adhoc')}
+                style={{ ...SANS, fontSize: 12, fontWeight: 700, marginLeft: 'auto',padding: '8px 16px', borderRadius: 6, border: `1px solid ${T.actionBase}`, background: T.actionBg, color: T.actionBase, cursor: 'pointer' }}
+              >
+                + Ad-Hoc Filing
+              </button>
+
             </div>
           </div>
 
